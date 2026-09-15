@@ -1,0 +1,3 @@
+<?php
+namespace App\Http\Controllers\Api\V1; use App\Http\Controllers\Controller; use Illuminate\Http\Request; use Illuminate\Support\Facades\DB;
+class DeviceController extends Controller {public function store(Request $r){$d=$r->validate(['platform'=>'required|in:android,ios,web','push_token'=>'required|string','device_name'=>'nullable|string|max:120']); DB::table('user_devices')->updateOrInsert(['user_id'=>$r->user()->id,'push_token'=>$d['push_token']],['platform'=>$d['platform'],'device_name'=>$d['device_name']??null,'last_seen_at'=>now(),'updated_at'=>now(),'created_at'=>now()]); return response()->json(['message'=>'Device registered.']);}}

@@ -1,0 +1,3 @@
+<?php
+namespace App\Http\Controllers\Api\V1; use App\Http\Controllers\Controller; use App\Models\Donation; use Illuminate\Http\Request;
+class ReceiptController extends Controller { public function show(Request $r,Donation $donation){abort_unless($donation->user_id===$r->user()->id||$r->user()->can('viewAny',$donation),403);abort_unless($donation->status==='successful',404);return response()->json(['receipt_number'=>$donation->receipt_number,'reference'=>$donation->reference,'amount'=>$donation->amount,'currency'=>$donation->currency,'paid_at'=>$donation->paid_at,'donor_name'=>$donation->is_anonymous?'Anonymous':$donation->donor_name]);} }

@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
+return new class extends Migration { public function up(): void { Schema::create('media_assets',function(Blueprint $t){$t->id();$t->foreignId('organisation_unit_id')->nullable()->constrained()->nullOnDelete();$t->foreignId('uploaded_by')->constrained('users')->cascadeOnDelete();$t->string('title');$t->enum('type',['image','audio','video','document']);$t->string('path');$t->string('mime_type',120);$t->unsignedBigInteger('size_bytes');$t->text('alt_text')->nullable();$t->boolean('is_published')->default(false);$t->timestamps();}); } public function down(): void {Schema::dropIfExists('media_assets');}};

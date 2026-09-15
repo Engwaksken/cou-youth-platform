@@ -1,0 +1,4 @@
+@extends('admin.layout')
+@section('content')<h1>Media Library</h1>@if(session('success'))<div>{{session('success')}}</div>@endif
+<form method="post" enctype="multipart/form-data" action="{{route('admin.media.store')}}">@csrf<input name="title" required placeholder="Title"><select name="type"><option>image</option><option>audio</option><option>video</option><option>document</option></select><input name="alt_text" placeholder="Accessible alt text"><input type="file" name="file" required><label><input type="checkbox" name="is_published" value="1"> Published</label><button>Upload</button></form>
+@foreach($items as $i)<article><strong>{{$i->title}}</strong> · {{$i->type}} · {{$i->mime_type}} <form method="post" action="{{route('admin.media.destroy',$i)}}">@csrf @method('DELETE')<button>Delete</button></form></article>@endforeach {{$items->links()}}@endsection

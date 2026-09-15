@@ -1,0 +1,3 @@
+<?php
+namespace App\Http\Controllers\Admin; use App\Http\Controllers\Controller; use App\Models\PrayerRequest; use Illuminate\Http\Request;
+class PrayerRequestController extends Controller { public function index(Request $r){$q=PrayerRequest::latest();if($r->filled('status'))$q->where('status',$r->status);if($r->boolean('safeguarding'))$q->where('requires_safeguarding_review',true);return view('admin.prayer.index',['items'=>$q->paginate(25)]);} public function update(Request $r,PrayerRequest $prayerRequest){$d=$r->validate(['status'=>'required|in:submitted,in_review,referred,resolved,closed','pastoral_notes'=>'nullable|string|max:5000']);$prayerRequest->update($d);return back()->with('success','Prayer/pastoral case updated.');} }

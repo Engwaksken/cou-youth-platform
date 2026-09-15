@@ -1,0 +1,1 @@
+@extends('admin.layout') @section('title','Dashboard') @section('content')<h1>Dashboard</h1><div class="grid">@foreach($stats as $label=>$value)<div class="card"><div>{{ ucwords(str_replace('_',' ',$label)) }}</div><h2>{{ is_numeric($value)?number_format((float)$value):$value }}</h2></div>@endforeach</div>@endsection

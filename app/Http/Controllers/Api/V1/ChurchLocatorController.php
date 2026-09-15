@@ -1,0 +1,3 @@
+<?php
+namespace App\Http\Controllers\Api\V1; use App\Http\Controllers\Controller; use App\Models\ChurchLocation; use Illuminate\Http\Request;
+class ChurchLocatorController extends Controller {public function index(Request $r){$q=ChurchLocation::with('organisationUnit'); if($r->filled('q')){$term='%'.$r->string('q').'%';$q->whereHas('organisationUnit',fn($x)=>$x->where('name','like',$term));} return response()->json($q->paginate(20));}}

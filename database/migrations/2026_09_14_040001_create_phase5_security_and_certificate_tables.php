@@ -1,0 +1,7 @@
+<?php
+use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
+return new class extends Migration { public function up(): void {
+ Schema::create('verification_codes',function(Blueprint $t){$t->id();$t->foreignId('user_id')->constrained()->cascadeOnDelete();$t->string('purpose',30);$t->string('code_hash');$t->timestamp('expires_at');$t->timestamp('used_at')->nullable();$t->unsignedTinyInteger('attempts')->default(0);$t->timestamps();$t->index(['user_id','purpose','expires_at']);});
+ Schema::create('course_certificates',function(Blueprint $t){$t->id();$t->uuid('uuid')->unique();$t->foreignId('course_id')->constrained()->cascadeOnDelete();$t->foreignId('user_id')->constrained()->cascadeOnDelete();$t->string('certificate_number')->unique();$t->timestamp('issued_at');$t->timestamps();$t->unique(['course_id','user_id']);});
+ Schema::create('payment_webhook_logs',function(Blueprint $t){$t->id();$t->foreignId('payment_gateway_id')->nullable()->constrained()->nullOnDelete();$t->string('provider');$t->string('event_type')->nullable();$t->string('external_reference')->nullable();$t->string('signature')->nullable();$t->boolean('signature_valid')->default(false);$t->json('payload');$t->string('processing_status')->default('received');$t->text('error_message')->nullable();$t->timestamps();});
+ } public function down(): void {Schema::dropIfExists('payment_webhook_logs');Schema::dropIfExists('course_certificates');Schema::dropIfExists('verification_codes');} };

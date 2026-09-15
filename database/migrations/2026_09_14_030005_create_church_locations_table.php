@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
+return new class extends Migration { public function up(): void { Schema::create('church_locations',function(Blueprint $t){$t->id();$t->foreignId('organisation_unit_id')->unique()->constrained()->cascadeOnDelete();$t->string('address')->nullable();$t->decimal('latitude',10,7)->nullable();$t->decimal('longitude',10,7)->nullable();$t->string('service_times')->nullable();$t->string('youth_fellowship_times')->nullable();$t->string('contact_phone')->nullable();$t->string('contact_email')->nullable();$t->timestamps();}); } public function down(): void {Schema::dropIfExists('church_locations');}};

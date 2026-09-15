@@ -1,0 +1,6 @@
+<?php
+namespace App\Services\Auth; use App\Models\{User,VerificationCode}; use Illuminate\Support\Facades\Hash; use Illuminate\Support\Facades\Mail; use Illuminate\Validation\ValidationException;
+class VerificationService {
+ public function issue(User $user,string $purpose,int $minutes=10): void { VerificationCode::where('user_id',$user->id)->where('purpose',$purpose)->whereNull('used_at')->delete(); $code=(string)random_int(100000,999999); VerificationCode::create(['user_id'=>$user->id,'purpose'=>$purpose,'code_hash'=>Hash::make($code),'expires_at'=>now()->addMinutes($minutes)]); Mail::raw("Your Church of Uganda Youth Platform verification code is {$code}. It expires in {$minutes} minutes.",fn($m)=>$m->to($user->email)->subject('Your verification code')); }
+ public function verify(User $user,string $purpose,string $code): void { $row=VerificationCode::where('user_id',$user->id)->where('purpose',$purpose)->whereNull('used_at')->latest()->first(); if(!$row||$row->expires_at->isPast()||!Hash::check($code,$row->code_hash)){ if($row)$row->increment('attempts'); throw ValidationException::withMessages(['code'=>['The verification code is invalid or expired.']]); } $row->update(['used_at'=>now()]); }
+}
