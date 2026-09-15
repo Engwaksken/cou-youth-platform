@@ -37,10 +37,12 @@
         <div class="nav-label">Finance</div>
         <a href="{{ route('admin.donations.index') }}"><i class="fas fa-hand-holding-heart"></i> Donations</a>
         <a href="{{ route('admin.payment-gateways.index') }}"><i class="fas fa-credit-card"></i> Payment Gateways</a>
-        <div class="nav-label">Safety & Communication</div>
+        <div class="nav-label">AI & Communication</div>
+        <a href="{{ route('admin.ai.index') }}"><i class="fas fa-robot"></i> AI Settings</a>
+        <a href="{{ route('admin.notifications.index') }}"><i class="fas fa-bell"></i> Notifications</a>
+        <div class="nav-label">Safety</div>
         <a href="{{ route('admin.guardian-consents.index') }}"><i class="fas fa-shield-heart"></i> Safeguarding</a>
         <a href="{{ route('admin.moderation.index') }}"><i class="fas fa-shield-halved"></i> Moderation</a>
-        <a href="{{ route('admin.notifications.index') }}"><i class="fas fa-bell"></i> Notifications</a>
         <div class="nav-label">Insights</div>
         <a href="{{ route('admin.reports.index') }}"><i class="fas fa-chart-column"></i> Reports</a>
         <a href="{{ route('admin.system.health') }}"><i class="fas fa-heart-pulse"></i> System Health</a>
