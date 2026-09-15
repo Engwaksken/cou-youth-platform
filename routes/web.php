@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SystemHealthController;
 use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,15 +28,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
-
-/*
-|--------------------------------------------------------------------------
-| Authentication
-|--------------------------------------------------------------------------
-*/
+Route::get('/', [HomeController::class, 'index'])
+    ->name('home');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AdminAuthController::class, 'showLoginForm'])
