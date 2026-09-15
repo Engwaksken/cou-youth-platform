@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\AiSettingController;
 use App\Http\Controllers\Admin\ChurchLocationController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\CourseController;
@@ -88,6 +89,13 @@ Route::middleware(['auth', 'cms.access'])
             ->name('donations.campaigns.update');
         Route::delete('donations/campaigns/{campaign}', [DonationController::class, 'destroyCampaign'])
             ->name('donations.campaigns.destroy');
+
+        Route::get('ai', [AiSettingController::class, 'index'])
+            ->name('ai.index');
+        Route::put('ai', [AiSettingController::class, 'update'])
+            ->name('ai.update');
+        Route::post('ai/test', [AiSettingController::class, 'test'])
+            ->name('ai.test');
 
         Route::get('prayer', [PrayerRequestController::class, 'index'])
             ->name('prayer.index');
