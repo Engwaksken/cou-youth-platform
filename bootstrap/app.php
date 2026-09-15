@@ -13,10 +13,27 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+
         $middleware->alias([
             'cms.access' => EnsureCmsAccess::class,
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Authentication Redirects
+        |--------------------------------------------------------------------------
+        |
+        | Guests attempting to access protected pages go to /login.
+        | Logged-in users attempting to access guest pages such as /login
+        | go directly to the CMS dashboard.
+        |
+        */
+
+        $middleware->redirectGuestsTo('/login');
+
+        $middleware->redirectUsersTo('/admin');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->create();
