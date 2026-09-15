@@ -23,16 +23,12 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Public Home
+| Public Website
 |--------------------------------------------------------------------------
 */
 
 Route::get('/', function () {
-    return response()->json([
-        'status' => true,
-        'message' => 'Church of Uganda Youth Platform is running.',
-        'platform' => 'Church of Uganda Youth Platform',
-    ]);
+    return view('welcome');
 })->name('home');
 
 /*
@@ -194,7 +190,7 @@ Route::middleware([
 
         /*
         |--------------------------------------------------------------------------
-        | Media
+        | Media Library
         |--------------------------------------------------------------------------
         */
 
