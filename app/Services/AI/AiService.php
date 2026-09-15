@@ -6,6 +6,7 @@ namespace App\Services\AI;
 
 use App\Models\AiSetting;
 use App\Models\AiUsageLog;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Throwable;
@@ -91,25 +92,27 @@ class AiService
     ): string {
         $endpoint = rtrim($setting->api_endpoint ?: 'https://api.openai.com/v1', '/').'/responses';
 
-        $response = Http::withToken($setting->api_key)
+        $request = Http::withToken($setting->api_key)
             ->acceptJson()
-            ->timeout((int) ($setting->timeout_seconds ?: 30))
-            ->retry((int) ($setting->retry_count ?: 0), 500)
-            ->post($endpoint, [
-                'model' => $setting->model,
-                'input' => [
-                    [
-                        'role' => 'system',
-                        'content' => trim(($setting->system_prompt ?? '')."\n".($setting->safety_prompt ?? '')),
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $message,
-                    ],
+            ->timeout((int) ($setting->timeout_seconds ?: 30));
+
+        $request = $this->applyRetries($request, (int) ($setting->retry_count ?? 0));
+
+        $response = $request->post($endpoint, [
+            'model' => $setting->model,
+            'input' => [
+                [
+                    'role' => 'system',
+                    'content' => trim(($setting->system_prompt ?? '')."\n".($setting->safety_prompt ?? '')),
                 ],
-                'temperature' => (float) ($setting->temperature ?? 0.3),
-                'max_output_tokens' => (int) ($setting->max_tokens ?: 1200),
-            ]);
+                [
+                    'role' => 'user',
+                    'content' => $message,
+                ],
+            ],
+            'temperature' => (float) ($setting->temperature ?? 0.3),
+            'max_output_tokens' => (int) ($setting->max_tokens ?: 1200),
+        ]);
 
         $response->throw();
         $data = $response->json();
@@ -131,5 +134,14 @@ class AiService
         ]);
 
         return trim($text);
+    }
+
+    private function applyRetries(PendingRequest $request, int $retryCount): PendingRequest
+    {
+        if ($retryCount <= 0) {
+            return $request;
+        }
+
+        return $request->retry($retryCount + 1, 500);
     }
 }
