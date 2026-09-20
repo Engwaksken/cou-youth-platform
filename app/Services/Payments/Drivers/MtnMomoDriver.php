@@ -7,6 +7,7 @@ namespace App\Services\Payments\Drivers;
 use App\Models\Donation;
 use App\Models\PaymentGateway;
 use App\Services\Payments\Contracts\StatusAwarePaymentDriver;
+use App\Services\Payments\PhoneNumberNormalizer;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -14,6 +15,11 @@ use RuntimeException;
 
 final class MtnMomoDriver implements StatusAwarePaymentDriver
 {
+    public function __construct(
+        private readonly PhoneNumberNormalizer $phones
+    ) {
+    }
+
     public function initialize(Donation $donation, PaymentGateway $gateway): array
     {
         $settings = $gateway->settings ?? [];
@@ -23,6 +29,7 @@ final class MtnMomoDriver implements StatusAwarePaymentDriver
         $apiUser = $this->required($credentials, 'api_user', 'MTN API User');
         $apiKey = $this->required($credentials, 'api_key', 'MTN API Key');
         $targetEnvironment = $this->targetEnvironment($gateway, $settings);
+        $country = strtoupper((string) Arr::get($settings, 'country', 'UG'));
 
         if (blank($donation->donor_phone)) {
             throw new RuntimeException('A mobile money phone number is required.');
@@ -47,7 +54,7 @@ final class MtnMomoDriver implements StatusAwarePaymentDriver
             'externalId' => $donation->reference,
             'payer' => [
                 'partyIdType' => 'MSISDN',
-                'partyId' => $this->normalisePhone((string) $donation->donor_phone),
+                'partyId' => $this->phones->normalise((string) $donation->donor_phone, $country),
             ],
             'payerMessage' => 'Church of Uganda Youth Platform donation',
             'payeeNote' => 'Donation '.$donation->reference,
@@ -161,11 +168,6 @@ final class MtnMomoDriver implements StatusAwarePaymentDriver
         }
 
         return $value;
-    }
-
-    private function normalisePhone(string $phone): string
-    {
-        return preg_replace('/\D+/', '', $phone) ?: $phone;
     }
 
     private function mapStatus(string $status): string
