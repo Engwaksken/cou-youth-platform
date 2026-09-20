@@ -1,61 +1,25 @@
 @extends('admin.layout')
 @section('title','Life Groups')
 @section('content')
-<div class="page-head"><div><h1><i class="fas fa-people-group"></i> Life Groups</h1><p>Manage active groups, membership capacity and meeting details.</p></div></div>
-
-<div class="grid stats-grid group-stats">
-    @foreach([
-        ['Total groups',$stats['total'],'fa-people-group','#4b2e83'],
-        ['Active',$stats['active'],'fa-circle-check','#15803d'],
-        ['Inactive',$stats['inactive'],'fa-circle-pause','#b45309'],
-        ['Members',$stats['members'],'fa-users','#2563eb'],
-    ] as [$label,$value,$icon,$tone])
-        <div class="card stat-card group-stat" style="--tone:{{ $tone }}"><div class="stat-icon"><i class="fas {{ $icon }}"></i></div><div><strong>{{ number_format((int)$value) }}</strong><span>{{ $label }}</span></div></div>
-    @endforeach
-</div>
-
-<div class="card">
-    <form method="get" class="filters">
-        <input name="q" value="{{ $filters['q'] }}" placeholder="Search group, meeting day or location">
-        <select name="status"><option value="">All statuses</option><option value="active" @selected($filters['status']==='active')>Active</option><option value="inactive" @selected($filters['status']==='inactive')>Inactive</option></select>
-        <button class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
-        <a class="btn btn-light" href="{{ route('admin.life-groups.index') }}">Reset</a>
-    </form>
-</div>
-
-<div class="group-layout">
-    <section class="card">
-        <h2 style="margin-top:0">Create Life Group</h2>
-        <form method="post" action="{{ route('admin.life-groups.store') }}" class="form-grid">@csrf
-            <label>Group name<input name="name" required></label>
-            <label>Church unit ID<input name="organisation_unit_id" type="number"></label>
-            <label>Leader user ID<input name="leader_user_id" type="number"></label>
-            <label>Member limit<input name="member_limit" type="number" value="12" min="2" max="12"></label>
-            <label>Meeting day<input name="meeting_day" placeholder="e.g. Saturday"></label>
-            <label>Meeting time<input name="meeting_time" type="time"></label>
-            <label class="span-2">Meeting location<input name="meeting_location"></label>
-            <div class="span-2"><button class="btn btn-primary"><i class="fas fa-plus"></i> Create Life Group</button></div>
-        </form>
+<div class="page-head"><div><h1><i class="fas fa-people-group"></i> Life Groups</h1><p>Manage active groups, membership capacity and meeting details.</p></div><button class="btn btn-primary" data-open-modal="group-create"><i class="fas fa-plus"></i> Add Life Group</button></div>
+<div data-tabs>
+    <div class="tabs"><button class="tab active" data-tab-target="groups-overview"><i class="fas fa-chart-column"></i> Overview</button><button class="tab" data-tab-target="groups-list"><i class="fas fa-list"></i> Life Groups <span class="tab-count">{{ $groups->total() }}</span></button></div>
+    <section id="groups-overview" class="tab-panel active">
+        <div class="grid stats-grid group-stats">@foreach([['Total groups',$stats['total'],'fa-people-group','#4b2e83'],['Active',$stats['active'],'fa-circle-check','#15803d'],['Inactive',$stats['inactive'],'fa-circle-pause','#b45309'],['Members',$stats['members'],'fa-users','#2563eb']] as [$label,$value,$icon,$tone])<div class="card stat-card group-stat" style="--tone:{{ $tone }}"><div class="stat-icon"><i class="fas {{ $icon }}"></i></div><div><strong>{{ number_format((int)$value) }}</strong><span>{{ $label }}</span></div></div>@endforeach</div>
+        <div class="card"><h2 style="margin-top:0">Capacity overview</h2><div class="capacity-list">@forelse($groups->take(8) as $group)@php $pct=min(100,$group->member_limit>0?round(($group->members_count/$group->member_limit)*100):0); @endphp<div class="capacity-row"><div><strong>{{ $group->name }}</strong><small>{{ $group->members_count }}/{{ $group->member_limit }} members</small></div><div class="capacity-track"><span style="width:{{ $pct }}%"></span></div></div>@empty<div class="empty">No groups to display.</div>@endforelse</div></div>
     </section>
-
-    <section class="card">
-        <h2 style="margin-top:0">Capacity overview</h2>
-        <div class="capacity-list">
-            @forelse($groups->take(6) as $group)
-                @php $pct = min(100, $group->member_limit > 0 ? round(($group->members_count/$group->member_limit)*100) : 0); @endphp
-                <div class="capacity-row"><div><strong>{{ $group->name }}</strong><small>{{ $group->members_count }}/{{ $group->member_limit }} members</small></div><div class="capacity-track"><span style="width:{{ $pct }}%"></span></div></div>
-            @empty<div class="empty">No groups to display.</div>@endforelse
-        </div>
+    <section id="groups-list" class="tab-panel">
+        <div class="card"><form method="get" class="filters"><input name="q" value="{{ $filters['q'] }}" placeholder="Search group, meeting day or location"><select name="status"><option value="">All statuses</option><option value="active" @selected($filters['status']==='active')>Active</option><option value="inactive" @selected($filters['status']==='inactive')>Inactive</option></select><button class="btn btn-primary"><i class="fas fa-search"></i> Search</button><a class="btn btn-light" href="{{ route('admin.life-groups.index') }}#groups-list">Reset</a></form></div>
+        <div class="card table-card"><div class="table-wrap"><table><thead><tr><th>Life Group</th><th>Members</th><th>Meeting</th><th>Church Unit</th><th>Status</th><th>Actions</th></tr></thead><tbody>@forelse($groups as $group)<tr><td><strong>{{ $group->name }}</strong><small>{{ $group->description ?: 'No description' }}</small></td><td>{{ $group->members_count }}/{{ $group->member_limit }}</td><td>{{ $group->meeting_day ?: '—' }} {{ $group->meeting_time ? ' · '.$group->meeting_time : '' }}<small>{{ $group->meeting_location ?: '' }}</small></td><td>{{ $group->organisationUnit?->name ?: 'All Church' }}</td><td><span class="badge {{ $group->is_active?'badge-success':'badge-warning' }}">{{ $group->is_active?'Active':'Inactive' }}</span></td><td><div class="actions"><button class="icon-btn" data-open-modal="group-view-{{ $group->id }}" title="View"><i class="fas fa-eye"></i></button><button class="icon-btn" data-open-modal="group-edit-{{ $group->id }}" title="Edit"><i class="fas fa-pen"></i></button>@if($group->is_active)<button class="icon-btn" data-open-modal="group-delete-{{ $group->id }}" title="Deactivate"><i class="fas fa-ban"></i></button>@endif</div></td></tr>@empty<tr><td colspan="6" class="empty">No life groups match your filters.</td></tr>@endforelse</tbody></table></div><div class="pagination">{{ $groups->withQueryString()->links() }}</div></div>
     </section>
 </div>
 
-<div class="card table-card"><div class="table-wrap"><table><thead><tr><th>Life Group</th><th>Members</th><th>Meeting</th><th>Church Unit</th><th>Status</th></tr></thead><tbody>
-@forelse($groups as $group)
-<tr><td><strong>{{ $group->name }}</strong><small>{{ $group->description ?: 'No description' }}</small></td><td>{{ $group->members_count }}/{{ $group->member_limit }}</td><td>{{ $group->meeting_day ?: '—' }} {{ $group->meeting_time ? ' · '.$group->meeting_time : '' }}<small>{{ $group->meeting_location ?: '' }}</small></td><td>{{ $group->organisationUnit?->name ?: 'All Church' }}</td><td><span class="badge {{ $group->is_active ? 'badge-success' : 'badge-warning' }}">{{ $group->is_active ? 'Active' : 'Inactive' }}</span></td></tr>
-@empty<tr><td colspan="5" class="empty">No life groups match your filters.</td></tr>@endforelse
-</tbody></table></div><div class="pagination">{{ $groups->links() }}</div></div>
+<div id="group-create" class="modal"><div class="modal-card"><div class="modal-head"><h2>Add Life Group</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><form method="post" action="{{ route('admin.life-groups.store') }}">@csrf<div class="form-grid"><label>Group name<input name="name" required></label><label>Church unit ID<input name="organisation_unit_id" type="number"></label><label>Leader user ID<input name="leader_user_id" type="number"></label><label>Member limit<input name="member_limit" type="number" value="12" min="2" max="12" required></label><label>Meeting day<input name="meeting_day" placeholder="e.g. Saturday"></label><label>Meeting time<input name="meeting_time" type="time"></label><label class="span-2">Meeting location<input name="meeting_location"></label><label class="span-2">Description<textarea name="description" rows="4"></textarea></label></div><div class="modal-actions"><button type="button" class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Save Group</button></div></form></div></div>
 
-<style>
-.group-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.group-stat{border-left:5px solid var(--tone)}.group-stat .stat-icon{color:var(--tone);background:#f6f4fb}.group-layout{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:16px}.capacity-list{display:grid;gap:14px}.capacity-row{display:grid;gap:7px}.capacity-row>div:first-child{display:flex;justify-content:space-between;gap:12px}.capacity-row small{color:var(--muted)}.capacity-track{height:10px;background:#f3f4f6;border-radius:99px;overflow:hidden}.capacity-track span{display:block;height:100%;background:var(--primary);border-radius:99px}@media(max-width:900px){.group-layout{grid-template-columns:1fr}.group-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.group-stats{grid-template-columns:1fr}}
-</style>
+@foreach($groups as $group)
+<div id="group-view-{{ $group->id }}" class="modal"><div class="modal-card"><div class="modal-head"><h2>{{ $group->name }}</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><div class="detail-grid"><div class="detail-item"><span>Status</span><strong>{{ $group->is_active?'Active':'Inactive' }}</strong></div><div class="detail-item"><span>Members</span><strong>{{ $group->members_count }}/{{ $group->member_limit }}</strong></div><div class="detail-item"><span>Church Unit</span><strong>{{ $group->organisationUnit?->name ?: 'All Church' }}</strong></div><div class="detail-item"><span>Leader User ID</span><strong>{{ $group->leader_user_id ?: '—' }}</strong></div><div class="detail-item"><span>Meeting Day</span><strong>{{ $group->meeting_day ?: '—' }}</strong></div><div class="detail-item"><span>Meeting Time</span><strong>{{ $group->meeting_time ?: '—' }}</strong></div><div class="detail-item span-2"><span>Meeting Location</span><strong>{{ $group->meeting_location ?: '—' }}</strong></div><div class="detail-item span-2"><span>Description</span><strong>{{ $group->description ?: 'No description.' }}</strong></div></div><div class="modal-actions"><button class="btn btn-light" data-close-modal>Close</button><button class="btn btn-primary" data-close-modal data-open-modal="group-edit-{{ $group->id }}"><i class="fas fa-pen"></i> Edit</button></div></div></div>
+<div id="group-edit-{{ $group->id }}" class="modal"><div class="modal-card"><div class="modal-head"><h2>Edit Life Group</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><form method="post" action="{{ route('admin.life-groups.update',$group) }}">@csrf @method('PUT')<div class="form-grid"><label>Group name<input name="name" value="{{ $group->name }}" required></label><label>Church unit ID<input name="organisation_unit_id" type="number" value="{{ $group->organisation_unit_id }}"></label><label>Leader user ID<input name="leader_user_id" type="number" value="{{ $group->leader_user_id }}"></label><label>Member limit<input name="member_limit" type="number" value="{{ $group->member_limit }}" min="2" max="12" required></label><label>Meeting day<input name="meeting_day" value="{{ $group->meeting_day }}"></label><label>Meeting time<input name="meeting_time" type="time" value="{{ $group->meeting_time }}"></label><label class="span-2">Meeting location<input name="meeting_location" value="{{ $group->meeting_location }}"></label><label class="span-2">Description<textarea name="description" rows="4">{{ $group->description }}</textarea></label></div><div class="modal-actions"><button type="button" class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Update Group</button></div></form></div></div>
+<div id="group-delete-{{ $group->id }}" class="modal"><div class="modal-card small"><div class="modal-head"><h2>Deactivate Life Group?</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><p class="danger-copy">Deactivate <strong>{{ $group->name }}</strong>? Existing records remain in the database but the group will become inactive.</p><form method="post" action="{{ route('admin.life-groups.destroy',$group) }}">@csrf @method('DELETE')<div class="modal-actions"><button type="button" class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-danger"><i class="fas fa-ban"></i> Deactivate</button></div></form></div></div>
+@endforeach
+<style>.group-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.group-stat{border-left:5px solid var(--tone)}.group-stat .stat-icon{color:var(--tone);background:#f6f4fb}.capacity-list{display:grid;gap:14px}.capacity-row{display:grid;gap:7px}.capacity-row>div:first-child{display:flex;justify-content:space-between;gap:12px}.capacity-row small{color:var(--muted)}.capacity-track{height:10px;background:#f3f4f6;border-radius:99px;overflow:hidden}.capacity-track span{display:block;height:100%;background:var(--primary);border-radius:99px}@media(max-width:900px){.group-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.group-stats{grid-template-columns:1fr}}</style>
 @endsection
