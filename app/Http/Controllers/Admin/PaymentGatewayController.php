@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PaymentGateway;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -69,9 +70,10 @@ final class PaymentGatewayController extends Controller
     {
         $this->normaliseRequestSlug($request);
         $data = $this->validated($request);
+        $modelData = Arr::only($data, ['name', 'slug', 'provider', 'currency', 'sort_order']);
 
         PaymentGateway::create([
-            ...$data,
+            ...$modelData,
             'currency' => strtoupper($data['currency']),
             'credentials' => $this->credentials($request),
             'settings' => $this->settings($request),
@@ -87,12 +89,13 @@ final class PaymentGatewayController extends Controller
     {
         $this->normaliseRequestSlug($request);
         $data = $this->validated($request, $paymentGateway);
+        $modelData = Arr::only($data, ['name', 'slug', 'provider', 'currency', 'sort_order']);
 
         $existingSettings = is_array($paymentGateway->settings) ? $paymentGateway->settings : [];
         $existingCredentials = is_array($paymentGateway->credentials) ? $paymentGateway->credentials : [];
 
         $paymentGateway->update([
-            ...$data,
+            ...$modelData,
             'currency' => strtoupper($data['currency']),
             'credentials' => $this->credentials($request, $existingCredentials),
             'settings' => $this->settings($request, $existingSettings),
