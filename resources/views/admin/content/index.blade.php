@@ -1,100 +1,28 @@
 @extends('admin.layout')
-
-@section('title', 'Content')
-
+@section('title','Content')
 @section('content')
-    @php
-        $contentTypes = [
-            'news' => 'News',
-            'announcement' => 'Announcement',
-            'devotion' => 'Devotion',
-            'bible_study' => 'Bible Study',
-            'resource' => 'Resource',
-            'opportunity' => 'Opportunity',
-            'mission' => 'Mission & Evangelism',
-            'talent' => 'Talent Hub',
-            'youth_business' => 'Youth Business Directory',
-        ];
-    @endphp
+@php
+$contentTypes=['news'=>'News','announcement'=>'Announcement','devotion'=>'Devotion','bible_study'=>'Bible Study','resource'=>'Resource','opportunity'=>'Opportunity','mission'=>'Mission & Evangelism','talent'=>'Talent Hub','youth_business'=>'Youth Business Directory'];
+$maxType=max(1,(int)collect($typeCounts)->max());
+@endphp
+<div class="page-head"><div><h1><i class="fas fa-newspaper"></i> Content</h1><p>Publish youth ministry updates, discipleship material, missions, opportunities, talent profiles and youth businesses.</p></div><button class="btn btn-primary" data-open-modal="content-create"><i class="fas fa-plus"></i> Add Content</button></div>
+<div data-tabs>
+<div class="tabs"><button class="tab active" data-tab-target="content-overview"><i class="fas fa-chart-column"></i> Overview</button><button class="tab" data-tab-target="content-list"><i class="fas fa-list"></i> Content <span class="tab-count">{{ $items->total() }}</span></button></div>
+<section id="content-overview" class="tab-panel active">
+<div class="grid stats-grid content-stats"><div class="card stat-card stat-purple"><div class="stat-icon"><i class="fas fa-layer-group"></i></div><div><strong>{{ number_format($stats['total']) }}</strong><span>Total content</span></div></div><div class="card stat-card stat-green"><div class="stat-icon"><i class="fas fa-circle-check"></i></div><div><strong>{{ number_format($stats['published']) }}</strong><span>Published</span></div></div><div class="card stat-card stat-orange"><div class="stat-icon"><i class="fas fa-file-pen"></i></div><div><strong>{{ number_format($stats['draft']) }}</strong><span>Draft</span></div></div><div class="card stat-card stat-blue"><div class="stat-icon"><i class="fas fa-clock"></i></div><div><strong>{{ number_format($stats['pending']) }}</strong><span>Pending review</span></div></div></div>
+<div class="card"><h3 style="margin-top:0">Content by type</h3><div class="mini-chart">@foreach($contentTypes as $key=>$label)@php $count=(int)($typeCounts[$key]??0); @endphp<div class="chart-row"><span>{{ $label }}</span><div class="chart-track"><i style="width:{{ ($count/$maxType)*100 }}%"></i></div><strong>{{ $count }}</strong></div>@endforeach</div></div>
+</section>
+<section id="content-list" class="tab-panel">
+<div class="card"><form method="get" class="filters"><input name="q" value="{{ $filters['q'] }}" placeholder="Search title, summary or content"><select name="type"><option value="">All content types</option>@foreach($contentTypes as $value=>$label)<option value="{{ $value }}" @selected($filters['type']===$value)>{{ $label }}</option>@endforeach</select><select name="status"><option value="">All statuses</option>@foreach(['draft'=>'Draft','pending'=>'Pending review','published'=>'Published','archived'=>'Archived'] as $value=>$label)<option value="{{ $value }}" @selected($filters['status']===$value)>{{ $label }}</option>@endforeach</select><button class="btn btn-primary"><i class="fas fa-search"></i> Search</button><a class="btn btn-light" href="{{ route('admin.content.index') }}#content-list">Reset</a></form></div>
+<div class="card table-card"><div class="table-wrap"><table><thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Published</th><th>Actions</th></tr></thead><tbody>@forelse($items as $item)<tr><td><strong>{{ $item->title }}</strong><small>{{ Str::limit($item->summary ?: strip_tags($item->body),90) }}</small></td><td>{{ $contentTypes[$item->type] ?? ucfirst(str_replace('_',' ',$item->type)) }}</td><td><span class="badge {{ $item->status==='published'?'badge-success':($item->status==='archived'?'badge-danger':'badge-warning') }}">{{ ucfirst($item->status) }}</span></td><td>{{ $item->published_at?->format('d M Y') ?: '—' }}</td><td><div class="actions"><button class="icon-btn" data-open-modal="content-view-{{ $item->id }}"><i class="fas fa-eye"></i></button><button class="icon-btn" data-open-modal="content-edit-{{ $item->id }}"><i class="fas fa-pen"></i></button><button class="icon-btn" data-open-modal="content-delete-{{ $item->id }}"><i class="fas fa-trash"></i></button></div></td></tr>@empty<tr><td colspan="5" class="empty">No content matches your filters.</td></tr>@endforelse</tbody></table></div><div class="pagination">{{ $items->withQueryString()->links() }}</div></div>
+</section></div>
 
-    <div class="page-header">
-        <div>
-            <h1>Content</h1>
-            <p class="muted">Publish youth ministry updates, discipleship material, missions, opportunities, talent profiles and youth businesses.</p>
-        </div>
-    </div>
+<div id="content-create" class="modal"><div class="modal-card large"><div class="modal-head"><h2>Add Content</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><form method="post" action="{{ route('admin.content.store') }}">@csrf<div class="form-grid"><label>Title<input name="title" required></label><label>Content type<select name="type">@foreach($contentTypes as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></label><label>Status<select name="status">@foreach(['draft'=>'Draft','pending'=>'Pending review','published'=>'Published','archived'=>'Archived'] as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></label><label>Church unit ID<input name="organisation_unit_id" type="number"></label><label class="span-2">Summary<textarea name="summary" rows="3" maxlength="500"></textarea></label><label class="span-2">Content<textarea name="body" rows="10" required></textarea></label><label class="checkbox"><input type="checkbox" name="is_official" value="1"> Official content</label></div><div class="modal-actions"><button type="button" class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Save Content</button></div></form></div></div>
 
-    <div class="card">
-        <form method="post" action="{{ route('admin.content.store') }}" class="form-grid">
-            @csrf
-
-            <div class="form-group">
-                <label for="content-title">Title</label>
-                <input id="content-title" name="title" value="{{ old('title') }}" placeholder="Content title" required>
-            </div>
-
-            <div class="form-group">
-                <label for="content-type">Content type</label>
-                <select id="content-type" name="type" required>
-                    @foreach($contentTypes as $value => $label)
-                        <option value="{{ $value }}" @selected(old('type') === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="content-status">Status</label>
-                <select id="content-status" name="status" required>
-                    @foreach(['draft' => 'Draft', 'pending' => 'Pending review', 'published' => 'Published', 'archived' => 'Archived'] as $value => $label)
-                        <option value="{{ $value }}" @selected(old('status', 'draft') === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="form-group form-group-full">
-                <label for="content-summary">Summary</label>
-                <textarea id="content-summary" name="summary" rows="3" maxlength="500" placeholder="Short summary for cards and mobile discovery">{{ old('summary') }}</textarea>
-            </div>
-
-            <div class="form-group form-group-full">
-                <label for="content-body">Content</label>
-                <textarea id="content-body" name="body" rows="10" placeholder="Write the full content here" required>{{ old('body') }}</textarea>
-            </div>
-
-            <div class="form-group form-group-full">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save" aria-hidden="true"></i>
-                    Save content
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <div class="card">
-        <form method="get" class="toolbar" style="margin-bottom: 1rem;">
-            <select name="type" aria-label="Filter by content type">
-                <option value="">All content types</option>
-                @foreach($contentTypes as $value => $label)
-                    <option value="{{ $value }}" @selected(request('type') === $value)>{{ $label }}</option>
-                @endforeach
-            </select>
-            <button type="submit" class="btn btn-secondary">
-                <i class="fas fa-filter" aria-hidden="true"></i>
-                Filter
-            </button>
-        </form>
-
-        @forelse($items as $item)
-            <div class="list-row" style="padding: .85rem 0; border-bottom: 1px solid #e5e7eb;">
-                <strong>{{ $item->title }}</strong>
-                <span class="muted"> · {{ $contentTypes[$item->type] ?? ucfirst(str_replace('_', ' ', $item->type)) }} · {{ ucfirst($item->status) }}</span>
-            </div>
-        @empty
-            <p class="muted">No content has been created yet.</p>
-        @endforelse
-
-        <div style="margin-top: 1rem;">
-            {{ $items->links() }}
-        </div>
-    </div>
+@foreach($items as $item)
+<div id="content-view-{{ $item->id }}" class="modal"><div class="modal-card large"><div class="modal-head"><h2>{{ $item->title }}</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><div class="detail-grid"><div class="detail-item"><span>Type</span><strong>{{ $contentTypes[$item->type] ?? $item->type }}</strong></div><div class="detail-item"><span>Status</span><strong>{{ ucfirst($item->status) }}</strong></div><div class="detail-item"><span>Slug</span><strong>{{ $item->slug }}</strong></div><div class="detail-item"><span>Published</span><strong>{{ $item->published_at?->format('d M Y H:i') ?: '—' }}</strong></div><div class="detail-item span-2"><span>Summary</span><strong>{{ $item->summary ?: '—' }}</strong></div><div class="detail-item span-2"><span>Content</span><div>{!! nl2br(e($item->body)) !!}</div></div></div><div class="modal-actions"><button class="btn btn-light" data-close-modal>Close</button><button class="btn btn-primary" data-close-modal data-open-modal="content-edit-{{ $item->id }}"><i class="fas fa-pen"></i> Edit</button></div></div></div>
+<div id="content-edit-{{ $item->id }}" class="modal"><div class="modal-card large"><div class="modal-head"><h2>Edit Content</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><form method="post" action="{{ route('admin.content.update',$item) }}">@csrf @method('PUT')<div class="form-grid"><label>Title<input name="title" value="{{ $item->title }}" required></label><label>Content type<select name="type">@foreach($contentTypes as $value=>$label)<option value="{{ $value }}" @selected($item->type===$value)>{{ $label }}</option>@endforeach</select></label><label>Status<select name="status">@foreach(['draft'=>'Draft','pending'=>'Pending review','published'=>'Published','archived'=>'Archived'] as $value=>$label)<option value="{{ $value }}" @selected($item->status===$value)>{{ $label }}</option>@endforeach</select></label><label>Church unit ID<input name="organisation_unit_id" type="number" value="{{ $item->organisation_unit_id }}"></label><label class="span-2">Summary<textarea name="summary" rows="3">{{ $item->summary }}</textarea></label><label class="span-2">Content<textarea name="body" rows="10" required>{{ $item->body }}</textarea></label><label class="checkbox"><input type="checkbox" name="is_official" value="1" @checked($item->is_official)> Official content</label></div><div class="modal-actions"><button type="button" class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Update Content</button></div></form></div></div>
+<div id="content-delete-{{ $item->id }}" class="modal"><div class="modal-card small"><div class="modal-head"><h2>Delete Content?</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><p class="danger-copy">Delete <strong>{{ $item->title }}</strong>? This action cannot be undone.</p><form method="post" action="{{ route('admin.content.destroy',$item) }}">@csrf @method('DELETE')<div class="modal-actions"><button type="button" class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-danger"><i class="fas fa-trash"></i> Delete</button></div></form></div></div>
+@endforeach
 @endsection
+@push('styles')<style>.content-stats .stat-card{border-left:5px solid var(--primary)}.stat-purple{border-left-color:#7c3aed!important}.stat-green{border-left-color:#16a34a!important}.stat-orange{border-left-color:#ea580c!important}.stat-blue{border-left-color:#2563eb!important}.mini-chart{display:grid;gap:10px}.chart-row{display:grid;grid-template-columns:170px 1fr 42px;gap:10px;align-items:center}.chart-track{height:10px;background:#eef2f7;border-radius:99px;overflow:hidden}.chart-track i{display:block;height:100%;background:var(--primary);border-radius:99px}</style>@endpush
