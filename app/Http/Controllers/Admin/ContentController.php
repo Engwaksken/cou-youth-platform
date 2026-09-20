@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -10,75 +12,63 @@ use Illuminate\Support\Str;
 
 class ContentController extends Controller
 {
-    public function __construct(private HierarchyScopeService $scope)
-    {
-    }
+    public function __construct(private HierarchyScopeService $scope) {}
 
     public function index(Request $request)
     {
-        $query = Content::latest();
+        $query = Content::query()->latest();
+        $search = trim((string) $request->query('q', ''));
+        $type = (string) $request->query('type', '');
+        $status = (string) $request->query('status', '');
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->string('type'));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search): void {
+                $builder->where('title', 'like', "%{$search}%")
+                    ->orWhere('summary', 'like', "%{$search}%")
+                    ->orWhere('body', 'like', "%{$search}%");
+            });
         }
+        if ($type !== '') $query->where('type', $type);
+        if ($status !== '') $query->where('status', $status);
 
         return view('admin.content.index', [
-            'items' => $query->paginate(25)->withQueryString(),
+            'items' => $query->paginate(12)->withQueryString(),
+            'stats' => [
+                'total' => Content::count(),
+                'published' => Content::where('status', 'published')->count(),
+                'draft' => Content::where('status', 'draft')->count(),
+                'pending' => Content::where('status', 'pending')->count(),
+            ],
+            'typeCounts' => Content::query()->selectRaw('type, COUNT(*) total')->groupBy('type')->pluck('total', 'type'),
+            'filters' => ['q' => $search, 'type' => $type, 'status' => $status],
         ]);
     }
 
     public function store(Request $request)
     {
         $data = $this->validated($request);
-
-        if (! empty($data['organisation_unit_id'])
-            && ! $this->scope->canManage($request->user(), (int) $data['organisation_unit_id'])) {
-            abort(403);
-        }
-
+        if (! empty($data['organisation_unit_id']) && ! $this->scope->canManage($request->user(), (int) $data['organisation_unit_id'])) abort(403);
         $data['created_by'] = $request->user()->id;
         $data['slug'] = $this->uniqueSlug($data['title']);
-
-        if (($data['status'] ?? 'draft') === 'published') {
-            $data['published_at'] = now();
-        }
-
+        if (($data['status'] ?? 'draft') === 'published') $data['published_at'] = now();
         Content::create($data);
-
         return back()->with('success', 'Content saved successfully.');
     }
 
     public function update(Request $request, Content $content)
     {
-        if ($content->organisation_unit_id
-            && ! $this->scope->canManage($request->user(), $content->organisation_unit_id)) {
-            abort(403);
-        }
-
+        if ($content->organisation_unit_id && ! $this->scope->canManage($request->user(), $content->organisation_unit_id)) abort(403);
         $data = $this->validated($request);
-
-        if (($data['title'] ?? null) !== $content->title) {
-            $data['slug'] = $this->uniqueSlug($data['title'], $content->id);
-        }
-
-        if (($data['status'] ?? null) === 'published' && ! $content->published_at) {
-            $data['published_at'] = now();
-        }
-
+        if (($data['title'] ?? null) !== $content->title) $data['slug'] = $this->uniqueSlug($data['title'], $content->id);
+        if (($data['status'] ?? null) === 'published' && ! $content->published_at) $data['published_at'] = now();
         $content->update($data);
-
         return back()->with('success', 'Content updated successfully.');
     }
 
     public function destroy(Request $request, Content $content)
     {
-        if ($content->organisation_unit_id
-            && ! $this->scope->canManage($request->user(), $content->organisation_unit_id)) {
-            abort(403);
-        }
-
+        if ($content->organisation_unit_id && ! $this->scope->canManage($request->user(), $content->organisation_unit_id)) abort(403);
         $content->delete();
-
         return back()->with('success', 'Content deleted.');
     }
 
@@ -87,15 +77,9 @@ class ContentController extends Controller
         $base = Str::slug($title) ?: 'content';
         $slug = $base;
         $suffix = 2;
-
-        while (
-            Content::where('slug', $slug)
-                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
-                ->exists()
-        ) {
+        while (Content::where('slug', $slug)->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))->exists()) {
             $slug = $base.'-'.$suffix++;
         }
-
         return $slug;
     }
 
