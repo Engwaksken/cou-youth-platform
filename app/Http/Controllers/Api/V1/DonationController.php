@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Donation;
 use App\Models\DonationCampaign;
 use App\Models\PaymentGateway;
+use App\Services\Payments\DonationStatusUpdater;
 use App\Services\Payments\PaymentGatewayManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -53,8 +54,12 @@ class DonationController extends Controller
         ]);
     }
 
-    public function verify(Request $request, Donation $donation, PaymentGatewayManager $payments): JsonResponse
-    {
+    public function verify(
+        Request $request,
+        Donation $donation,
+        PaymentGatewayManager $payments,
+        DonationStatusUpdater $statusUpdater
+    ): JsonResponse {
         $this->authoriseOwner($request, $donation);
 
         $gateway = $donation->gateway;
@@ -79,27 +84,20 @@ class DonationController extends Controller
             $providerStatus = $payments->queryDonationStatus($donation, $gateway);
             $newStatus = (string) ($providerStatus['status'] ?? 'pending');
 
-            $attributes = [
-                'status' => $newStatus,
-                'gateway_response' => $providerStatus['provider_response'] ?? null,
-            ];
+            $donation = $statusUpdater->apply(
+                $donation,
+                $newStatus,
+                $providerStatus['transaction_id'] ?? null,
+                is_array($providerStatus['provider_response'] ?? null)
+                    ? $providerStatus['provider_response']
+                    : null,
+            );
 
-            if (! empty($providerStatus['transaction_id'])) {
-                $attributes['external_transaction_id'] = (string) $providerStatus['transaction_id'];
-            }
-
-            if ($newStatus === 'successful') {
-                $attributes['paid_at'] = $donation->paid_at ?? now();
-                $attributes['receipt_number'] = $donation->receipt_number
-                    ?: 'COU-RCP-'.now()->format('Ymd').'-'.str_pad((string) $donation->id, 7, '0', STR_PAD_LEFT);
-            }
-
-            $donation->forceFill($attributes)->save();
             $donation->load(['campaign:id,title,slug', 'gateway:id,name,slug,provider,currency']);
 
             return response()->json([
                 'success' => true,
-                'message' => $newStatus === 'successful'
+                'message' => $donation->status === 'successful'
                     ? 'Payment confirmed successfully.'
                     : 'Payment status refreshed.',
                 'data' => $this->donationPayload($donation),
