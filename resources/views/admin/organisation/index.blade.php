@@ -1,49 +1,18 @@
 @extends('admin.layout')
 @section('title','Church Structure')
 @section('content')
-<div class="page-head"><div><h1><i class="fas fa-sitemap"></i> Church Structure</h1><p>Manage the organisational hierarchy used across the youth platform.</p></div></div>
+<div class="page-head"><div><h1><i class="fas fa-sitemap"></i> Church Structure</h1><p>Manage the organisational hierarchy used across the youth platform.</p></div><button class="btn btn-primary" data-open-modal="unit-create"><i class="fas fa-plus"></i> Add Church Unit</button></div>
+<div data-tabs>
+<div class="tabs"><button class="tab active" data-tab-target="units-overview"><i class="fas fa-chart-column"></i> Overview</button><button class="tab" data-tab-target="units-list"><i class="fas fa-list"></i> Church Units <span class="tab-count">{{ $units->total() }}</span></button></div>
+<section id="units-overview" class="tab-panel active"><div class="grid stats-grid org-stats">@foreach([['Total units',$stats['total'],'fa-sitemap','#4b2e83'],['Active units',$stats['active'],'fa-circle-check','#15803d'],['Dioceses',$stats['dioceses'],'fa-landmark','#2563eb'],['Local churches',$stats['local_churches'],'fa-church','#b45309']] as [$label,$value,$icon,$tone])<div class="card stat-card org-stat" style="--tone:{{ $tone }}"><div class="stat-icon"><i class="fas {{ $icon }}"></i></div><div><strong>{{ number_format((int)$value) }}</strong><span>{{ $label }}</span></div></div>@endforeach</div></section>
+<section id="units-list" class="tab-panel"><div class="card"><form method="get" class="filters"><input name="q" value="{{ $filters['q'] }}" placeholder="Search name, code, email or phone"><select name="type"><option value="">All types</option>@foreach(['province','diocese','archdeaconry','parish','local_church','chaplaincy','institution'] as $type)<option value="{{ $type }}" @selected($filters['type']===$type)>{{ ucwords(str_replace('_',' ',$type)) }}</option>@endforeach</select><select name="status"><option value="">All statuses</option><option value="active" @selected($filters['status']==='active')>Active</option><option value="inactive" @selected($filters['status']==='inactive')>Inactive</option></select><button class="btn btn-primary"><i class="fas fa-search"></i> Search</button><a class="btn btn-light" href="{{ route('admin.organisation-units.index') }}#units-list">Reset</a></form></div>
+<div class="card table-card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Parent</th><th>Code</th><th>Status</th><th>Actions</th></tr></thead><tbody>@forelse($units as $unit)<tr><td><strong>{{ $unit->name }}</strong><small>{{ $unit->email ?: '' }} {{ $unit->phone ? ' · '.$unit->phone : '' }}</small></td><td>{{ ucwords(str_replace('_',' ',$unit->type)) }}</td><td>{{ $unit->parent?->name ?: '—' }}</td><td>{{ $unit->code ?: '—' }}</td><td><span class="badge {{ $unit->is_active?'badge-success':'badge-warning' }}">{{ $unit->is_active?'Active':'Inactive' }}</span></td><td><div class="actions"><button class="icon-btn" data-open-modal="unit-view-{{ $unit->id }}"><i class="fas fa-eye"></i></button><button class="icon-btn" data-open-modal="unit-edit-{{ $unit->id }}"><i class="fas fa-pen"></i></button><button class="icon-btn" data-open-modal="unit-delete-{{ $unit->id }}"><i class="fas fa-trash"></i></button></div></td></tr>@empty<tr><td colspan="6" class="empty">No church units match your filters.</td></tr>@endforelse</tbody></table></div><div class="pagination">{{ $units->withQueryString()->links() }}</div></div></section></div>
 
-<div class="grid stats-grid org-stats">
-    @foreach([
-        ['Total units',$stats['total'],'fa-sitemap','#4b2e83'],
-        ['Active units',$stats['active'],'fa-circle-check','#15803d'],
-        ['Dioceses',$stats['dioceses'],'fa-landmark','#2563eb'],
-        ['Local churches',$stats['local_churches'],'fa-church','#b45309'],
-    ] as [$label,$value,$icon,$tone])
-        <div class="card stat-card org-stat" style="--tone:{{ $tone }}"><div class="stat-icon"><i class="fas {{ $icon }}"></i></div><div><strong>{{ number_format((int)$value) }}</strong><span>{{ $label }}</span></div></div>
-    @endforeach
-</div>
-
-<div class="card">
-    <form method="get" class="filters">
-        <input name="q" value="{{ $filters['q'] }}" placeholder="Search name, code, email or phone">
-        <select name="type"><option value="">All types</option>@foreach(['province','diocese','archdeaconry','parish','local_church','chaplaincy','institution'] as $type)<option value="{{ $type }}" @selected($filters['type']===$type)>{{ ucwords(str_replace('_',' ',$type)) }}</option>@endforeach</select>
-        <select name="status"><option value="">All statuses</option><option value="active" @selected($filters['status']==='active')>Active</option><option value="inactive" @selected($filters['status']==='inactive')>Inactive</option></select>
-        <button class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
-        <a class="btn btn-light" href="{{ route('admin.organisation-units.index') }}">Reset</a>
-    </form>
-</div>
-
-<div class="card" style="margin-top:16px">
-    <h2 style="margin-top:0">Add Church Unit</h2>
-    <form method="post" action="{{ route('admin.organisation-units.store') }}" class="form-grid">@csrf
-        <label>Name<input name="name" required></label>
-        <label>Type<select name="type" required>@foreach(['province','diocese','archdeaconry','parish','local_church','chaplaincy','institution'] as $type)<option value="{{ $type }}">{{ ucwords(str_replace('_',' ',$type)) }}</option>@endforeach</select></label>
-        <label>Parent ID<input name="parent_id" type="number"></label>
-        <label>Code<input name="code"></label>
-        <label>Email<input name="email" type="email"></label>
-        <label>Phone<input name="phone"></label>
-        <div class="span-2"><button class="btn btn-primary"><i class="fas fa-plus"></i> Add Unit</button></div>
-    </form>
-</div>
-
-<div class="card table-card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Parent</th><th>Code</th><th>Status</th></tr></thead><tbody>
-@forelse($units as $unit)
-<tr><td><strong>{{ $unit->name }}</strong><small>{{ $unit->email ?: '' }} {{ $unit->phone ? ' · '.$unit->phone : '' }}</small></td><td>{{ ucwords(str_replace('_',' ',$unit->type)) }}</td><td>{{ $unit->parent?->name ?: '—' }}</td><td>{{ $unit->code ?: '—' }}</td><td><span class="badge {{ $unit->is_active ? 'badge-success' : 'badge-warning' }}">{{ $unit->is_active ? 'Active' : 'Inactive' }}</span></td></tr>
-@empty<tr><td colspan="5" class="empty">No church units match your filters.</td></tr>@endforelse
-</tbody></table></div><div class="pagination">{{ $units->links() }}</div></div>
-
-<style>
-.org-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.org-stat{border-left:5px solid var(--tone)}.org-stat .stat-icon{color:var(--tone);background:#f6f4fb}@media(max-width:900px){.org-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.org-stats{grid-template-columns:1fr}}
-</style>
+<div id="unit-create" class="modal"><div class="modal-card"><div class="modal-head"><h2>Add Church Unit</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><form method="post" action="{{ route('admin.organisation-units.store') }}">@csrf<div class="form-grid"><label>Name<input name="name" required></label><label>Type<select name="type" required>@foreach(['province','diocese','archdeaconry','parish','local_church','chaplaincy','institution'] as $type)<option value="{{ $type }}">{{ ucwords(str_replace('_',' ',$type)) }}</option>@endforeach</select></label><label>Parent ID<input name="parent_id" type="number"></label><label>Code<input name="code"></label><label>Email<input name="email" type="email"></label><label>Phone<input name="phone"></label></div><div class="modal-actions"><button type="button" class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Save Unit</button></div></form></div></div>
+@foreach($units as $unit)
+<div id="unit-view-{{ $unit->id }}" class="modal"><div class="modal-card"><div class="modal-head"><h2>{{ $unit->name }}</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><div class="detail-grid"><div class="detail-item"><span>Type</span><strong>{{ ucwords(str_replace('_',' ',$unit->type)) }}</strong></div><div class="detail-item"><span>Status</span><strong>{{ $unit->is_active?'Active':'Inactive' }}</strong></div><div class="detail-item"><span>Parent</span><strong>{{ $unit->parent?->name ?: '—' }}</strong></div><div class="detail-item"><span>Code</span><strong>{{ $unit->code ?: '—' }}</strong></div><div class="detail-item"><span>Email</span><strong>{{ $unit->email ?: '—' }}</strong></div><div class="detail-item"><span>Phone</span><strong>{{ $unit->phone ?: '—' }}</strong></div></div><div class="modal-actions"><button class="btn btn-light" data-close-modal>Close</button><button class="btn btn-primary" data-close-modal data-open-modal="unit-edit-{{ $unit->id }}"><i class="fas fa-pen"></i> Edit</button></div></div></div>
+<div id="unit-edit-{{ $unit->id }}" class="modal"><div class="modal-card"><div class="modal-head"><h2>Edit Church Unit</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><form method="post" action="{{ route('admin.organisation-units.update',$unit) }}">@csrf @method('PUT')<div class="form-grid"><label>Name<input name="name" value="{{ $unit->name }}" required></label><label>Code<input name="code" value="{{ $unit->code }}"></label><label>Email<input name="email" type="email" value="{{ $unit->email }}"></label><label>Phone<input name="phone" value="{{ $unit->phone }}"></label><label class="checkbox"><input type="checkbox" name="is_active" value="1" @checked($unit->is_active)> Active</label></div><div class="modal-actions"><button type="button" class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Update Unit</button></div></form></div></div>
+<div id="unit-delete-{{ $unit->id }}" class="modal"><div class="modal-card small"><div class="modal-head"><h2>Delete Church Unit?</h2><button class="icon-btn" data-close-modal><i class="fas fa-xmark"></i></button></div><p class="danger-copy">Delete <strong>{{ $unit->name }}</strong>? Units with children cannot be deleted.</p><form method="post" action="{{ route('admin.organisation-units.destroy',$unit) }}">@csrf @method('DELETE')<div class="modal-actions"><button type="button" class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-danger"><i class="fas fa-trash"></i> Delete</button></div></form></div></div>
+@endforeach
+<style>.org-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.org-stat{border-left:5px solid var(--tone)}.org-stat .stat-icon{color:var(--tone);background:#f6f4fb}@media(max-width:900px){.org-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.org-stats{grid-template-columns:1fr}}</style>
 @endsection
