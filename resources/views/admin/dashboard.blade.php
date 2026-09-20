@@ -2,97 +2,15 @@
 @section('title','Dashboard')
 @section('content')
 @php
-    $cards = [
-        ['key'=>'youth','label'=>'Youth profiles','icon'=>'fa-users','tone'=>'#4b2e83'],
-        ['key'=>'units','label'=>'Active church units','icon'=>'fa-sitemap','tone'=>'#0f766e'],
-        ['key'=>'events','label'=>'Events','icon'=>'fa-calendar-days','tone'=>'#2563eb'],
-        ['key'=>'life_groups','label'=>'Active life groups','icon'=>'fa-people-group','tone'=>'#7c3aed'],
-        ['key'=>'pending_consents','label'=>'Pending consents','icon'=>'fa-shield-heart','tone'=>'#d97706'],
-        ['key'=>'published_content','label'=>'Published content','icon'=>'fa-newspaper','tone'=>'#16a34a'],
-        ['key'=>'donations','label'=>'Successful donations (UGX)','icon'=>'fa-hand-holding-heart','tone'=>'#dc2626'],
-    ];
-    $maxYouth = max(1, (int) collect($trend)->max('youth'));
-    $maxDonation = max(1, (float) collect($trend)->max('donations'));
-    $maxEventStatus = max(1, (int) collect($eventStatus)->max());
+$cards=[['key'=>'youth','label'=>'Youth profiles','icon'=>'fa-users','tone'=>'#4b2e83'],['key'=>'units','label'=>'Active church units','icon'=>'fa-sitemap','tone'=>'#0f766e'],['key'=>'events','label'=>'Events','icon'=>'fa-calendar-days','tone'=>'#2563eb'],['key'=>'life_groups','label'=>'Active life groups','icon'=>'fa-people-group','tone'=>'#7c3aed'],['key'=>'pending_consents','label'=>'Pending consents','icon'=>'fa-shield-heart','tone'=>'#d97706'],['key'=>'published_content','label'=>'Published content','icon'=>'fa-newspaper','tone'=>'#16a34a'],['key'=>'donations','label'=>'Successful donations (UGX)','icon'=>'fa-hand-holding-heart','tone'=>'#dc2626']];
+$maxYouth=max(1,(int)collect($trend)->max('youth'));$maxDonation=max(1,(float)collect($trend)->max('donations'));$maxEventStatus=max(1,(int)collect($eventStatus)->max());
 @endphp
-
-<div class="page-head">
-    <div>
-        <h1><i class="fas fa-gauge-high"></i> Dashboard</h1>
-        <p>Live overview of youth engagement, ministry activity, safeguarding and giving.</p>
-    </div>
+<div class="page-head"><div><h1><i class="fas fa-gauge-high"></i> Dashboard</h1><p>Live overview of youth engagement, ministry activity, safeguarding and giving.</p></div></div>
+<div data-tabs>
+<div class="tabs"><button class="tab active" data-tab-target="dashboard-overview"><i class="fas fa-table-cells-large"></i> Overview</button><button class="tab" data-tab-target="dashboard-trends"><i class="fas fa-chart-line"></i> Trends</button><button class="tab" data-tab-target="dashboard-events"><i class="fas fa-calendar-days"></i> Event Status</button></div>
+<section id="dashboard-overview" class="tab-panel active"><div class="grid stats-grid dashboard-stats">@foreach($cards as $card)<div class="card stat-card dashboard-stat" style="--stat-tone:{{ $card['tone'] }}"><div class="stat-icon"><i class="fas {{ $card['icon'] }}"></i></div><div><strong>{{ $card['key']==='donations'?number_format((float)($stats[$card['key']]??0),0):number_format((int)($stats[$card['key']]??0)) }}</strong><span>{{ $card['label'] }}</span></div></div>@endforeach</div></section>
+<section id="dashboard-trends" class="tab-panel"><div class="dashboard-chart-grid"><section class="card dashboard-chart-card"><div class="chart-head"><div><h2>Youth registrations</h2><p>New youth profiles over the last six months.</p></div><i class="fas fa-chart-column"></i></div><div class="bar-chart">@foreach($trend as $row)<div class="bar-item"><div class="bar-track"><span style="height:{{ max(6,round(($row['youth']/$maxYouth)*100)) }}%"></span></div><strong>{{ number_format($row['youth']) }}</strong><small>{{ $row['label'] }}</small></div>@endforeach</div></section><section class="card dashboard-chart-card"><div class="chart-head"><div><h2>Successful donations</h2><p>Monthly successful donation value in UGX.</p></div><i class="fas fa-chart-line"></i></div><div class="bar-chart donations-chart">@foreach($trend as $row)<div class="bar-item"><div class="bar-track"><span style="height:{{ max(6,round(($row['donations']/$maxDonation)*100)) }}%"></span></div><strong>{{ number_format($row['donations'],0) }}</strong><small>{{ $row['label'] }}</small></div>@endforeach</div></section></div></section>
+<section id="dashboard-events" class="tab-panel"><div class="card dashboard-chart-card"><div class="chart-head"><div><h2>Events by status</h2><p>Current distribution of event records.</p></div><i class="fas fa-chart-pie"></i></div><div class="status-bars">@forelse($eventStatus as $status=>$total)<div class="status-row"><span>{{ ucwords(str_replace('_',' ',$status)) }}</span><div class="status-track"><span style="width:{{ round(((int)$total/$maxEventStatus)*100) }}%"></span></div><strong>{{ number_format((int)$total) }}</strong></div>@empty<div class="empty">No event data is available yet.</div>@endforelse</div></div></section>
 </div>
-
-<div class="grid stats-grid dashboard-stats">
-    @foreach($cards as $card)
-        <div class="card stat-card dashboard-stat" style="--stat-tone:{{ $card['tone'] }}">
-            <div class="stat-icon"><i class="fas {{ $card['icon'] }}"></i></div>
-            <div>
-                <strong>{{ $card['key']==='donations' ? number_format((float)($stats[$card['key']] ?? 0),0) : number_format((int)($stats[$card['key']] ?? 0)) }}</strong>
-                <span>{{ $card['label'] }}</span>
-            </div>
-        </div>
-    @endforeach
-</div>
-
-<div class="dashboard-chart-grid">
-    <section class="card dashboard-chart-card">
-        <div class="chart-head">
-            <div><h2>Youth registrations</h2><p>New youth profiles over the last six months.</p></div>
-            <i class="fas fa-chart-column"></i>
-        </div>
-        <div class="bar-chart">
-            @foreach($trend as $row)
-                <div class="bar-item">
-                    <div class="bar-track"><span style="height:{{ max(6, round(($row['youth']/$maxYouth)*100)) }}%"></span></div>
-                    <strong>{{ number_format($row['youth']) }}</strong>
-                    <small>{{ $row['label'] }}</small>
-                </div>
-            @endforeach
-        </div>
-    </section>
-
-    <section class="card dashboard-chart-card">
-        <div class="chart-head">
-            <div><h2>Successful donations</h2><p>Monthly successful donation value in UGX.</p></div>
-            <i class="fas fa-chart-line"></i>
-        </div>
-        <div class="bar-chart donations-chart">
-            @foreach($trend as $row)
-                <div class="bar-item">
-                    <div class="bar-track"><span style="height:{{ max(6, round(($row['donations']/$maxDonation)*100)) }}%"></span></div>
-                    <strong>{{ number_format($row['donations'],0) }}</strong>
-                    <small>{{ $row['label'] }}</small>
-                </div>
-            @endforeach
-        </div>
-    </section>
-</div>
-
-<section class="card dashboard-chart-card" style="margin-top:16px">
-    <div class="chart-head">
-        <div><h2>Events by status</h2><p>Current distribution of event records.</p></div>
-        <i class="fas fa-chart-pie"></i>
-    </div>
-    <div class="status-bars">
-        @forelse($eventStatus as $status => $total)
-            <div class="status-row">
-                <span>{{ ucwords(str_replace('_',' ',$status)) }}</span>
-                <div class="status-track"><span style="width:{{ round(((int)$total/$maxEventStatus)*100) }}%"></span></div>
-                <strong>{{ number_format((int)$total) }}</strong>
-            </div>
-        @empty
-            <div class="empty">No event data is available yet.</div>
-        @endforelse
-    </div>
-</section>
-
-<style>
-.dashboard-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
-.dashboard-stat{border-left:5px solid var(--stat-tone);min-height:94px}.dashboard-stat .stat-icon{background:color-mix(in srgb,var(--stat-tone) 12%,white);color:var(--stat-tone)}
-.dashboard-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.dashboard-chart-card h2{margin:0;font-size:18px}.dashboard-chart-card p{margin:5px 0 0;color:var(--muted);font-size:13px}.chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}.chart-head>i{font-size:24px;color:var(--primary)}
-.bar-chart{height:245px;display:grid;grid-template-columns:repeat(6,1fr);gap:14px;align-items:end;margin-top:22px}.bar-item{height:100%;display:grid;grid-template-rows:1fr auto auto;gap:6px;text-align:center;min-width:0}.bar-track{height:170px;display:flex;align-items:flex-end;background:#f3f4f6;border-radius:10px 10px 4px 4px;overflow:hidden}.bar-track span{display:block;width:100%;background:linear-gradient(180deg,#7c3aed,#4b2e83);border-radius:8px 8px 0 0}.donations-chart .bar-track span{background:linear-gradient(180deg,#ef4444,#b91c1c)}.bar-item strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar-item small{font-size:11px;color:var(--muted)}
-.status-bars{display:grid;gap:14px;margin-top:20px}.status-row{display:grid;grid-template-columns:140px 1fr 60px;gap:12px;align-items:center}.status-row>span{font-size:13px;font-weight:700}.status-track{height:11px;background:#f3f4f6;border-radius:99px;overflow:hidden}.status-track span{display:block;height:100%;background:var(--primary);border-radius:99px}.status-row strong{text-align:right}
-@media(max-width:1100px){.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-chart-grid{grid-template-columns:1fr}}@media(max-width:700px){.dashboard-stats{grid-template-columns:1fr}.bar-chart{gap:7px}.bar-item strong{font-size:10px}.status-row{grid-template-columns:90px 1fr 45px}}
-</style>
 @endsection
+@push('styles')<style>.dashboard-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.dashboard-stat{border-left:5px solid var(--stat-tone);min-height:94px}.dashboard-stat .stat-icon{color:var(--stat-tone)}.dashboard-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.dashboard-chart-card h2{margin:0;font-size:18px}.dashboard-chart-card p{margin:5px 0 0;color:var(--muted);font-size:13px}.chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}.chart-head>i{font-size:24px;color:var(--primary)}.bar-chart{height:245px;display:grid;grid-template-columns:repeat(6,1fr);gap:14px;align-items:end;margin-top:22px}.bar-item{height:100%;display:grid;grid-template-rows:1fr auto auto;gap:6px;text-align:center}.bar-track{height:170px;display:flex;align-items:flex-end;background:#f3f4f6;border-radius:10px;overflow:hidden}.bar-track span{display:block;width:100%;background:linear-gradient(180deg,#7c3aed,#4b2e83);border-radius:8px 8px 0 0}.donations-chart .bar-track span{background:linear-gradient(180deg,#ef4444,#b91c1c)}.bar-item strong{font-size:12px}.bar-item small{font-size:11px;color:var(--muted)}.status-bars{display:grid;gap:14px;margin-top:20px}.status-row{display:grid;grid-template-columns:140px 1fr 60px;gap:12px;align-items:center}.status-row>span{font-size:13px;font-weight:700}.status-track{height:11px;background:#f3f4f6;border-radius:99px;overflow:hidden}.status-track span{display:block;height:100%;background:var(--primary);border-radius:99px}.status-row strong{text-align:right}@media(max-width:1100px){.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-chart-grid{grid-template-columns:1fr}}@media(max-width:700px){.dashboard-stats{grid-template-columns:1fr}}</style>@endpush
