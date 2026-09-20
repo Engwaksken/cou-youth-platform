@@ -124,4 +124,8 @@ Route::middleware(['auth', 'cms.access'])
             ->name('notifications.index');
         Route::post('notifications', [NotificationController::class, 'store'])
             ->name('notifications.store');
+        Route::put('notifications/{notification}', [NotificationController::class, 'update'])
+            ->name('notifications.update');
+        Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])
+            ->name('notifications.destroy');
     });
