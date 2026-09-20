@@ -1,7 +1,12 @@
 @php
     $editing = isset($gateway) && $gateway;
     $settings = is_array($settings ?? null) ? $settings : [];
-    $credentialsConfigured = $editing && ! empty($gateway->credentials ?? []);
+    $credentials = $editing && is_array($gateway->credentials ?? null) ? $gateway->credentials : [];
+    $credentialsConfigured = $editing && ! empty($credentials);
+    $webhookSecretConfigured = $editing && (
+        ! empty($credentials['webhook_secret'] ?? null)
+        || ! empty($settings['webhook_secret'] ?? null)
+    );
 @endphp
 
 <div class="form-grid gateway-form-grid">
@@ -133,9 +138,9 @@
 
     <label class="span-2">
         Webhook secret
-        <input type="password" name="webhook_secret" autocomplete="new-password" placeholder="{{ $editing && !empty($settings['webhook_secret']) ? 'Enter a value to replace the saved webhook secret' : 'Optional webhook signing secret' }}">
-        @if($editing && !empty($settings['webhook_secret']))
-            <small class="gateway-secret-hint"><i class="fas fa-lock"></i> A webhook secret is already configured.</small>
+        <input type="password" name="webhook_secret" autocomplete="new-password" placeholder="{{ $webhookSecretConfigured ? 'Leave blank to keep the encrypted webhook secret' : 'Optional webhook signing secret' }}">
+        @if($webhookSecretConfigured)
+            <small class="gateway-secret-hint"><i class="fas fa-lock"></i> An encrypted webhook secret is configured. Saving this gateway will also migrate any legacy plaintext secret into encrypted storage.</small>
         @endif
     </label>
 
