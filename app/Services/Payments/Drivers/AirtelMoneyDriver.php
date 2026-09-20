@@ -7,6 +7,7 @@ namespace App\Services\Payments\Drivers;
 use App\Models\Donation;
 use App\Models\PaymentGateway;
 use App\Services\Payments\Contracts\StatusAwarePaymentDriver;
+use App\Services\Payments\PhoneNumberNormalizer;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -14,6 +15,11 @@ use RuntimeException;
 
 final class AirtelMoneyDriver implements StatusAwarePaymentDriver
 {
+    public function __construct(
+        private readonly PhoneNumberNormalizer $phones
+    ) {
+    }
+
     public function initialize(Donation $donation, PaymentGateway $gateway): array
     {
         $settings = $gateway->settings ?? [];
@@ -42,7 +48,7 @@ final class AirtelMoneyDriver implements StatusAwarePaymentDriver
                 'subscriber' => [
                     'country' => $country,
                     'currency' => strtoupper((string) $donation->currency),
-                    'msisdn' => $this->normalisePhone((string) $donation->donor_phone),
+                    'msisdn' => $this->phones->normalise((string) $donation->donor_phone, $country),
                 ],
                 'transaction' => [
                     'amount' => (float) $donation->amount,
@@ -156,11 +162,6 @@ final class AirtelMoneyDriver implements StatusAwarePaymentDriver
         }
 
         return $value;
-    }
-
-    private function normalisePhone(string $phone): string
-    {
-        return preg_replace('/\D+/', '', $phone) ?: $phone;
     }
 
     private function mapStatus(string $status): string
