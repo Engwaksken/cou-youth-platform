@@ -1,3 +1,47 @@
 <?php
-use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
-return new class extends Migration { public function up(): void { Schema::create('contents', function(Blueprint $table){ $table->id(); $table->enum('type',['news','announcement','devotion','bible_study','resource','opportunity']); $table->foreignId('organisation_unit_id')->nullable()->constrained()->nullOnDelete(); $table->string('title'); $table->string('slug')->unique(); $table->text('summary')->nullable(); $table->longText('body')->nullable(); $table->string('featured_image')->nullable(); $table->string('file_path')->nullable(); $table->string('external_url')->nullable(); $table->json('target_age_categories')->nullable(); $table->boolean('is_official')->default(false); $table->enum('status',['draft','pending','published','archived'])->default('draft'); $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete(); $table->timestamp('published_at')->nullable(); $table->timestamps(); $table->index(['type','status','published_at']); }); } public function down(): void { Schema::dropIfExists('contents'); } };
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('contents', function (Blueprint $table) {
+            $table->id();
+            $table->enum('type', [
+                'news',
+                'announcement',
+                'devotion',
+                'bible_study',
+                'resource',
+                'opportunity',
+                'mission',
+                'talent',
+                'youth_business',
+            ]);
+            $table->foreignId('organisation_unit_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('title');
+            $table->string('slug')->unique();
+            $table->text('summary')->nullable();
+            $table->longText('body')->nullable();
+            $table->string('featured_image')->nullable();
+            $table->string('file_path')->nullable();
+            $table->string('external_url')->nullable();
+            $table->json('target_age_categories')->nullable();
+            $table->boolean('is_official')->default(false);
+            $table->enum('status', ['draft', 'pending', 'published', 'archived'])->default('draft');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('published_at')->nullable();
+            $table->timestamps();
+            $table->index(['type', 'status', 'published_at']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('contents');
+    }
+};
