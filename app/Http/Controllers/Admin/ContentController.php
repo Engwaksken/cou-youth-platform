@@ -1,11 +1,116 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
-use App\Http\Controllers\Controller; use App\Models\Content; use App\Services\Access\HierarchyScopeService; use Illuminate\Http\Request; use Illuminate\Support\Str;
-class ContentController extends Controller { public function __construct(private HierarchyScopeService $scope){}
- public function index(Request $r){ $q=Content::latest(); if($r->filled('type'))$q->where('type',$r->type); return view('admin.content.index',['items'=>$q->paginate(25)]); }
- public function store(Request $r){ $data=$this->validated($r); if(!empty($data['organisation_unit_id'])&&!$this->scope->canManage($r->user(),(int)$data['organisation_unit_id'])) abort(403); $data['created_by']=$r->user()->id; $data['slug']=$this->uniqueSlug($data['title']); if(($data['status']??'draft')==='published')$data['published_at']=now(); Content::create($data); return back()->with('success','Content saved successfully.'); }
- public function update(Request $r, Content $content){ if($content->organisation_unit_id&&!$this->scope->canManage($r->user(),$content->organisation_unit_id))abort(403); $data=$this->validated($r); if(($data['title']??null)!==$content->title)$data['slug']=$this->uniqueSlug($data['title'],$content->id); if(($data['status']??null)==='published'&&!$content->published_at)$data['published_at']=now(); $content->update($data); return back()->with('success','Content updated successfully.'); }
- public function destroy(Request $r, Content $content){ if($content->organisation_unit_id&&!$this->scope->canManage($r->user(),$content->organisation_unit_id))abort(403); $content->delete(); return back()->with('success','Content deleted.'); }
- private function uniqueSlug(string $title, ?int $ignoreId=null): string { $base=Str::slug($title) ?: 'content'; $slug=$base; $i=2; while(Content::where('slug',$slug)->when($ignoreId,fn($q)=>$q->where('id','!=',$ignoreId))->exists()) $slug=$base.'-'.$i++; return $slug; }
- private function validated(Request $r): array { return $r->validate(['type'=>'required|in:news,announcement,devotion,bible_study,resource,opportunity','title'=>'required|max:200','summary'=>'nullable|max:500','body'=>'required','organisation_unit_id'=>'nullable|exists:organisation_units,id','target_age_categories'=>'nullable|array','target_age_categories.*'=>'in:teen,youth,young_adult','status'=>'required|in:draft,pending,published,archived','is_official'=>'boolean']); }
+
+use App\Http\Controllers\Controller;
+use App\Models\Content;
+use App\Services\Access\HierarchyScopeService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+class ContentController extends Controller
+{
+    public function __construct(private HierarchyScopeService $scope)
+    {
+    }
+
+    public function index(Request $request)
+    {
+        $query = Content::latest();
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->string('type'));
+        }
+
+        return view('admin.content.index', [
+            'items' => $query->paginate(25)->withQueryString(),
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $this->validated($request);
+
+        if (! empty($data['organisation_unit_id'])
+            && ! $this->scope->canManage($request->user(), (int) $data['organisation_unit_id'])) {
+            abort(403);
+        }
+
+        $data['created_by'] = $request->user()->id;
+        $data['slug'] = $this->uniqueSlug($data['title']);
+
+        if (($data['status'] ?? 'draft') === 'published') {
+            $data['published_at'] = now();
+        }
+
+        Content::create($data);
+
+        return back()->with('success', 'Content saved successfully.');
+    }
+
+    public function update(Request $request, Content $content)
+    {
+        if ($content->organisation_unit_id
+            && ! $this->scope->canManage($request->user(), $content->organisation_unit_id)) {
+            abort(403);
+        }
+
+        $data = $this->validated($request);
+
+        if (($data['title'] ?? null) !== $content->title) {
+            $data['slug'] = $this->uniqueSlug($data['title'], $content->id);
+        }
+
+        if (($data['status'] ?? null) === 'published' && ! $content->published_at) {
+            $data['published_at'] = now();
+        }
+
+        $content->update($data);
+
+        return back()->with('success', 'Content updated successfully.');
+    }
+
+    public function destroy(Request $request, Content $content)
+    {
+        if ($content->organisation_unit_id
+            && ! $this->scope->canManage($request->user(), $content->organisation_unit_id)) {
+            abort(403);
+        }
+
+        $content->delete();
+
+        return back()->with('success', 'Content deleted.');
+    }
+
+    private function uniqueSlug(string $title, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($title) ?: 'content';
+        $slug = $base;
+        $suffix = 2;
+
+        while (
+            Content::where('slug', $slug)
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = $base.'-'.$suffix++;
+        }
+
+        return $slug;
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'type' => 'required|in:news,announcement,devotion,bible_study,resource,opportunity,mission,talent,youth_business',
+            'title' => 'required|max:200',
+            'summary' => 'nullable|max:500',
+            'body' => 'required',
+            'organisation_unit_id' => 'nullable|exists:organisation_units,id',
+            'target_age_categories' => 'nullable|array',
+            'target_age_categories.*' => 'in:teen,youth,young_adult',
+            'status' => 'required|in:draft,pending,published,archived',
+            'is_official' => 'boolean',
+        ]);
+    }
 }
