@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -12,8 +14,10 @@ class MediaAssetController extends Controller
     public function index(Request $request)
     {
         $query = MediaAsset::query();
-
         $search = trim((string) $request->query('q', ''));
+        $type = (string) $request->query('type', '');
+        $status = (string) $request->query('status', '');
+
         if ($search !== '') {
             $query->where(function ($builder) use ($search): void {
                 $builder->where('title', 'like', "%{$search}%")
@@ -21,76 +25,82 @@ class MediaAssetController extends Controller
                     ->orWhere('mime_type', 'like', "%{$search}%");
             });
         }
-
-        $type = (string) $request->query('type', '');
-        if (in_array($type, ['image', 'audio', 'video', 'document'], true)) {
-            $query->where('type', $type);
-        }
-
-        $status = (string) $request->query('status', '');
-        if ($status === 'published') {
-            $query->where('is_published', true);
-        } elseif ($status === 'draft') {
-            $query->where('is_published', false);
-        }
-
-        $stats = [
-            'total' => MediaAsset::count(),
-            'published' => MediaAsset::where('is_published', true)->count(),
-            'images' => MediaAsset::where('type', 'image')->count(),
-            'documents' => MediaAsset::where('type', 'document')->count(),
-        ];
-
-        $typeCounts = MediaAsset::query()
-            ->selectRaw('type, COUNT(*) as total')
-            ->groupBy('type')
-            ->pluck('total', 'type');
+        if (in_array($type, ['image', 'audio', 'video', 'document'], true)) $query->where('type', $type);
+        if ($status === 'published') $query->where('is_published', true);
+        elseif ($status === 'draft') $query->where('is_published', false);
 
         return view('admin.media.index', [
             'items' => $query->latest()->paginate(12)->withQueryString(),
-            'stats' => $stats,
-            'typeCounts' => $typeCounts,
-            'filters' => [
-                'q' => $search,
-                'type' => $type,
-                'status' => $status,
+            'stats' => [
+                'total' => MediaAsset::count(),
+                'published' => MediaAsset::where('is_published', true)->count(),
+                'images' => MediaAsset::where('type', 'image')->count(),
+                'documents' => MediaAsset::where('type', 'document')->count(),
             ],
+            'typeCounts' => MediaAsset::query()->selectRaw('type, COUNT(*) as total')->groupBy('type')->pluck('total', 'type'),
+            'filters' => ['q' => $search, 'type' => $type, 'status' => $status],
         ]);
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:190',
-            'type' => 'required|in:image,audio,video,document',
-            'alt_text' => 'nullable|string|max:255',
-            'file' => 'required|file|max:51200',
-            'is_published' => 'sometimes|boolean',
-        ]);
-
-        $path = $request->file('file')->store('media', 'public');
+        $data = $this->validated($request, true);
+        $file = $request->file('file');
+        $path = $file->store('media', 'public');
 
         MediaAsset::create([
             'title' => $data['title'],
             'type' => $data['type'],
             'alt_text' => $data['alt_text'] ?? null,
             'file_path' => $path,
-            'mime_type' => $request->file('file')->getMimeType(),
-            'file_size' => $request->file('file')->getSize(),
+            'mime_type' => $file->getMimeType(),
+            'file_size' => $file->getSize(),
             'is_published' => $request->boolean('is_published'),
         ]);
 
         return back()->with('success', 'Media uploaded.');
     }
 
-    public function destroy(MediaAsset $media)
+    public function update(Request $request, MediaAsset $media)
     {
-        if ($media->file_path) {
-            Storage::disk('public')->delete($media->file_path);
+        $data = $this->validated($request, false);
+        $attributes = [
+            'title' => $data['title'],
+            'type' => $data['type'],
+            'alt_text' => $data['alt_text'] ?? null,
+            'is_published' => $request->boolean('is_published'),
+        ];
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $path = $file->store('media', 'public');
+            if ($media->file_path) Storage::disk('public')->delete($media->file_path);
+            $attributes += [
+                'file_path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
+            ];
         }
 
-        $media->delete();
+        $media->update($attributes);
+        return back()->with('success', 'Media updated.');
+    }
 
+    public function destroy(MediaAsset $media)
+    {
+        if ($media->file_path) Storage::disk('public')->delete($media->file_path);
+        $media->delete();
         return back()->with('success', 'Media deleted.');
+    }
+
+    private function validated(Request $request, bool $fileRequired): array
+    {
+        return $request->validate([
+            'title' => 'required|string|max:190',
+            'type' => 'required|in:image,audio,video,document',
+            'alt_text' => 'nullable|string|max:255',
+            'file' => ($fileRequired ? 'required' : 'nullable').'|file|max:51200',
+            'is_published' => 'sometimes|boolean',
+        ]);
     }
 }
