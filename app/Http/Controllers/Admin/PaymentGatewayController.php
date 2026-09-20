@@ -88,35 +88,18 @@ final class PaymentGatewayController extends Controller
         $this->normaliseRequestSlug($request);
         $data = $this->validated($request, $paymentGateway);
 
-        $existingSettings = is_array($paymentGateway->settings)
-            ? $paymentGateway->settings
-            : [];
+        $existingSettings = is_array($paymentGateway->settings) ? $paymentGateway->settings : [];
+        $existingCredentials = is_array($paymentGateway->credentials) ? $paymentGateway->credentials : [];
 
-        $update = [
+        $paymentGateway->update([
             ...$data,
             'currency' => strtoupper($data['currency']),
+            'credentials' => $this->credentials($request, $existingCredentials),
             'settings' => $this->settings($request, $existingSettings),
             'is_enabled' => $request->boolean('is_enabled'),
             'is_test_mode' => $request->boolean('is_test_mode'),
             'sort_order' => (int) ($data['sort_order'] ?? 0),
-        ];
-
-        if ($request->filled('api_key') || $request->filled('api_secret')) {
-            $existingCredentials = is_array($paymentGateway->credentials)
-                ? $paymentGateway->credentials
-                : [];
-
-            $update['credentials'] = array_filter([
-                'api_key' => $request->filled('api_key')
-                    ? trim((string) $request->input('api_key'))
-                    : ($existingCredentials['api_key'] ?? null),
-                'api_secret' => $request->filled('api_secret')
-                    ? trim((string) $request->input('api_secret'))
-                    : ($existingCredentials['api_secret'] ?? null),
-            ], static fn ($value): bool => filled($value));
-        }
-
-        $paymentGateway->update($update);
+        ]);
 
         return back()->with('success', 'Payment gateway updated successfully.');
     }
@@ -133,9 +116,7 @@ final class PaymentGatewayController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'slug' => [
-                'required',
-                'string',
-                'max:120',
+                'required', 'string', 'max:120',
                 Rule::unique('payment_gateways', 'slug')->ignore($paymentGateway?->getKey()),
             ],
             'provider' => ['required', 'string', 'max:80'],
@@ -144,44 +125,66 @@ final class PaymentGatewayController extends Controller
             'callback_url' => ['nullable', 'url', 'max:2048'],
             'webhook_url' => ['nullable', 'url', 'max:2048'],
             'initialize_url' => ['nullable', 'url', 'max:2048'],
+            'base_url' => ['nullable', 'url', 'max:2048'],
+            'target_environment' => ['nullable', 'string', 'max:80'],
+            'country' => ['nullable', 'string', 'size:2'],
             'timeout' => ['nullable', 'integer', 'min:5', 'max:120'],
             'webhook_secret' => ['nullable', 'string', 'max:255'],
             'api_key' => ['nullable', 'string', 'max:2000'],
             'api_secret' => ['nullable', 'string', 'max:2000'],
+            'subscription_key' => ['nullable', 'string', 'max:2000'],
+            'api_user' => ['nullable', 'string', 'max:255'],
+            'client_id' => ['nullable', 'string', 'max:2000'],
+            'client_secret' => ['nullable', 'string', 'max:2000'],
         ]);
     }
 
-    private function credentials(Request $request): array
+    private function credentials(Request $request, array $existing = []): array
     {
-        return array_filter([
-            'api_key' => $request->filled('api_key')
-                ? trim((string) $request->input('api_key'))
-                : null,
-            'api_secret' => $request->filled('api_secret')
-                ? trim((string) $request->input('api_secret'))
-                : null,
-        ], static fn ($value): bool => filled($value));
+        $fields = [
+            'api_key',
+            'api_secret',
+            'subscription_key',
+            'api_user',
+            'client_id',
+            'client_secret',
+        ];
+
+        $credentials = $existing;
+
+        foreach ($fields as $field) {
+            if ($request->filled($field)) {
+                $credentials[$field] = trim((string) $request->input($field));
+            }
+        }
+
+        return array_filter($credentials, static fn ($value): bool => filled($value));
     }
 
     private function settings(Request $request, array $existing = []): array
     {
-        return array_filter([
-            'callback_url' => $request->filled('callback_url')
-                ? trim((string) $request->input('callback_url'))
-                : null,
-            'webhook_url' => $request->filled('webhook_url')
-                ? trim((string) $request->input('webhook_url'))
-                : null,
-            'initialize_url' => $request->filled('initialize_url')
-                ? trim((string) $request->input('initialize_url'))
-                : null,
-            'timeout' => $request->filled('timeout')
-                ? (int) $request->input('timeout')
-                : null,
-            'webhook_secret' => $request->filled('webhook_secret')
-                ? trim((string) $request->input('webhook_secret'))
-                : ($existing['webhook_secret'] ?? null),
-        ], static fn ($value): bool => filled($value));
+        $settings = $existing;
+
+        foreach (['callback_url', 'webhook_url', 'initialize_url', 'base_url', 'target_environment', 'country'] as $field) {
+            if ($request->filled($field)) {
+                $value = trim((string) $request->input($field));
+                $settings[$field] = $field === 'country' ? strtoupper($value) : $value;
+            } elseif ($request->has($field)) {
+                unset($settings[$field]);
+            }
+        }
+
+        if ($request->filled('timeout')) {
+            $settings['timeout'] = (int) $request->input('timeout');
+        } elseif ($request->has('timeout')) {
+            unset($settings['timeout']);
+        }
+
+        if ($request->filled('webhook_secret')) {
+            $settings['webhook_secret'] = trim((string) $request->input('webhook_secret'));
+        }
+
+        return array_filter($settings, static fn ($value): bool => filled($value));
     }
 
     private function normaliseRequestSlug(Request $request): void
@@ -193,6 +196,7 @@ final class PaymentGatewayController extends Controller
         $request->merge([
             'slug' => Str::slug($source),
             'currency' => strtoupper(trim((string) $request->input('currency'))),
+            'country' => strtoupper(trim((string) $request->input('country', ''))),
         ]);
     }
 }
