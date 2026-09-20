@@ -63,6 +63,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/auth/email/verify', [AuthRecoveryController::class, 'verifyEmail']);
 
         Route::post('/devices', [DeviceController::class, 'store']);
+        Route::delete('/devices', [DeviceController::class, 'destroy']);
 
         Route::get('/guardian-consent', [GuardianConsentController::class, 'show']);
         Route::post('/guardian-consent', [GuardianConsentController::class, 'store']);
