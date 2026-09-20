@@ -175,7 +175,16 @@ final class PaymentWebhookService
         string $rawBody,
         array $payload
     ): bool {
-        $secret = (string) Arr::get($gateway->settings, 'webhook_secret', '');
+        $credentials = is_array($gateway->credentials) ? $gateway->credentials : [];
+        $settings = is_array($gateway->settings) ? $gateway->settings : [];
+
+        // New records keep signing secrets encrypted in credentials. The settings fallback
+        // supports gateways saved before the security hardening until they are next updated.
+        $secret = (string) (
+            Arr::get($credentials, 'webhook_secret')
+            ?: Arr::get($settings, 'webhook_secret', '')
+        );
+
         $signedBody = $rawBody !== ''
             ? $rawBody
             : (string) json_encode($payload, JSON_UNESCAPED_SLASHES);
