@@ -94,6 +94,14 @@ final class PaymentGatewayController extends Controller
         $existingSettings = is_array($paymentGateway->settings) ? $paymentGateway->settings : [];
         $existingCredentials = is_array($paymentGateway->credentials) ? $paymentGateway->credentials : [];
 
+        // Backward compatibility: older records stored webhook_secret in plain settings JSON.
+        // Move it into the encrypted credentials payload the next time an administrator saves.
+        if (! filled($existingCredentials['webhook_secret'] ?? null)
+            && filled($existingSettings['webhook_secret'] ?? null)) {
+            $existingCredentials['webhook_secret'] = (string) $existingSettings['webhook_secret'];
+        }
+        unset($existingSettings['webhook_secret']);
+
         $paymentGateway->update([
             ...$modelData,
             'currency' => strtoupper($data['currency']),
@@ -132,7 +140,7 @@ final class PaymentGatewayController extends Controller
             'target_environment' => ['nullable', 'string', 'max:80'],
             'country' => ['nullable', 'string', 'size:2'],
             'timeout' => ['nullable', 'integer', 'min:5', 'max:120'],
-            'webhook_secret' => ['nullable', 'string', 'max:255'],
+            'webhook_secret' => ['nullable', 'string', 'max:2000'],
             'api_key' => ['nullable', 'string', 'max:2000'],
             'api_secret' => ['nullable', 'string', 'max:2000'],
             'subscription_key' => ['nullable', 'string', 'max:2000'],
@@ -151,6 +159,7 @@ final class PaymentGatewayController extends Controller
             'api_user',
             'client_id',
             'client_secret',
+            'webhook_secret',
         ];
 
         $credentials = $existing;
@@ -168,6 +177,9 @@ final class PaymentGatewayController extends Controller
     {
         $settings = $existing;
 
+        // Secrets never belong in the unencrypted settings JSON.
+        unset($settings['webhook_secret']);
+
         foreach (['callback_url', 'webhook_url', 'initialize_url', 'base_url', 'target_environment', 'country'] as $field) {
             if ($request->filled($field)) {
                 $value = trim((string) $request->input($field));
@@ -181,10 +193,6 @@ final class PaymentGatewayController extends Controller
             $settings['timeout'] = (int) $request->input('timeout');
         } elseif ($request->has('timeout')) {
             unset($settings['timeout']);
-        }
-
-        if ($request->filled('webhook_secret')) {
-            $settings['webhook_secret'] = trim((string) $request->input('webhook_secret'));
         }
 
         return array_filter($settings, static fn ($value): bool => filled($value));
