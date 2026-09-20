@@ -44,24 +44,74 @@ class DonationController extends Controller
 
     public function show(Request $request, Donation $donation): JsonResponse
     {
-        abort_unless((int) $donation->user_id === (int) $request->user()->id, 404);
-
+        $this->authoriseOwner($request, $donation);
         $donation->load(['campaign:id,title,slug', 'gateway:id,name,slug,provider,currency']);
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $donation->id,
-                'reference' => $donation->reference,
-                'amount' => $donation->amount,
-                'currency' => $donation->currency,
-                'status' => $donation->status,
-                'receipt_number' => $donation->receipt_number,
-                'paid_at' => $donation->paid_at,
-                'campaign' => $donation->campaign,
-                'gateway' => $donation->gateway,
-            ],
+            'data' => $this->donationPayload($donation),
         ]);
+    }
+
+    public function verify(Request $request, Donation $donation, PaymentGatewayManager $payments): JsonResponse
+    {
+        $this->authoriseOwner($request, $donation);
+
+        $gateway = $donation->gateway;
+        if (! $gateway) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The payment gateway for this donation is unavailable.',
+            ], 422);
+        }
+
+        if (in_array($donation->status, ['successful', 'paid', 'completed'], true)) {
+            $donation->load(['campaign:id,title,slug', 'gateway:id,name,slug,provider,currency']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment has already been confirmed.',
+                'data' => $this->donationPayload($donation),
+            ]);
+        }
+
+        try {
+            $providerStatus = $payments->queryDonationStatus($donation, $gateway);
+            $newStatus = (string) ($providerStatus['status'] ?? 'pending');
+
+            $attributes = [
+                'status' => $newStatus,
+                'gateway_response' => $providerStatus['provider_response'] ?? null,
+            ];
+
+            if (! empty($providerStatus['transaction_id'])) {
+                $attributes['external_transaction_id'] = (string) $providerStatus['transaction_id'];
+            }
+
+            if ($newStatus === 'successful') {
+                $attributes['paid_at'] = $donation->paid_at ?? now();
+                $attributes['receipt_number'] = $donation->receipt_number
+                    ?: 'COU-RCP-'.now()->format('Ymd').'-'.str_pad((string) $donation->id, 7, '0', STR_PAD_LEFT);
+            }
+
+            $donation->forceFill($attributes)->save();
+            $donation->load(['campaign:id,title,slug', 'gateway:id,name,slug,provider,currency']);
+
+            return response()->json([
+                'success' => true,
+                'message' => $newStatus === 'successful'
+                    ? 'Payment confirmed successfully.'
+                    : 'Payment status refreshed.',
+                'data' => $this->donationPayload($donation),
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'We could not verify the payment status right now. Please try again shortly.',
+            ], 422);
+        }
     }
 
     public function store(Request $request, PaymentGatewayManager $payments): JsonResponse
@@ -138,6 +188,10 @@ class DonationController extends Controller
         try {
             $payment = $payments->initializeDonation($donation, $gateway);
 
+            if (isset($payment['provider_response'])) {
+                $donation->forceFill(['gateway_response' => $payment['provider_response']])->save();
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Donation payment started successfully.',
@@ -155,5 +209,26 @@ class DonationController extends Controller
                 'message' => 'We could not start your payment. Please try again or choose another payment method.',
             ], 422);
         }
+    }
+
+    private function authoriseOwner(Request $request, Donation $donation): void
+    {
+        abort_unless((int) $donation->user_id === (int) $request->user()->id, 404);
+    }
+
+    private function donationPayload(Donation $donation): array
+    {
+        return [
+            'id' => $donation->id,
+            'reference' => $donation->reference,
+            'amount' => $donation->amount,
+            'currency' => $donation->currency,
+            'status' => $donation->status,
+            'external_transaction_id' => $donation->external_transaction_id,
+            'receipt_number' => $donation->receipt_number,
+            'paid_at' => $donation->paid_at,
+            'campaign' => $donation->campaign,
+            'gateway' => $donation->gateway,
+        ];
     }
 }
