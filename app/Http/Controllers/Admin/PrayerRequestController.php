@@ -15,15 +15,14 @@ class PrayerRequestController extends Controller
         $search = trim((string) $request->query('q', ''));
         if ($search !== '') {
             $query->where(function ($builder) use ($search): void {
-                $builder->where('title', 'like', "%{$search}%")
+                $builder->where('subject', 'like', "%{$search}%")
                     ->orWhere('message', 'like', "%{$search}%")
-                    ->orWhere('request_text', 'like', "%{$search}%")
                     ->orWhere('pastoral_notes', 'like', "%{$search}%");
             });
         }
 
         $status = (string) $request->query('status', '');
-        if (in_array($status, ['submitted', 'in_review', 'referred', 'resolved', 'closed'], true)) {
+        if (in_array($status, ['submitted', 'under_review', 'referred', 'resolved', 'closed'], true)) {
             $query->where('status', $status);
         }
 
@@ -34,7 +33,7 @@ class PrayerRequestController extends Controller
 
         $stats = [
             'total' => PrayerRequest::count(),
-            'open' => PrayerRequest::whereIn('status', ['submitted', 'in_review', 'referred'])->count(),
+            'open' => PrayerRequest::whereIn('status', ['submitted', 'under_review', 'referred'])->count(),
             'resolved' => PrayerRequest::whereIn('status', ['resolved', 'closed'])->count(),
             'safeguarding' => PrayerRequest::where('requires_safeguarding_review', true)->count(),
         ];
@@ -59,7 +58,7 @@ class PrayerRequestController extends Controller
     public function update(Request $request, PrayerRequest $prayerRequest)
     {
         $data = $request->validate([
-            'status' => 'required|in:submitted,in_review,referred,resolved,closed',
+            'status' => 'required|in:submitted,under_review,referred,resolved,closed',
             'pastoral_notes' => 'nullable|string|max:5000',
         ]);
 
