@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PaymentGateway;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -66,11 +67,11 @@ final class PaymentGatewayController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->normaliseRequestSlug($request);
         $data = $this->validated($request);
 
         PaymentGateway::create([
             ...$data,
-            'slug' => $this->normaliseSlug($data['slug'] ?? null, $data['name']),
             'currency' => strtoupper($data['currency']),
             'credentials' => $this->credentials($request),
             'settings' => $this->settings($request),
@@ -84,27 +85,34 @@ final class PaymentGatewayController extends Controller
 
     public function update(Request $request, PaymentGateway $paymentGateway): RedirectResponse
     {
+        $this->normaliseRequestSlug($request);
         $data = $this->validated($request, $paymentGateway);
+
+        $existingSettings = is_array($paymentGateway->settings)
+            ? $paymentGateway->settings
+            : [];
 
         $update = [
             ...$data,
-            'slug' => $this->normaliseSlug($data['slug'] ?? null, $data['name']),
             'currency' => strtoupper($data['currency']),
-            'settings' => $this->settings($request),
+            'settings' => $this->settings($request, $existingSettings),
             'is_enabled' => $request->boolean('is_enabled'),
             'is_test_mode' => $request->boolean('is_test_mode'),
             'sort_order' => (int) ($data['sort_order'] ?? 0),
         ];
 
         if ($request->filled('api_key') || $request->filled('api_secret')) {
-            $existing = is_array($paymentGateway->credentials) ? $paymentGateway->credentials : [];
+            $existingCredentials = is_array($paymentGateway->credentials)
+                ? $paymentGateway->credentials
+                : [];
+
             $update['credentials'] = array_filter([
                 'api_key' => $request->filled('api_key')
                     ? trim((string) $request->input('api_key'))
-                    : ($existing['api_key'] ?? null),
+                    : ($existingCredentials['api_key'] ?? null),
                 'api_secret' => $request->filled('api_secret')
                     ? trim((string) $request->input('api_secret'))
-                    : ($existing['api_secret'] ?? null),
+                    : ($existingCredentials['api_secret'] ?? null),
             ], static fn ($value): bool => filled($value));
         }
 
@@ -122,15 +130,13 @@ final class PaymentGatewayController extends Controller
 
     private function validated(Request $request, ?PaymentGateway $paymentGateway = null): array
     {
-        $gatewayId = $paymentGateway?->getKey();
-
         return $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'slug' => [
-                'nullable',
+                'required',
                 'string',
                 'max:120',
-                Rule::unique('payment_gateways', 'slug')->ignore($gatewayId),
+                Rule::unique('payment_gateways', 'slug')->ignore($paymentGateway?->getKey()),
             ],
             'provider' => ['required', 'string', 'max:80'],
             'currency' => ['required', 'string', 'size:3'],
@@ -157,7 +163,7 @@ final class PaymentGatewayController extends Controller
         ], static fn ($value): bool => filled($value));
     }
 
-    private function settings(Request $request): array
+    private function settings(Request $request, array $existing = []): array
     {
         return array_filter([
             'callback_url' => $request->filled('callback_url')
@@ -174,12 +180,19 @@ final class PaymentGatewayController extends Controller
                 : null,
             'webhook_secret' => $request->filled('webhook_secret')
                 ? trim((string) $request->input('webhook_secret'))
-                : null,
+                : ($existing['webhook_secret'] ?? null),
         ], static fn ($value): bool => filled($value));
     }
 
-    private function normaliseSlug(?string $slug, string $name): string
+    private function normaliseRequestSlug(Request $request): void
     {
-        return \Illuminate\Support\Str::slug(filled($slug) ? $slug : $name);
+        $source = $request->filled('slug')
+            ? (string) $request->input('slug')
+            : (string) $request->input('name');
+
+        $request->merge([
+            'slug' => Str::slug($source),
+            'currency' => strtoupper(trim((string) $request->input('currency'))),
+        ]);
     }
 }
