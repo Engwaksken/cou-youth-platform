@@ -8,43 +8,48 @@ use App\Models\Donation;
 use App\Models\PaymentGateway;
 use App\Models\PaymentWebhookLog;
 use Illuminate\Support\Arr;
+use Throwable;
 
 final class PaymentWebhookService
 {
+    public function __construct(
+        private readonly PaymentGatewayManager $payments
+    ) {
+    }
+
     public function process(
         PaymentGateway $gateway,
         array $payload,
         ?string $signature,
         string $rawBody = ''
     ): array {
-        $secret = (string) Arr::get($gateway->settings, 'webhook_secret', '');
-        $signedBody = $rawBody !== ''
-            ? $rawBody
-            : (string) json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $provider = strtolower((string) $gateway->provider);
+        $mobileProvider = in_array($provider, [
+            'mtn_momo', 'mtn', 'mtn_mobile_money',
+            'airtel_money', 'airtel', 'airtel_momo',
+        ], true);
 
-        $valid = $secret !== ''
-            && is_string($signature)
-            && $signature !== ''
-            && hash_equals(hash_hmac('sha256', $signedBody, $secret), $signature);
+        $reference = $this->extractReference($payload);
+        $signatureValid = $mobileProvider
+            ? false
+            : $this->validSignature($gateway, $signature, $rawBody, $payload);
 
         $log = PaymentWebhookLog::create([
             'payment_gateway_id' => $gateway->id,
             'provider' => $gateway->provider,
-            'event_type' => Arr::get($payload, 'event'),
-            'external_reference' => Arr::get($payload, 'reference'),
+            'event_type' => Arr::get($payload, 'event') ?? Arr::get($payload, 'type'),
+            'external_reference' => $reference ?: null,
             'signature' => $signature,
-            'signature_valid' => $valid,
+            'signature_valid' => $signatureValid,
             'payload' => $payload,
-            'processing_status' => $valid ? 'processing' : 'rejected',
+            'processing_status' => $mobileProvider || $signatureValid ? 'processing' : 'rejected',
         ]);
 
-        if (! $valid) {
+        if (! $mobileProvider && ! $signatureValid) {
             $log->update(['error_message' => 'Invalid webhook signature']);
 
             return ['ok' => false, 'status' => 401];
         }
-
-        $reference = trim((string) (Arr::get($payload, 'reference') ?? ''));
 
         if ($reference === '') {
             $log->update([
@@ -69,23 +74,65 @@ final class PaymentWebhookService
             return ['ok' => true, 'status' => 202];
         }
 
-        $providerStatus = strtolower(trim((string) Arr::get($payload, 'status', 'pending')));
-        $statusMap = [
-            'paid' => 'successful',
-            'success' => 'successful',
-            'successful' => 'successful',
-            'completed' => 'successful',
-            'failed' => 'failed',
-            'cancelled' => 'cancelled',
-            'canceled' => 'cancelled',
-            'refunded' => 'refunded',
-            'pending' => 'pending',
-            'processing' => 'pending',
-        ];
+        if ($mobileProvider) {
+            return $this->processVerifiedMobileCallback($gateway, $donation, $payload, $log);
+        }
 
-        $newStatus = $statusMap[$providerStatus] ?? 'pending';
+        return $this->applyStatus(
+            $donation,
+            $this->mapStatus((string) Arr::get($payload, 'status', 'pending')),
+            Arr::get($payload, 'transaction_id') ?? Arr::get($payload, 'transactionId'),
+            $payload,
+            $log
+        );
+    }
 
-        // Never allow a duplicate or delayed callback to downgrade a completed payment.
+    private function processVerifiedMobileCallback(
+        PaymentGateway $gateway,
+        Donation $donation,
+        array $callbackPayload,
+        PaymentWebhookLog $log
+    ): array {
+        try {
+            // MTN and Airtel callbacks are treated as a signal to verify the transaction
+            // against the authenticated provider status API before changing local payment state.
+            $providerStatus = $this->payments->queryDonationStatus($donation, $gateway);
+
+            $log->update(['signature_valid' => true]);
+
+            return $this->applyStatus(
+                $donation,
+                (string) ($providerStatus['status'] ?? 'pending'),
+                $providerStatus['transaction_id'] ?? null,
+                [
+                    'callback' => $callbackPayload,
+                    'verified_status' => $providerStatus['provider_response'] ?? [],
+                ],
+                $log
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            $log->update([
+                'processing_status' => 'failed',
+                'error_message' => 'Provider status verification failed',
+            ]);
+
+            // Acknowledge the callback so the provider does not repeatedly retry while the
+            // platform can still recover payment state through the explicit verify endpoint.
+            return ['ok' => true, 'status' => 202];
+        }
+    }
+
+    private function applyStatus(
+        Donation $donation,
+        string $newStatus,
+        mixed $transactionId,
+        array $providerResponse,
+        PaymentWebhookLog $log
+    ): array {
+        $newStatus = $this->mapStatus($newStatus);
+
         if (in_array($donation->status, ['successful', 'paid', 'completed'], true)
             && $newStatus !== 'refunded') {
             $log->update(['processing_status' => 'processed']);
@@ -100,10 +147,10 @@ final class PaymentWebhookService
 
         $attributes = [
             'status' => $newStatus,
-            'external_transaction_id' => Arr::get($payload, 'transaction_id')
-                ?? Arr::get($payload, 'transactionId')
-                ?? $donation->external_transaction_id,
-            'gateway_response' => $payload,
+            'external_transaction_id' => filled($transactionId)
+                ? (string) $transactionId
+                : $donation->external_transaction_id,
+            'gateway_response' => $providerResponse,
         ];
 
         if ($newStatus === 'successful') {
@@ -120,5 +167,47 @@ final class PaymentWebhookService
             'status' => 200,
             'donation' => $donation->fresh(),
         ];
+    }
+
+    private function validSignature(
+        PaymentGateway $gateway,
+        ?string $signature,
+        string $rawBody,
+        array $payload
+    ): bool {
+        $secret = (string) Arr::get($gateway->settings, 'webhook_secret', '');
+        $signedBody = $rawBody !== ''
+            ? $rawBody
+            : (string) json_encode($payload, JSON_UNESCAPED_SLASHES);
+
+        return $secret !== ''
+            && is_string($signature)
+            && $signature !== ''
+            && hash_equals(hash_hmac('sha256', $signedBody, $secret), $signature);
+    }
+
+    private function extractReference(array $payload): string
+    {
+        return trim((string) (
+            Arr::get($payload, 'reference')
+            ?? Arr::get($payload, 'externalId')
+            ?? Arr::get($payload, 'external_id')
+            ?? Arr::get($payload, 'transaction.reference')
+            ?? Arr::get($payload, 'transaction.id')
+            ?? Arr::get($payload, 'data.transaction.reference')
+            ?? Arr::get($payload, 'data.transaction.id')
+            ?? ''
+        ));
+    }
+
+    private function mapStatus(string $status): string
+    {
+        return match (strtoupper(trim($status))) {
+            'PAID', 'SUCCESS', 'SUCCESSFUL', 'COMPLETED', 'TS' => 'successful',
+            'FAILED', 'REJECTED', 'TF' => 'failed',
+            'CANCELLED', 'CANCELED' => 'cancelled',
+            'REFUNDED' => 'refunded',
+            default => 'pending',
+        };
     }
 }
