@@ -13,7 +13,8 @@ use Throwable;
 final class PaymentWebhookService
 {
     public function __construct(
-        private readonly PaymentGatewayManager $payments
+        private readonly PaymentGatewayManager $payments,
+        private readonly DonationStatusUpdater $statusUpdater,
     ) {
     }
 
@@ -80,7 +81,7 @@ final class PaymentWebhookService
 
         return $this->applyStatus(
             $donation,
-            $this->mapStatus((string) Arr::get($payload, 'status', 'pending')),
+            $this->statusUpdater->normaliseStatus((string) Arr::get($payload, 'status', 'pending')),
             Arr::get($payload, 'transaction_id') ?? Arr::get($payload, 'transactionId'),
             $payload,
             $log
@@ -94,8 +95,6 @@ final class PaymentWebhookService
         PaymentWebhookLog $log
     ): array {
         try {
-            // MTN and Airtel callbacks are treated as a signal to verify the transaction
-            // against the authenticated provider status API before changing local payment state.
             $providerStatus = $this->payments->queryDonationStatus($donation, $gateway);
 
             $log->update(['signature_valid' => true]);
@@ -118,8 +117,6 @@ final class PaymentWebhookService
                 'error_message' => 'Provider status verification failed',
             ]);
 
-            // Acknowledge the callback so the provider does not repeatedly retry while the
-            // platform can still recover payment state through the explicit verify endpoint.
             return ['ok' => true, 'status' => 202];
         }
     }
@@ -131,41 +128,22 @@ final class PaymentWebhookService
         array $providerResponse,
         PaymentWebhookLog $log
     ): array {
-        $newStatus = $this->mapStatus($newStatus);
+        $beforeStatus = (string) $donation->status;
+        $updated = $this->statusUpdater->apply(
+            $donation,
+            $newStatus,
+            $transactionId,
+            $providerResponse,
+        );
 
-        if (in_array($donation->status, ['successful', 'paid', 'completed'], true)
-            && $newStatus !== 'refunded') {
-            $log->update(['processing_status' => 'processed']);
-
-            return [
-                'ok' => true,
-                'status' => 200,
-                'donation' => $donation->fresh(),
-                'idempotent' => true,
-            ];
-        }
-
-        $attributes = [
-            'status' => $newStatus,
-            'external_transaction_id' => filled($transactionId)
-                ? (string) $transactionId
-                : $donation->external_transaction_id,
-            'gateway_response' => $providerResponse,
-        ];
-
-        if ($newStatus === 'successful') {
-            $attributes['paid_at'] = $donation->paid_at ?: now();
-            $attributes['receipt_number'] = $donation->receipt_number
-                ?: 'COU-RCP-'.now()->format('Ymd').'-'.str_pad((string) $donation->id, 7, '0', STR_PAD_LEFT);
-        }
-
-        $donation->update($attributes);
         $log->update(['processing_status' => 'processed']);
 
         return [
             'ok' => true,
             'status' => 200,
-            'donation' => $donation->fresh(),
+            'donation' => $updated,
+            'idempotent' => $beforeStatus === (string) $updated->status
+                && in_array($beforeStatus, ['successful', 'paid', 'completed', 'refunded'], true),
         ];
     }
 
@@ -178,8 +156,6 @@ final class PaymentWebhookService
         $credentials = is_array($gateway->credentials) ? $gateway->credentials : [];
         $settings = is_array($gateway->settings) ? $gateway->settings : [];
 
-        // New records keep signing secrets encrypted in credentials. The settings fallback
-        // supports gateways saved before the security hardening until they are next updated.
         $secret = (string) (
             Arr::get($credentials, 'webhook_secret')
             ?: Arr::get($settings, 'webhook_secret', '')
@@ -207,16 +183,5 @@ final class PaymentWebhookService
             ?? Arr::get($payload, 'data.transaction.id')
             ?? ''
         ));
-    }
-
-    private function mapStatus(string $status): string
-    {
-        return match (strtoupper(trim($status))) {
-            'PAID', 'SUCCESS', 'SUCCESSFUL', 'COMPLETED', 'TS' => 'successful',
-            'FAILED', 'REJECTED', 'TF' => 'failed',
-            'CANCELLED', 'CANCELED' => 'cancelled',
-            'REFUNDED' => 'refunded',
-            default => 'pending',
-        };
     }
 }
