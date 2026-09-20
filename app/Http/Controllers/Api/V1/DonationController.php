@@ -21,28 +21,15 @@ class DonationController extends Controller
     {
         $campaigns = DonationCampaign::query()
             ->whereIn('status', ['published', 'active', 'open'])
-            ->where(function ($query): void {
-                $query->whereNull('starts_at')
-                    ->orWhere('starts_at', '<=', now());
-            })
-            ->where(function ($query): void {
-                $query->whereNull('ends_at')
-                    ->orWhere('ends_at', '>=', now());
-            })
+            ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+            ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
             ->withSum([
-                'donations as amount_raised' => fn ($query) => $query->whereIn('status', [
-                    'successful',
-                    'paid',
-                    'completed',
-                ]),
+                'donations as amount_raised' => fn ($query) => $query->whereIn('status', ['successful', 'paid', 'completed']),
             ], 'amount')
             ->latest()
             ->paginate(12);
 
-        return response()->json([
-            'success' => true,
-            'data' => $campaigns,
-        ]);
+        return response()->json(['success' => true, 'data' => $campaigns]);
     }
 
     public function gateways(): JsonResponse
@@ -50,18 +37,30 @@ class DonationController extends Controller
         $gateways = PaymentGateway::query()
             ->where('is_enabled', true)
             ->orderBy('sort_order')
-            ->get([
-                'id',
-                'name',
-                'slug',
-                'provider',
-                'currency',
-                'is_test_mode',
-            ]);
+            ->get(['id', 'name', 'slug', 'provider', 'currency', 'is_test_mode']);
+
+        return response()->json(['success' => true, 'data' => $gateways]);
+    }
+
+    public function show(Request $request, Donation $donation): JsonResponse
+    {
+        abort_unless((int) $donation->user_id === (int) $request->user()->id, 404);
+
+        $donation->load(['campaign:id,title,slug', 'gateway:id,name,slug,provider,currency']);
 
         return response()->json([
             'success' => true,
-            'data' => $gateways,
+            'data' => [
+                'id' => $donation->id,
+                'reference' => $donation->reference,
+                'amount' => $donation->amount,
+                'currency' => $donation->currency,
+                'status' => $donation->status,
+                'receipt_number' => $donation->receipt_number,
+                'paid_at' => $donation->paid_at,
+                'campaign' => $donation->campaign,
+                'gateway' => $donation->gateway,
+            ],
         ]);
     }
 
@@ -94,27 +93,16 @@ class DonationController extends Controller
 
         if (strtoupper((string) $gateway->currency) !== $validated['currency']) {
             throw ValidationException::withMessages([
-                'currency' => sprintf(
-                    'The selected payment method accepts %s payments.',
-                    strtoupper((string) $gateway->currency)
-                ),
+                'currency' => sprintf('The selected payment method accepts %s payments.', strtoupper((string) $gateway->currency)),
             ]);
         }
-
-        $campaign = null;
 
         if (! empty($validated['campaign_id'])) {
             $campaign = DonationCampaign::query()
                 ->whereKey($validated['campaign_id'])
                 ->whereIn('status', ['published', 'active', 'open'])
-                ->where(function ($query): void {
-                    $query->whereNull('starts_at')
-                        ->orWhere('starts_at', '<=', now());
-                })
-                ->where(function ($query): void {
-                    $query->whereNull('ends_at')
-                        ->orWhere('ends_at', '>=', now());
-                })
+                ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+                ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
                 ->first();
 
             if (! $campaign) {
@@ -125,10 +113,7 @@ class DonationController extends Controller
 
             if (strtoupper((string) $campaign->currency) !== $validated['currency']) {
                 throw ValidationException::withMessages([
-                    'currency' => sprintf(
-                        'This campaign accepts donations in %s.',
-                        strtoupper((string) $campaign->currency)
-                    ),
+                    'currency' => sprintf('This campaign accepts donations in %s.', strtoupper((string) $campaign->currency)),
                 ]);
             }
 
@@ -139,12 +124,6 @@ class DonationController extends Controller
             }
         }
 
-        if (! $validated['is_anonymous'] && ! $request->user() && empty($validated['donor_name'])) {
-            throw ValidationException::withMessages([
-                'donor_name' => 'Please provide your name or choose anonymous donation where available.',
-            ]);
-        }
-
         if ($validated['is_anonymous']) {
             $validated['donor_name'] = null;
         }
@@ -152,7 +131,7 @@ class DonationController extends Controller
         $donation = Donation::create([
             ...$validated,
             'reference' => (string) Str::uuid(),
-            'user_id' => $request->user()?->id,
+            'user_id' => $request->user()->id,
             'status' => 'pending',
         ]);
 
@@ -169,10 +148,7 @@ class DonationController extends Controller
             ], 201);
         } catch (Throwable $exception) {
             report($exception);
-
-            $donation->forceFill([
-                'status' => 'failed',
-            ])->save();
+            $donation->forceFill(['status' => 'failed'])->save();
 
             return response()->json([
                 'success' => false,
