@@ -73,6 +73,8 @@ Route::prefix('v1')->group(function (): void {
 
         Route::post('/donations', [DonationController::class, 'store']);
         Route::get('/donations/{donation}', [DonationController::class, 'show']);
+        Route::post('/donations/{donation}/verify', [DonationController::class, 'verify'])
+            ->middleware('throttle:20,1');
         Route::get('/donations/{donation}/receipt', [ReceiptController::class, 'show']);
 
         Route::post('/chatbot', [ChatbotController::class, 'reply']);
