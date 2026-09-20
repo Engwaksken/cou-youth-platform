@@ -14,6 +14,8 @@ final class HealthController extends Controller
 {
     public function __invoke(): JsonResponse
     {
+        $environment = app()->environment();
+
         $checks = [
             'database' => $this->databaseHealthy(),
             'storage' => $this->storageHealthy(),
@@ -21,15 +23,30 @@ final class HealthController extends Controller
             'debug_disabled' => ! (bool) config('app.debug'),
         ];
 
-        $healthy = ! in_array(false, $checks, true);
+        // Database and storage are runtime-readiness checks everywhere.
+        // APP_KEY and debug mode are production-hardening checks: they should
+        // be visible in local/testing health output without making the health
+        // endpoint itself unavailable during development or automated tests.
+        $criticalChecks = [
+            $checks['database'],
+            $checks['storage'],
+        ];
+
+        if ($environment === 'production') {
+            $criticalChecks[] = $checks['app_key'];
+            $criticalChecks[] = $checks['debug_disabled'];
+        }
+
+        $ready = ! in_array(false, $criticalChecks, true);
+        $allChecksPass = ! in_array(false, $checks, true);
 
         return response()->json([
-            'status' => $healthy ? 'healthy' : 'degraded',
+            'status' => $allChecksPass ? 'healthy' : 'degraded',
             'service' => config('app.name', 'Church of Uganda Youth Platform'),
-            'environment' => app()->environment(),
+            'environment' => $environment,
             'time' => now()->toIso8601String(),
             'checks' => $checks,
-        ], $healthy ? 200 : 503);
+        ], $ready ? 200 : 503);
     }
 
     private function databaseHealthy(): bool
