@@ -21,15 +21,33 @@ use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SystemHealthController;
 use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\Auth\YouthAuthController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PublicSiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/news', [PublicSiteController::class, 'news'])->name('public.news');
+Route::get('/events', [PublicSiteController::class, 'events'])->name('public.events');
+Route::get('/courses', [PublicSiteController::class, 'courses'])->name('public.courses');
+Route::get('/churches', [PublicSiteController::class, 'churches'])->name('public.churches');
+Route::get('/donate', [PublicSiteController::class, 'donate'])->name('public.donate');
+Route::get('/about', [PublicSiteController::class, 'about'])->name('public.about');
+
 Route::middleware('guest')->group(function (): void {
-    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AdminAuthController::class, 'login'])->name('login.attempt');
+    Route::get('/login', [YouthAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [YouthAuthController::class, 'login'])->name('login.attempt');
+    Route::get('/signup', [YouthAuthController::class, 'showRegister'])->name('register');
+    Route::post('/signup', [YouthAuthController::class, 'register'])->name('register.store');
+    Route::get('/forgot-password', [YouthAuthController::class, 'showForgot'])->name('password.request');
+    Route::post('/forgot-password', [YouthAuthController::class, 'requestReset'])->name('password.email');
+    Route::get('/reset-password', [YouthAuthController::class, 'showReset'])->name('password.reset.form');
+    Route::post('/reset-password', [YouthAuthController::class, 'resetPassword'])->name('password.update');
+
+    Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.attempt');
 });
-Route::post('/logout', [AdminAuthController::class, 'logout'])->middleware('auth')->name('logout');
+Route::post('/logout', [YouthAuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
