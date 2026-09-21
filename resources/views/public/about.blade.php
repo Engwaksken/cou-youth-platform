@@ -1,0 +1,6 @@
+@extends('public.layout')
+@section('title','About | COU Youth')
+@section('content')
+<section class="hero"><h1>About the COU Youth Platform</h1><p>A digital platform supporting discipleship, connection, opportunities, safeguarding and participation for young people across the Church of Uganda.</p></section>
+<div class="grid"><div class="card"><h3><i class="fas fa-book-bible"></i> Discipleship</h3><p class="muted">Access courses, devotions and faith-building resources.</p></div><div class="card"><h3><i class="fas fa-people-group"></i> Community</h3><p class="muted">Connect with events, life groups and church youth fellowships.</p></div><div class="card"><h3><i class="fas fa-shield-heart"></i> Safeguarding</h3><p class="muted">Age-aware consent and support workflows help keep participation safe.</p></div><div class="card"><h3><i class="fas fa-location-dot"></i> Church Locator</h3><p class="muted">Find nearby Church of Uganda congregations and youth activities.</p></div><div class="card"><h3><i class="fas fa-hand-holding-heart"></i> Giving</h3><p class="muted">Support verified youth ministry campaigns through secure payment channels.</p></div><div class="card"><h3><i class="fas fa-mobile-screen"></i> Mobile Access</h3><p class="muted">Use the Flutter mobile app for a personalised youth experience.</p></div></div>
+@endsection
