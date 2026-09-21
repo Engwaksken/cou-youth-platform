@@ -1,0 +1,5 @@
+@extends('public.layout')
+@section('title','Forgot Password | COU Youth')
+@section('content')
+<section style="max-width:520px;margin:40px auto"><div class="card"><h1 style="margin-top:0"><i class="fas fa-key"></i> Forgot Password</h1><p class="muted">Enter your registered email address and we will send a six-digit reset code.</p>@if($errors->any())<div style="padding:12px;background:#fef2f2;color:#991b1b;border-radius:9px;margin-bottom:14px">{{ $errors->first() }}</div>@endif<form method="post" action="{{ route('password.email') }}">@csrf<label>Email address<input style="width:100%;padding:11px;margin:6px 0 14px;border:1px solid #d1d5db;border-radius:9px" type="email" name="email" value="{{ old('email') }}" required autofocus></label><button class="btn btn-primary" style="width:100%;justify-content:center"><i class="fas fa-paper-plane"></i> Send Reset Code</button></form><p style="margin-bottom:0"><a href="{{ route('login') }}">Back to Youth Login</a></p></div></section>
+@endsection
