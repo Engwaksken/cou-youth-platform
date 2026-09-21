@@ -1,10 +1,97 @@
 <?php
-namespace App\Http\Controllers\Api\V1; use App\Http\Controllers\Controller; use App\Models\User; use App\Services\Auth\VerificationService; use Illuminate\Http\Request; use Illuminate\Support\Facades\Hash;
-class AuthRecoveryController extends Controller {
- public function requestEmailVerification(Request $r,VerificationService $v){$u=$r->user();$v->issue($u,'email_verification');return response()->json(['message'=>'Verification code sent.']);}
- public function verifyEmail(Request $r,VerificationService $v){$d=$r->validate(['code'=>'required|digits:6']);$u=$r->user();$v->verify($u,'email_verification',$d['code']); if(method_exists($u,'markEmailAsVerified'))$u->markEmailAsVerified(); return response()->json(['message'=>'Email verified successfully.']);}
- public function requestPasswordReset(Request $r,VerificationService $v){$d=$r->validate(['email'=>'required|email']);$u=User::where('email',$d['email'])->first(); if($u)$v->issue($u,'password_reset'); return response()->json(['message'=>'If the account exists, a reset code has been sent.']);}
- public function resetPassword(Request $r,VerificationService $v){$d=$r->validate(['email'=>'required|email','code'=>'required|digits:6','password'=>'required|string|min:8|confirmed']);$u=User::where('email',$d['email'])->firstOrFail();$v->verify($u,'password_reset',$d['code']);$u->update(['password'=>Hash::make($d['password'])]);if(method_exists($u,'tokens'))$u->tokens()->delete();return response()->json(['message'=>'Password reset successfully.']);}
- public function requestLoginOtp(Request $r,VerificationService $v){$d=$r->validate(['email'=>'required|email']);$u=User::where('email',$d['email'])->first();if($u)$v->issue($u,'login_otp');return response()->json(['message'=>'If the account exists, a login code has been sent.']);}
- public function verifyLoginOtp(Request $r,VerificationService $v){$d=$r->validate(['email'=>'required|email','code'=>'required|digits:6']);$u=User::where('email',$d['email'])->firstOrFail();$v->verify($u,'login_otp',$d['code']);$token=$u->createToken('mobile')->plainTextToken;return response()->json(['token'=>$token,'user'=>['id'=>$u->id,'name'=>$u->name,'email'=>$u->email]]);}
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\Auth\VerificationService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
+
+class AuthRecoveryController extends Controller
+{
+    public function requestEmailVerification(Request $request, VerificationService $verification)
+    {
+        $verification->issue($request->user(), 'email_verification');
+
+        return response()->json(['message' => 'Verification code sent.']);
+    }
+
+    public function verifyEmail(Request $request, VerificationService $verification)
+    {
+        $data = $request->validate(['code' => ['required', 'digits:6']]);
+        $user = $request->user();
+        $verification->verify($user, 'email_verification', $data['code']);
+
+        if (method_exists($user, 'markEmailAsVerified')) {
+            $user->markEmailAsVerified();
+        }
+
+        return response()->json(['message' => 'Email verified successfully.']);
+    }
+
+    public function requestPasswordReset(Request $request, VerificationService $verification)
+    {
+        $data = $request->validate(['email' => ['required', 'email']]);
+        $user = User::query()->where('email', $data['email'])->first();
+
+        if ($user) {
+            $verification->issue($user, 'password_reset');
+        }
+
+        return response()->json(['message' => 'If the account exists, a reset code has been sent.']);
+    }
+
+    public function resetPassword(Request $request, VerificationService $verification)
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+            'code' => ['required', 'digits:6'],
+            'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+        ]);
+
+        $user = User::query()->where('email', $data['email'])->firstOrFail();
+        $verification->verify($user, 'password_reset', $data['code']);
+        $user->update(['password' => Hash::make($data['password'])]);
+        $user->tokens()->delete();
+
+        return response()->json(['message' => 'Password reset successfully.']);
+    }
+
+    public function requestLoginOtp(Request $request, VerificationService $verification)
+    {
+        $data = $request->validate(['email' => ['required', 'email']]);
+        $user = User::query()->where('email', $data['email'])->first();
+
+        if ($user) {
+            $verification->issue($user, 'login_otp');
+        }
+
+        return response()->json(['message' => 'If the account exists, a login code has been sent.']);
+    }
+
+    public function verifyLoginOtp(Request $request, VerificationService $verification)
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+            'code' => ['required', 'digits:6'],
+        ]);
+
+        $user = User::query()->where('email', $data['email'])->firstOrFail();
+        $verification->verify($user, 'login_otp', $data['code']);
+        $user->tokens()->where('name', 'mobile')->delete();
+        $token = $user->createToken('mobile')->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+        ]);
+    }
 }
