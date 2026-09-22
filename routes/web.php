@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\AiSettingController;
+use App\Http\Controllers\Admin\BulkMessageController;
 use App\Http\Controllers\Admin\ChurchLocationController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\CourseController;
@@ -15,113 +16,136 @@ use App\Http\Controllers\Admin\MediaAssetController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\OrganisationUnitController;
+use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
 use App\Http\Controllers\Admin\PrayerRequestController;
+use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SystemHealthController;
+use App\Http\Controllers\Api\V1\ChatbotController as YouthAssistantController;
 use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\Auth\YouthAuthController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PublicSiteController;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Public youth website
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/news', [PublicSiteController::class, 'news'])->name('public.news');
+Route::get('/events', [PublicSiteController::class, 'events'])->name('public.events');
+Route::get('/courses', [PublicSiteController::class, 'courses'])->name('public.courses');
+Route::get('/churches', [PublicSiteController::class, 'churches'])->name('public.churches');
+Route::get('/donate', [PublicSiteController::class, 'donate'])->name('public.donate');
+Route::get('/about', [PublicSiteController::class, 'about'])->name('public.about');
+Route::get('/e/{token}', [PublicSiteController::class, 'registerByToken'])->name('public.event.register');
+Route::post('/e/{token}', [PublicSiteController::class, 'storeRegistrationByToken'])->name('public.event.register.store');
 
+/*
+|--------------------------------------------------------------------------
+| Youth web authentication
+|--------------------------------------------------------------------------
+*/
 Route::middleware('guest')->group(function (): void {
-    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AdminAuthController::class, 'login'])->name('login.attempt');
+    Route::get('/login', [YouthAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [YouthAuthController::class, 'login'])->name('login.attempt');
+
+    Route::get('/signup', [YouthAuthController::class, 'showRegister'])->name('register');
+    Route::post('/signup', [YouthAuthController::class, 'register'])->name('register.store');
+
+    Route::get('/forgot-password', [YouthAuthController::class, 'showForgot'])->name('password.request');
+    Route::post('/forgot-password', [YouthAuthController::class, 'requestReset'])->name('password.email');
+    Route::get('/reset-password', [YouthAuthController::class, 'showReset'])->name('password.reset.form');
+    Route::post('/reset-password', [YouthAuthController::class, 'resetPassword'])->name('password.update');
+
+    Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.attempt');
 });
 
-Route::post('/logout', [AdminAuthController::class, 'logout'])
+Route::post('/logout', [YouthAuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
 
-Route::middleware(['auth', 'cms.access'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function (): void {
-        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+Route::post('/youth-assistant', [YouthAssistantController::class, 'reply'])
+    ->middleware(['auth', 'throttle:30,1'])
+    ->name('youth-assistant.reply');
 
-        Route::resource('organisation-units', OrganisationUnitController::class)
-            ->except(['show', 'create', 'edit']);
+/*
+|--------------------------------------------------------------------------
+| CMS administration
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->group(function (): void {
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-        Route::resource('content', ContentController::class)
-            ->except(['show', 'create', 'edit']);
+    Route::resource('organisation-units', OrganisationUnitController::class)->except(['show', 'create', 'edit']);
+    Route::resource('content', ContentController::class)->except(['show', 'create', 'edit']);
+    Route::resource('events', EventController::class)->except(['show', 'create', 'edit']);
+    Route::resource('life-groups', LifeGroupController::class)->except(['show', 'create', 'edit']);
+    Route::resource('courses', CourseController::class)->except(['show', 'create', 'edit']);
 
-        Route::resource('events', EventController::class)
-            ->except(['show', 'create', 'edit']);
+    Route::post('courses/{course}/lessons', [CourseController::class, 'storeLesson'])->name('courses.lessons.store');
+    Route::delete('courses/{course}/lessons/{lesson}', [CourseController::class, 'destroyLesson'])->name('courses.lessons.destroy');
 
-        Route::resource('life-groups', LifeGroupController::class)
-            ->except(['show', 'create', 'edit']);
+    Route::get('courses/{course}/quizzes', [QuizController::class, 'index'])->name('courses.quizzes.index');
+    Route::post('courses/{course}/quizzes', [QuizController::class, 'store'])->name('courses.quizzes.store');
+    Route::put('quizzes/{quiz}', [QuizController::class, 'update'])->name('quizzes.update');
+    Route::post('quizzes/{quiz}/questions', [QuizController::class, 'storeQuestion'])->name('quizzes.questions.store');
+    Route::put('quizzes/{quiz}/questions/{question}', [QuizController::class, 'updateQuestion'])->name('quizzes.questions.update');
+    Route::delete('quizzes/{quiz}', [QuizController::class, 'destroy'])->name('quizzes.destroy');
+    Route::delete('quizzes/{quiz}/questions/{question}', [QuizController::class, 'destroyQuestion'])->name('quizzes.questions.destroy');
 
-        Route::resource('courses', CourseController::class)
-            ->except(['show', 'create', 'edit']);
+    Route::resource('media', MediaAssetController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('church-locations', ChurchLocationController::class)->except(['show', 'create', 'edit']);
+    Route::resource('payment-gateways', PaymentGatewayController::class)->except(['show', 'create', 'edit']);
 
-        Route::post('courses/{course}/lessons', [CourseController::class, 'storeLesson'])
-            ->name('courses.lessons.store');
-        Route::delete('courses/{course}/lessons/{lesson}', [CourseController::class, 'destroyLesson'])
-            ->name('courses.lessons.destroy');
+    Route::get('donations', [DonationController::class, 'index'])->name('donations.index');
+    Route::post('donations/campaigns', [DonationController::class, 'storeCampaign'])->name('donations.campaigns.store');
+    Route::put('donations/campaigns/{campaign}', [DonationController::class, 'updateCampaign'])->name('donations.campaigns.update');
+    Route::delete('donations/campaigns/{campaign}', [DonationController::class, 'destroyCampaign'])->name('donations.campaigns.destroy');
 
-        Route::get('courses/{course}/quizzes', [QuizController::class, 'index'])
-            ->name('courses.quizzes.index');
-        Route::post('courses/{course}/quizzes', [QuizController::class, 'store'])
-            ->name('courses.quizzes.store');
-        Route::post('quizzes/{quiz}/questions', [QuizController::class, 'storeQuestion'])
-            ->name('quizzes.questions.store');
-        Route::delete('quizzes/{quiz}', [QuizController::class, 'destroy'])
-            ->name('quizzes.destroy');
-        Route::delete('quizzes/{quiz}/questions/{question}', [QuizController::class, 'destroyQuestion'])
-            ->name('quizzes.questions.destroy');
+    Route::get('ai', [AiSettingController::class, 'index'])->name('ai.index');
+    Route::put('ai', [AiSettingController::class, 'update'])->name('ai.update');
+    Route::post('ai/test', [AiSettingController::class, 'test'])->name('ai.test');
 
-        Route::resource('media', MediaAssetController::class)
-            ->only(['index', 'store', 'destroy']);
+    Route::get('prayer', [PrayerRequestController::class, 'index'])->name('prayer.index');
+    Route::put('prayer/{prayerRequest}', [PrayerRequestController::class, 'update'])->name('prayer.update');
 
-        Route::resource('church-locations', ChurchLocationController::class)
-            ->except(['show', 'create', 'edit']);
+    Route::get('moderation', [ModerationController::class, 'index'])->name('moderation.index');
+    Route::put('moderation/{report}', [ModerationController::class, 'resolve'])->name('moderation.resolve');
+    Route::post('comments/{comment}/approve', [ModerationController::class, 'approveComment'])->name('comments.approve');
+    Route::post('comments/{comment}/hide', [ModerationController::class, 'hideComment'])->name('comments.hide');
+    Route::delete('comments/{comment}', [ModerationController::class, 'destroyComment'])->name('comments.destroy');
 
-        Route::resource('payment-gateways', PaymentGatewayController::class)
-            ->except(['show', 'create', 'edit']);
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('system/health', [SystemHealthController::class, 'index'])->name('system.health');
 
-        Route::get('donations', [DonationController::class, 'index'])
-            ->name('donations.index');
-        Route::post('donations/campaigns', [DonationController::class, 'storeCampaign'])
-            ->name('donations.campaigns.store');
-        Route::put('donations/campaigns/{campaign}', [DonationController::class, 'updateCampaign'])
-            ->name('donations.campaigns.update');
-        Route::delete('donations/campaigns/{campaign}', [DonationController::class, 'destroyCampaign'])
-            ->name('donations.campaigns.destroy');
+    Route::get('guardian-consents', [GuardianConsentController::class, 'index'])->name('guardian-consents.index');
+    Route::post('guardian-consents/{guardianConsent}/approve', [GuardianConsentController::class, 'approve'])->name('guardian-consents.approve');
+    Route::post('guardian-consents/{guardianConsent}/reject', [GuardianConsentController::class, 'reject'])->name('guardian-consents.reject');
 
-        Route::get('ai', [AiSettingController::class, 'index'])
-            ->name('ai.index');
-        Route::put('ai', [AiSettingController::class, 'update'])
-            ->name('ai.update');
-        Route::post('ai/test', [AiSettingController::class, 'test'])
-            ->name('ai.test');
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('notifications', [NotificationController::class, 'store'])->name('notifications.store');
+    Route::put('notifications/{notification}', [NotificationController::class, 'update'])->name('notifications.update');
+    Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
-        Route::get('prayer', [PrayerRequestController::class, 'index'])
-            ->name('prayer.index');
-        Route::put('prayer/{prayerRequest}', [PrayerRequestController::class, 'update'])
-            ->name('prayer.update');
+    Route::get('page-content', [PageContentController::class, 'index'])->name('page-content.index');
+    Route::post('page-content/slides', [PageContentController::class, 'storeSlide'])->name('page-content.slides.store');
+    Route::put('page-content/slides/{slide}', [PageContentController::class, 'updateSlide'])->name('page-content.slides.update');
+    Route::delete('page-content/slides/{slide}', [PageContentController::class, 'destroySlide'])->name('page-content.slides.destroy');
+    Route::post('page-content/cards', [PageContentController::class, 'storeCard'])->name('page-content.cards.store');
+    Route::put('page-content/cards/{card}', [PageContentController::class, 'updateCard'])->name('page-content.cards.update');
+    Route::delete('page-content/cards/{card}', [PageContentController::class, 'destroyCard'])->name('page-content.cards.destroy');
 
-        Route::get('moderation', [ModerationController::class, 'index'])
-            ->name('moderation.index');
-        Route::put('moderation/{report}', [ModerationController::class, 'resolve'])
-            ->name('moderation.resolve');
+    Route::get('settings', [SiteSettingController::class, 'index'])->name('settings.index');
+    Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');
+    Route::get('settings/backup', [SiteSettingController::class, 'backup'])->name('settings.backup');
+    Route::post('settings/backup-remote', [SiteSettingController::class, 'backupRemote'])->name('settings.backup-remote');
 
-        Route::get('reports', [ReportController::class, 'index'])
-            ->name('reports.index');
-
-        Route::get('system/health', [SystemHealthController::class, 'index'])
-            ->name('system.health');
-
-        Route::get('guardian-consents', [GuardianConsentController::class, 'index'])
-            ->name('guardian-consents.index');
-        Route::post('guardian-consents/{guardianConsent}/approve', [GuardianConsentController::class, 'approve'])
-            ->name('guardian-consents.approve');
-        Route::post('guardian-consents/{guardianConsent}/reject', [GuardianConsentController::class, 'reject'])
-            ->name('guardian-consents.reject');
-
-        Route::get('notifications', [NotificationController::class, 'index'])
-            ->name('notifications.index');
-        Route::post('notifications', [NotificationController::class, 'store'])
-            ->name('notifications.store');
-    });
+    Route::get('bulk-messages', [BulkMessageController::class, 'index'])->name('bulk.index');
+    Route::post('bulk-messages', [BulkMessageController::class, 'store'])->name('bulk.store');
+});

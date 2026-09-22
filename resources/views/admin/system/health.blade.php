@@ -1,32 +1,11 @@
 @extends('admin.layout')
-
-@section('title', 'System Health')
-
+@section('title','System Health')
 @section('content')
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">System Health</h1>
-            <p class="text-muted mb-0">Release {{ $release['version'] }} · Build {{ $release['build'] }}</p>
-        </div>
-    </div>
-
-    <div class="row g-3">
-        @foreach($checks as $name => $check)
-            <div class="col-md-6 col-xl-4">
-                <div class="card h-100 border-start border-4 {{ $check['ok'] ? 'border-success' : 'border-danger' }}">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h2 class="h6 text-uppercase">{{ str_replace('_', ' ', $name) }}</h2>
-                                <p class="mb-0">{{ $check['message'] }}</p>
-                            </div>
-                            <span class="badge {{ $check['ok'] ? 'bg-success' : 'bg-danger' }}">{{ $check['ok'] ? 'Healthy' : 'Action needed' }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endforeach
-    </div>
+<div class="page-head"><div><h1><i class="fas fa-heart-pulse"></i> System Health</h1><p>Release {{ $release['version']??'—' }} · Build {{ $release['build']??'—' }}</p></div></div>
+<div data-tabs>
+<div class="tabs"><button class="tab active" data-tab-target="health-overview"><i class="fas fa-chart-column"></i> Overview</button><button class="tab" data-tab-target="health-checks"><i class="fas fa-list-check"></i> Checks <span class="tab-count">{{ $stats['total'] }}</span></button></div>
+<section id="health-overview" class="tab-panel active"><div class="grid stats-grid"><div class="card stat-card stat-purple"><div class="stat-icon"><i class="fas fa-list-check"></i></div><div><strong>{{ $stats['total'] }}</strong><span>Total checks</span></div></div><div class="card stat-card stat-green"><div class="stat-icon"><i class="fas fa-circle-check"></i></div><div><strong>{{ $stats['healthy'] }}</strong><span>Healthy</span></div></div><div class="card stat-card stat-red"><div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div><div><strong>{{ $stats['attention'] }}</strong><span>Need attention</span></div></div><div class="card stat-card stat-blue"><div class="stat-icon"><i class="fas fa-gauge-high"></i></div><div><strong>{{ $stats['health_percent'] }}%</strong><span>Health score</span></div></div></div><div class="card"><div class="health-chart-head"><div><h3>Platform readiness</h3><p>Current result across database, environment, queue, storage and schema checks.</p></div><strong>{{ $stats['health_percent'] }}%</strong></div><div class="health-track"><span style="width:{{ $stats['health_percent'] }}%"></span></div></div></section>
+<section id="health-checks" class="tab-panel"><div class="card table-card"><div class="table-wrap"><table><thead><tr><th>Check</th><th>Status</th><th>Details</th></tr></thead><tbody>@foreach($checks as $name=>$check)<tr><td><strong>{{ ucwords(str_replace('_',' ',$name)) }}</strong></td><td><span class="badge {{ $check['ok']?'badge-success':'badge-danger' }}">{{ $check['ok']?'Healthy':'Action needed' }}</span></td><td>{{ $check['message'] }}</td></tr>@endforeach</tbody></table></div></div></section>
 </div>
 @endsection
+@push('styles')<style>.stat-card{border-left:5px solid var(--primary)}.stat-purple{border-left-color:#7c3aed}.stat-green{border-left-color:#16a34a}.stat-red{border-left-color:#dc2626}.stat-blue{border-left-color:#2563eb}.health-chart-head{display:flex;justify-content:space-between;align-items:center;gap:16px}.health-chart-head h3{margin:0}.health-chart-head p{margin:5px 0 0;color:var(--muted)}.health-chart-head>strong{font-size:30px;color:var(--primary)}.health-track{height:14px;background:#eef2f7;border-radius:99px;overflow:hidden;margin-top:15px}.health-track span{display:block;height:100%;background:var(--primary);border-radius:99px}</style>@endpush

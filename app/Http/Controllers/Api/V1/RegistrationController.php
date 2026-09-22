@@ -81,19 +81,10 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            $token = method_exists($user, 'createToken')
-                ? $user->createToken('flutter')->plainTextToken
-                : null;
+            $token = $user->createToken('mobile')->plainTextToken;
 
             return compact('user', 'token', 'category');
         });
-
-        if ($result['token'] === null) {
-            return response()->json([
-                'message' => 'Account created, but mobile authentication is not configured on the server.',
-                'data' => $result,
-            ], 201);
-        }
 
         return response()->json([
             'message' => $category === 'teen'

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -46,9 +45,18 @@ class SystemHealthController extends Controller
             'message' => $missing === [] ? 'Core tables are present.' : 'Missing: '.implode(', ', $missing),
         ];
 
+        $healthy = collect($checks)->where('ok', true)->count();
+        $unhealthy = count($checks) - $healthy;
+
         return view('admin.system.health', [
             'checks' => $checks,
             'release' => config('release'),
+            'stats' => [
+                'total' => count($checks),
+                'healthy' => $healthy,
+                'attention' => $unhealthy,
+                'health_percent' => count($checks) > 0 ? (int) round(($healthy / count($checks)) * 100) : 0,
+            ],
         ]);
     }
 }
