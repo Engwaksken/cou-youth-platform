@@ -9,6 +9,8 @@ use App\Models\Content;
 use App\Models\Course;
 use App\Models\DonationCampaign;
 use App\Models\Event;
+use App\Models\EventRegistration;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -85,5 +87,36 @@ final class PublicSiteController extends Controller
     public function about(): View
     {
         return view('public.about');
+    }
+
+    public function registerByToken(string $token)
+    {
+        $event = Event::where('qr_token', $token)->firstOrFail();
+        if ($event->allow_external_registration && $event->external_registration_url) {
+            return redirect()->away($event->external_registration_url);
+        }
+        return view('public.event-register', compact('event'));
+    }
+
+    public function storeRegistrationByToken(Request $request, string $token)
+    {
+        $event = Event::where('qr_token', $token)->firstOrFail();
+        if ($event->allow_external_registration && $event->external_registration_url) {
+            return redirect()->away($event->external_registration_url);
+        }
+        $data = $request->validate([
+            'name' => 'required|max:160',
+            'phone' => 'nullable|max:40',
+            'email' => 'nullable|email|max:200',
+        ]);
+        EventRegistration::create([
+            'event_id' => $event->id,
+            'user_id' => $request->user()?->id,
+            'name' => $data['name'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'email' => $data['email'] ?? null,
+            'status' => 'registered',
+        ]);
+        return back()->with('success', 'Registration successful.');
     }
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\AiSettingController;
+use App\Http\Controllers\Admin\BulkMessageController;
 use App\Http\Controllers\Admin\ChurchLocationController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\CourseController;
@@ -15,8 +16,10 @@ use App\Http\Controllers\Admin\MediaAssetController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\OrganisationUnitController;
+use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
 use App\Http\Controllers\Admin\PrayerRequestController;
+use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SystemHealthController;
@@ -39,6 +42,8 @@ Route::get('/courses', [PublicSiteController::class, 'courses'])->name('public.c
 Route::get('/churches', [PublicSiteController::class, 'churches'])->name('public.churches');
 Route::get('/donate', [PublicSiteController::class, 'donate'])->name('public.donate');
 Route::get('/about', [PublicSiteController::class, 'about'])->name('public.about');
+Route::get('/e/{token}', [PublicSiteController::class, 'registerByToken'])->name('public.event.register');
+Route::post('/e/{token}', [PublicSiteController::class, 'storeRegistrationByToken'])->name('public.event.register.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -112,6 +117,9 @@ Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->grou
 
     Route::get('moderation', [ModerationController::class, 'index'])->name('moderation.index');
     Route::put('moderation/{report}', [ModerationController::class, 'resolve'])->name('moderation.resolve');
+    Route::post('comments/{comment}/approve', [ModerationController::class, 'approveComment'])->name('comments.approve');
+    Route::post('comments/{comment}/hide', [ModerationController::class, 'hideComment'])->name('comments.hide');
+    Route::delete('comments/{comment}', [ModerationController::class, 'destroyComment'])->name('comments.destroy');
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('system/health', [SystemHealthController::class, 'index'])->name('system.health');
@@ -124,4 +132,20 @@ Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->grou
     Route::post('notifications', [NotificationController::class, 'store'])->name('notifications.store');
     Route::put('notifications/{notification}', [NotificationController::class, 'update'])->name('notifications.update');
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+
+    Route::get('page-content', [PageContentController::class, 'index'])->name('page-content.index');
+    Route::post('page-content/slides', [PageContentController::class, 'storeSlide'])->name('page-content.slides.store');
+    Route::put('page-content/slides/{slide}', [PageContentController::class, 'updateSlide'])->name('page-content.slides.update');
+    Route::delete('page-content/slides/{slide}', [PageContentController::class, 'destroySlide'])->name('page-content.slides.destroy');
+    Route::post('page-content/cards', [PageContentController::class, 'storeCard'])->name('page-content.cards.store');
+    Route::put('page-content/cards/{card}', [PageContentController::class, 'updateCard'])->name('page-content.cards.update');
+    Route::delete('page-content/cards/{card}', [PageContentController::class, 'destroyCard'])->name('page-content.cards.destroy');
+
+    Route::get('settings', [SiteSettingController::class, 'index'])->name('settings.index');
+    Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');
+    Route::get('settings/backup', [SiteSettingController::class, 'backup'])->name('settings.backup');
+    Route::post('settings/backup-remote', [SiteSettingController::class, 'backupRemote'])->name('settings.backup-remote');
+
+    Route::get('bulk-messages', [BulkMessageController::class, 'index'])->name('bulk.index');
+    Route::post('bulk-messages', [BulkMessageController::class, 'store'])->name('bulk.store');
 });

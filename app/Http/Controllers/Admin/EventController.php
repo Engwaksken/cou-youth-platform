@@ -96,6 +96,8 @@ final class EventController extends Controller
             'target_age_categories' => 'nullable|array',
             'target_age_categories.*' => 'in:teen,youth,young_adult',
             'registration_required' => 'boolean',
+            'allow_external_registration' => 'boolean',
+            'external_registration_url' => 'nullable|url|max:500',
             'fee' => 'nullable|numeric|min:0',
             'currency' => 'required|size:3',
             'capacity' => 'nullable|integer|min:1',
