@@ -44,7 +44,7 @@
 <div class="top">
     <div style="display:flex;align-items:center;gap:10px;min-width:0"><button class="icon-btn mobile-menu-btn" id="menuToggle" type="button"><i class="fas fa-bars"></i></button>
     <a class="brand" href="{{ route('admin.dashboard') }}">@if(!empty($sysLogoUrl))<span class="brand-logo-shell"><img class="brand-logo" src="{{ $sysLogoUrl }}" alt="{{ $sysName }} logo"></span>@else<i class="fas fa-church"></i>@endif<span class="brand-text">{{ $sysName }}</span></a></div>
-    <div class="top-actions"><a class="btn btn-light" href="{{ route('home') }}" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Website</a><span class="user-name">{{ auth()->user()->name ?? 'Administrator' }}</span><form class="logout-form" method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-light" type="submit"><i class="fas fa-right-from-bracket"></i> Logout</button></form></div>
+    <div class="top-actions"><span class="user-name">{{ auth()->user()->name ?? 'Administrator' }}</span><form class="logout-form" method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-light" type="submit"><i class="fas fa-right-from-bracket"></i> Logout</button></form></div>
 </div>
 <div class="wrap">
     <aside class="side">
@@ -52,7 +52,7 @@
             @if(!empty($sysLogoUrl))<span class="brand-logo-shell"><img class="brand-logo" src="{{ $sysLogoUrl }}" alt=""></span>@else<span class="brand-logo-shell"><i class="fas fa-church" style="color:var(--primary)"></i></span>@endif
             <div class="side-brand-copy"><strong>{{ $brand['short_name'] ?? 'COU Youth Platform' }}</strong><small>{{ $brand['tagline'] ?? 'Connect • Grow • Serve' }}</small></div>
         </div>
-        <div class="nav-label">Overview</div><a href="{{ route('admin.dashboard') }}"><i class="fas fa-gauge-high"></i> Dashboard</a>
+        <div class="nav-label">Overview</div><a href="{{ route('admin.dashboard') }}"><i class="fas fa-gauge-high"></i> Dashboard</a><a href="{{ route('home') }}" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Website</a>
         <div class="nav-label">Ministry</div><a href="{{ route('admin.organisation-units.index') }}"><i class="fas fa-sitemap"></i> Church Structure</a><a href="{{ route('admin.content.index') }}"><i class="fas fa-newspaper"></i> Content</a><a href="{{ route('admin.events.index') }}"><i class="fas fa-calendar-days"></i> Events</a><a href="{{ route('admin.life-groups.index') }}"><i class="fas fa-people-group"></i> Life Groups</a><a href="{{ route('admin.courses.index') }}"><i class="fas fa-book-bible"></i> Courses</a><a href="{{ route('admin.media.index') }}"><i class="fas fa-photo-film"></i> Media</a><a href="{{ route('admin.church-locations.index') }}"><i class="fas fa-location-dot"></i> Church Locator</a><a href="{{ route('admin.prayer.index') }}"><i class="fas fa-hands-praying"></i> Prayer & Pastoral</a>
         <div class="nav-label">Finance</div><a href="{{ route('admin.donations.index') }}"><i class="fas fa-hand-holding-heart"></i> Donations</a><a href="{{ route('admin.payment-gateways.index') }}"><i class="fas fa-credit-card"></i> Payment Gateways</a>
         <div class="nav-label">AI & Communication</div><a href="{{ route('admin.ai.index') }}"><i class="fas fa-robot"></i> AI Settings</a><a href="{{ route('admin.notifications.index') }}"><i class="fas fa-bell"></i> Notifications</a><a href="{{ route('admin.bulk.index') }}"><i class="fas fa-paper-plane"></i> Bulk SMS/Email</a>
