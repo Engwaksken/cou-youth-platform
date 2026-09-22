@@ -128,12 +128,19 @@ class BulkMessageController extends Controller
         $query = User::query();
 
         if ($audienceType === 'department' && $organisationUnitId) {
-            $query->whereExists(function ($subQuery) use ($organisationUnitId): void {
-                $subQuery->selectRaw('1')
-                    ->from('user_organisation_roles')
-                    ->whereColumn('user_organisation_roles.user_id', 'users.id')
-                    ->where('user_organisation_roles.organisation_unit_id', $organisationUnitId)
-                    ->where('user_organisation_roles.is_active', true);
+            $query->where(function (Builder $builder) use ($organisationUnitId): void {
+                $builder->whereExists(function ($subQuery) use ($organisationUnitId): void {
+                    $subQuery->selectRaw('1')
+                        ->from('youth_profiles')
+                        ->whereColumn('youth_profiles.user_id', 'users.id')
+                        ->where('youth_profiles.organisation_unit_id', $organisationUnitId);
+                })->orWhereExists(function ($subQuery) use ($organisationUnitId): void {
+                    $subQuery->selectRaw('1')
+                        ->from('user_organisation_roles')
+                        ->whereColumn('user_organisation_roles.user_id', 'users.id')
+                        ->where('user_organisation_roles.organisation_unit_id', $organisationUnitId)
+                        ->where('user_organisation_roles.is_active', true);
+                });
             });
         }
 
