@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\{
     AuthController,
     AuthRecoveryController,
+    BrandingController,
     CertificateController,
     CertificatePdfController,
     ChatbotController,
@@ -32,6 +33,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function (): void {
     Route::get('/health', HealthController::class)->middleware('throttle:60,1');
     Route::get('/release', [ReleaseController::class, 'show'])->middleware('throttle:60,1');
+    Route::get('/branding', BrandingController::class)->middleware('throttle:120,1');
 
     Route::post('/register', [RegistrationController::class, 'store']);
     Route::post('/auth/login', [AuthController::class, 'login']);
