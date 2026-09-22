@@ -62,6 +62,7 @@ final class BrandingService
             }
 
             foreach ($disk->allFiles() as $path) {
+                $lowerPath = strtolower($path);
                 $basename = strtolower(pathinfo($path, PATHINFO_FILENAME));
                 $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
@@ -69,7 +70,20 @@ final class BrandingService
                     continue;
                 }
 
-                if ($basename === 'logo' || str_contains($basename, 'system-logo') || str_contains($basename, 'platform-logo')) {
+                $inBrandFolder = str_starts_with($lowerPath, 'branding/')
+                    || str_starts_with($lowerPath, 'system/')
+                    || str_starts_with($lowerPath, 'settings/')
+                    || str_contains($lowerPath, '/branding/')
+                    || str_contains($lowerPath, '/system/')
+                    || str_contains($lowerPath, '/settings/');
+
+                if (
+                    $inBrandFolder
+                    || $basename === 'logo'
+                    || str_contains($basename, 'system-logo')
+                    || str_contains($basename, 'platform-logo')
+                    || str_contains($basename, 'brand-logo')
+                ) {
                     return $disk->url($path);
                 }
             }
