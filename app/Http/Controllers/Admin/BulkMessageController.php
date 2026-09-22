@@ -9,6 +9,7 @@ use App\Models\BulkMessage;
 use App\Models\OrganisationUnit;
 use App\Models\SiteSetting;
 use App\Models\User;
+use App\Services\Branding\BrandingService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\Mail;
 
 class BulkMessageController extends Controller
 {
+    public function __construct(private BrandingService $branding) {}
+
     public function index()
     {
         return view('admin.bulk.index', [
@@ -91,19 +94,33 @@ class BulkMessageController extends Controller
             }
         } else {
             try {
-                $emails = (clone $users)
-                    ->whereNotNull('email')
-                    ->pluck('email')
-                    ->filter(fn ($email) => trim((string) $email) !== '')
-                    ->unique()
-                    ->values();
+                $brand = $this->branding->data();
+                $subject = $data['subject'] ?: ($brand['name'] ?? 'Church of Uganda Youth Platform');
 
-                foreach ($emails as $email) {
-                    Mail::raw($data['body'], function ($message) use ($email, $data): void {
-                        $message->to($email)
-                            ->subject($data['subject'] ?: 'Church of Uganda Youth Platform');
+                (clone $users)
+                    ->whereNotNull('email')
+                    ->select(['id', 'name', 'email'])
+                    ->orderBy('id')
+                    ->chunkById(100, function ($recipients) use ($data, $brand, $subject): void {
+                        foreach ($recipients as $recipient) {
+                            if (! $recipient->email) {
+                                continue;
+                            }
+
+                            Mail::send('emails.branded-message', [
+                                'brand' => $brand,
+                                'subjectLine' => $subject,
+                                'heading' => $subject,
+                                'recipientName' => $recipient->name,
+                                'messageBody' => $data['body'],
+                                'actionUrl' => url('/'),
+                                'actionLabel' => 'Open COU Youth Platform',
+                            ], function ($message) use ($recipient, $subject, $brand): void {
+                                $message->to($recipient->email, $recipient->name)
+                                    ->subject($subject.' | '.($brand['short_name'] ?? 'COU Youth Platform'));
+                            });
+                        }
                     });
-                }
             } catch (\Throwable $e) {
                 Log::warning('Bulk email send failed: '.$e->getMessage());
                 $status = 'partial';
