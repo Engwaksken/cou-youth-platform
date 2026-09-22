@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\OrganisationUnit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 final class CourseController extends Controller
@@ -48,32 +49,25 @@ final class CourseController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:190',
-            'description' => 'nullable|string',
-            'organisation_unit_id' => 'nullable|exists:organisation_units,id',
-            'age_category' => 'required|in:teen,youth,young_adult,all',
-            'is_published' => 'sometimes|boolean',
-        ]);
+        $data = $this->validated($request);
+        $data = $this->storeVisualFiles($request, $data);
         Course::create([...$data, 'is_published' => $request->boolean('is_published')]);
         return back()->with('success', 'Course created.');
     }
 
     public function update(Request $request, Course $course)
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:190',
-            'description' => 'nullable|string',
-            'organisation_unit_id' => 'nullable|exists:organisation_units,id',
-            'age_category' => 'required|in:teen,youth,young_adult,all',
-            'is_published' => 'sometimes|boolean',
-        ]);
+        $data = $this->validated($request);
+        $data = $this->storeVisualFiles($request, $data, $course);
         $course->update([...$data, 'is_published' => $request->boolean('is_published')]);
         return back()->with('success', 'Course updated.');
     }
 
     public function destroy(Course $course)
     {
+        foreach ([$course->image_path, $course->banner_path] as $path) {
+            if ($path) Storage::disk('public')->delete($path);
+        }
         $course->delete();
         return back()->with('success', 'Course deleted.');
     }
@@ -100,5 +94,53 @@ final class CourseController extends Controller
         abort_unless($lesson->course_id === $course->id, 404);
         $lesson->delete();
         return back()->with('success', 'Lesson deleted.');
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'title' => 'required|string|max:190',
+            'description' => 'nullable|string',
+            'organisation_unit_id' => 'nullable|exists:organisation_units,id',
+            'age_category' => 'required|in:teen,youth,young_adult,all',
+            'is_published' => 'sometimes|boolean',
+            'visual_type' => 'required|in:icon,image',
+            'icon_class' => 'nullable|string|max:100|required_if:visual_type,icon',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096|required_if:visual_type,image',
+            'banner' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:6144',
+            'remove_image' => 'sometimes|boolean',
+            'remove_banner' => 'sometimes|boolean',
+        ]);
+    }
+
+    private function storeVisualFiles(Request $request, array $data, ?Course $course = null): array
+    {
+        unset($data['image'], $data['banner'], $data['remove_image'], $data['remove_banner']);
+
+        if ($request->boolean('remove_image') && $course?->image_path) {
+            Storage::disk('public')->delete($course->image_path);
+            $data['image_path'] = null;
+        }
+
+        if ($request->hasFile('image')) {
+            if ($course?->image_path) Storage::disk('public')->delete($course->image_path);
+            $data['image_path'] = $request->file('image')->store('courses/cards', 'public');
+        }
+
+        if ($request->boolean('remove_banner') && $course?->banner_path) {
+            Storage::disk('public')->delete($course->banner_path);
+            $data['banner_path'] = null;
+        }
+
+        if ($request->hasFile('banner')) {
+            if ($course?->banner_path) Storage::disk('public')->delete($course->banner_path);
+            $data['banner_path'] = $request->file('banner')->store('courses/banners', 'public');
+        }
+
+        if (($data['visual_type'] ?? 'icon') === 'icon') {
+            $data['image_path'] = $data['image_path'] ?? $course?->image_path;
+        }
+
+        return $data;
     }
 }
