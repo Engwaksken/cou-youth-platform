@@ -8,4 +8,111 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Brand tokens — extend default palette, do not replace */
+    --color-brand-50: #eef6ff;
+    --color-brand-100: #d9eaff;
+    --color-brand-500: #1d6fd1;
+    --color-brand-600: #175cb0;
+    --color-brand-700: #134a8d;
+
+    /* Media constraints */
+    --spacing-logo-max-w: 180px;
+    --spacing-logo-max-h: 40px;
+    --spacing-banner-h-sm: 160px;
+    --spacing-banner-h-md: 240px;
+}
+
+/* Design-system components consumed via classes only (no markup changes). */
+
+@layer components {
+    /* Logo: max-h 40px, max-w 180px, contain, no mobile overflow. */
+    .site-logo {
+        display: block;
+        max-height: var(--spacing-logo-max-h);
+        max-width: var(--spacing-logo-max-w);
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+
+    /* Banner imagery: consistent cover, mobile-first height. */
+    .banner-media {
+        display: block;
+        width: 100%;
+        height: var(--spacing-banner-h-sm);
+        object-fit: cover;
+        object-position: center;
+    }
+
+    @media (min-width: 768px) {
+        .banner-media {
+            height: var(--spacing-banner-h-md);
+        }
+    }
+
+    /* Card imagery: consistent 16/9 cover, dark-mode safe border. */
+    .card-media {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        object-position: center;
+        background-color: var(--color-brand-50);
+    }
+
+    .dark .card-media {
+        background-color: var(--color-brand-700);
+    }
+
+    /* Full-width button (e.g. panel / chat actions). Mobile-first block. */
+    .btn-block {
+        width: 100%;
+    }
+
+    /* Narrow centered form card (e.g. event registration). Reuses spacing scale. */
+    .form-narrow {
+        max-width: 35rem;
+        margin: 2rem auto;
+        padding: 1.5rem;
+    }
+
+    /* Donation progress: static track/fill styling; per-instance width stays inline. */
+    .progress-track {
+        height: 0.5rem;
+        background-color: var(--color-brand-100);
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        display: block;
+        height: 100%;
+        background-color: var(--color-brand-600);
+    }
+
+    .dark .progress-track {
+        background-color: var(--color-brand-700);
+    }
+
+    .dark .btn-block {
+        width: 100%;
+    }
+
+    /* Flash messages: smooth fade (opacity + translate). */
+    .flash {
+        transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
+    }
+
+    .flash-leaving {
+        opacity: 0;
+        transform: translateY(-0.25rem);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .flash {
+            transition: none;
+        }
+    }
 }

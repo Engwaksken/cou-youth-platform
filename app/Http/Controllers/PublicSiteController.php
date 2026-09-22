@@ -4,18 +4,39 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreEventRegistrationRequest;
 use App\Models\ChurchLocation;
 use App\Models\Content;
 use App\Models\Course;
 use App\Models\DonationCampaign;
 use App\Models\Event;
 use App\Models\EventRegistration;
-use Illuminate\Http\RedirectResponse;
+use App\Models\PageCard;
+use App\Models\PageSlide;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 final class PublicSiteController extends Controller
 {
+    /** @return array{slides: Collection<int, PageSlide>, cards: Collection<int, PageCard>} */
+    private function pageContent(string $page): array
+    {
+        $slides = collect();
+        $cards = collect();
+
+        if (Schema::hasTable('page_slides')) {
+            $slides = PageSlide::query()->forPage($page)->active()->ordered()->get();
+        }
+
+        if (Schema::hasTable('page_cards')) {
+            $cards = PageCard::query()->forPage($page)->active()->ordered()->get();
+        }
+
+        return compact('slides', 'cards');
+    }
+
     public function news(Request $request): View
     {
         $query = Content::query()->where('status', 'published');
@@ -25,9 +46,10 @@ final class PublicSiteController extends Controller
                 ->orWhere('summary', 'like', "%{$search}%"));
         }
 
-        return view('public.news', [
-            'items' => $query->latest('published_at')->paginate(12)->withQueryString(),
-        ]);
+        return view('public.news', array_merge(
+            ['items' => $query->latest('published_at')->paginate(12)->withQueryString()],
+            $this->pageContent('news'),
+        ));
     }
 
     public function events(Request $request): View
@@ -39,9 +61,10 @@ final class PublicSiteController extends Controller
                 ->orWhere('venue', 'like', "%{$search}%"));
         }
 
-        return view('public.events', [
-            'items' => $query->orderBy('starts_at')->paginate(12)->withQueryString(),
-        ]);
+        return view('public.events', array_merge(
+            ['items' => $query->orderBy('starts_at')->paginate(12)->withQueryString()],
+            $this->pageContent('events'),
+        ));
     }
 
     public function courses(Request $request): View
@@ -53,9 +76,10 @@ final class PublicSiteController extends Controller
                 ->orWhere('description', 'like', "%{$search}%"));
         }
 
-        return view('public.courses', [
-            'items' => $query->latest()->paginate(12)->withQueryString(),
-        ]);
+        return view('public.courses', array_merge(
+            ['items' => $query->latest()->paginate(12)->withQueryString()],
+            $this->pageContent('courses'),
+        ));
     }
 
     public function churches(Request $request): View
@@ -68,9 +92,10 @@ final class PublicSiteController extends Controller
                 ->orWhereHas('organisationUnit', fn ($unit) => $unit->where('name', 'like', "%{$search}%")));
         }
 
-        return view('public.churches', [
-            'items' => $query->latest()->paginate(12)->withQueryString(),
-        ]);
+        return view('public.churches', array_merge(
+            ['items' => $query->latest()->paginate(12)->withQueryString()],
+            $this->pageContent('churches'),
+        ));
     }
 
     public function donate(): View
@@ -81,12 +106,15 @@ final class PublicSiteController extends Controller
             ->latest()
             ->paginate(9);
 
-        return view('public.donate', compact('campaigns'));
+        return view('public.donate', array_merge(
+            compact('campaigns'),
+            $this->pageContent('donate'),
+        ));
     }
 
     public function about(): View
     {
-        return view('public.about');
+        return view('public.about', $this->pageContent('about'));
     }
 
     public function registerByToken(string $token)
@@ -98,17 +126,13 @@ final class PublicSiteController extends Controller
         return view('public.event-register', compact('event'));
     }
 
-    public function storeRegistrationByToken(Request $request, string $token)
+    public function storeRegistrationByToken(StoreEventRegistrationRequest $request, string $token)
     {
         $event = Event::where('qr_token', $token)->firstOrFail();
         if ($event->allow_external_registration && $event->external_registration_url) {
             return redirect()->away($event->external_registration_url);
         }
-        $data = $request->validate([
-            'name' => 'required|max:160',
-            'phone' => 'nullable|max:40',
-            'email' => 'nullable|email|max:200',
-        ]);
+        $data = $request->validated();
         EventRegistration::create([
             'event_id' => $event->id,
             'user_id' => $request->user()?->id,

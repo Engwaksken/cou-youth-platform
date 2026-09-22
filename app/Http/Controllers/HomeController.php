@@ -10,6 +10,8 @@ use App\Models\Course;
 use App\Models\DonationCampaign;
 use App\Models\Event;
 use App\Models\LifeGroup;
+use App\Models\PageCard;
+use App\Models\PageSlide;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -172,6 +174,17 @@ class HomeController extends Controller
             $stats['donation_campaigns'] = $donationCampaigns->count();
         }
 
+        $slides = collect();
+        $cards = collect();
+
+        if (Schema::hasTable('page_slides')) {
+            $slides = PageSlide::query()->forPage('home')->active()->ordered()->get();
+        }
+
+        if (Schema::hasTable('page_cards')) {
+            $cards = PageCard::query()->forPage('home')->active()->ordered()->get();
+        }
+
         return view('welcome', compact(
             'latestNews',
             'upcomingEvents',
@@ -179,6 +192,8 @@ class HomeController extends Controller
             'churchLocations',
             'donationCampaigns',
             'stats',
+            'slides',
+            'cards',
         ));
     }
 }
