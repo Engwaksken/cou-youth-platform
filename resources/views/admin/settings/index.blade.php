@@ -3,7 +3,7 @@
 @section('content')
 <div class="page-head"><div><h1><i class="fas fa-gear"></i> Site Settings</h1><p>Manage branding, communication providers and backups from organised tabs.</p></div></div>
 
-<form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data">
+<form id="siteSettingsForm" method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data">
 @csrf @method('PUT')
 <div data-tabs class="settings-tabs-wrap">
     <div class="tabs settings-tabs" role="tablist" aria-label="Site settings sections">
@@ -59,13 +59,17 @@
             <div class="settings-section-head"><div><h2><i class="fas fa-database"></i> Backups</h2><p>Create a downloadable system backup or send a backup to the configured remote storage.</p></div></div>
             <div class="backup-grid">
                 <div class="backup-option"><span class="backup-icon"><i class="fas fa-file-zipper"></i></span><div><strong>Download backup</strong><p>Create and download a ZIP backup to this device.</p><a class="btn btn-light" href="{{ route('admin.settings.backup') }}"><i class="fas fa-download"></i> Download backup</a></div></div>
-                <div class="backup-option"><span class="backup-icon"><i class="fas fa-cloud-arrow-up"></i></span><div><strong>Remote backup</strong><p>Send the backup to the configured S3 or remote/local backup destination.</p><button class="btn btn-light" type="submit" formaction="{{ route('admin.settings.backup-remote') }}" formmethod="POST" name="_backup_remote" value="1"><i class="fas fa-cloud-arrow-up"></i> Run remote backup</button></div></div>
+                <div class="backup-option"><span class="backup-icon"><i class="fas fa-cloud-arrow-up"></i></span><div><strong>Remote backup</strong><p>Send the backup to the configured S3 or remote/local backup destination.</p><button class="btn btn-light" type="submit" form="remoteBackupForm"><i class="fas fa-cloud-arrow-up"></i> Run remote backup</button></div></div>
             </div>
         </div>
     </section>
 </div>
 
 <div class="settings-savebar"><span><i class="fas fa-circle-info"></i> Save changes made in Branding, SMS or Email tabs.</span><button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i> Save settings</button></div>
+</form>
+
+<form id="remoteBackupForm" method="POST" action="{{ route('admin.settings.backup-remote') }}" hidden>
+    @csrf
 </form>
 
 <style>
