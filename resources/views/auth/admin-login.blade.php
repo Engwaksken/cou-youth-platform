@@ -16,6 +16,7 @@
     @if(!empty($adminFavicon))
         <link rel="icon" href="{{ asset('storage/'.$adminFavicon) }}">
     @endif
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
         *{box-sizing:border-box}
         :root{--primary:#4b2e83;--secondary:#204f78;--text:#182230;--muted:#667085;--border:#d0d5dd;--surface:#fff;--page:#f8f7fc}
@@ -37,7 +38,7 @@
         input::placeholder{color:#98a2b3}
         .pw-wrap{display:block;position:relative}
         .pw-wrap input{padding-right:48px}
-        .pw-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;background:transparent;color:#667085;border-radius:8px;cursor:pointer;font-size:17px}
+        .pw-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;background:transparent;color:#667085;border-radius:8px;cursor:pointer;font-size:17px;display:inline-flex;align-items:center;justify-content:center}
         .pw-toggle:hover,.pw-toggle:focus-visible{background:#f2f4f7;color:var(--primary);outline:none}
         .remember{display:flex;gap:8px;align-items:center;margin-bottom:20px;color:#475467;font-size:14px}
         .remember input{accent-color:var(--primary)}
@@ -55,7 +56,7 @@
                 @if(!empty($adminLogo))
                     <img class="brand-logo" src="{{ asset('storage/'.$adminLogo) }}" alt="Church of Uganda Youth Platform logo">
                 @else
-                    <div class="brand-fallback" aria-hidden="true">COU</div>
+                    <div class="brand-fallback" aria-hidden="true"><i class="fas fa-church"></i></div>
                 @endif
                 <strong>COU Youth Platform</strong>
                 <span>Administrator access</span>
@@ -82,7 +83,9 @@
                     <label for="password">Password</label>
                     <span class="pw-wrap">
                         <input id="password" type="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
-                        <button type="button" class="pw-toggle" data-pw-toggle="password" aria-label="Show password" aria-pressed="false">👁</button>
+                        <button type="button" class="pw-toggle" data-pw-toggle="password" aria-label="Show password" aria-pressed="false">
+                            <i class="fas fa-eye" aria-hidden="true"></i>
+                        </button>
                     </span>
                 </div>
 
@@ -91,7 +94,7 @@
                     <span>Remember me</span>
                 </label>
 
-                <button type="submit" class="submit-btn">Sign In</button>
+                <button type="submit" class="submit-btn"><i class="fas fa-right-to-bracket" aria-hidden="true"></i> Sign In</button>
             </form>
         </section>
     </main>
@@ -100,13 +103,17 @@
         (function(){
             document.querySelectorAll('[data-pw-toggle]').forEach(function(button){
                 var input=document.getElementById(button.getAttribute('data-pw-toggle'));
+                var icon=button.querySelector('i');
                 if(!input)return;
                 button.addEventListener('click',function(){
                     var show=input.type==='password';
                     input.type=show?'text':'password';
                     button.setAttribute('aria-pressed',String(show));
                     button.setAttribute('aria-label',show?'Hide password':'Show password');
-                    button.textContent=show?'🙈':'👁';
+                    if(icon){
+                        icon.classList.toggle('fa-eye',!show);
+                        icon.classList.toggle('fa-eye-slash',show);
+                    }
                 });
             });
             document.querySelectorAll('[data-auth-flash]').forEach(function(el){
