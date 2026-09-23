@@ -7,17 +7,17 @@
 
 <section class="register-page" aria-labelledby="register-title">
     <div class="register-shell">
-        <div class="register-brand">
-            @if(!empty($brand['logo_url']))
-                <img src="{{ $brand['logo_url'] }}" alt="{{ $brand['short_name'] ?? 'COU Youth' }} logo" class="register-logo">
-            @else
-                <div class="register-logo-fallback" aria-hidden="true"><i class="fas fa-church"></i></div>
-            @endif
-            <strong>{{ $brand['short_name'] ?? 'COU Youth' }}</strong>
-            <span>Faith · Community · Opportunity</span>
-        </div>
-
         <div class="register-card">
+            <div class="register-brand">
+                @if(!empty($brand['logo_url']))
+                    <img src="{{ $brand['logo_url'] }}" alt="{{ $brand['short_name'] ?? 'COU Youth' }} logo" class="register-logo">
+                @else
+                    <div class="register-logo-fallback" aria-hidden="true"><i class="fas fa-church"></i></div>
+                @endif
+                <strong>{{ $brand['short_name'] ?? 'COU Youth' }}</strong>
+                <span>Faith · Community · Opportunity</span>
+            </div>
+
             <div class="register-heading">
                 <h1 id="register-title">Create Account</h1>
                 <p>Join the Church of Uganda Youth Platform.</p>
@@ -39,10 +39,13 @@
 
             <div class="register-tabs" role="tablist" aria-label="Registration steps">
                 <button type="button" class="register-tab is-active" id="account-tab" data-tab-target="account-panel" role="tab" aria-selected="true" aria-controls="account-panel">
-                    <span>1</span> Account details
+                    <span>1</span> Account
+                </button>
+                <button type="button" class="register-tab" id="profile-tab" data-tab-target="profile-panel" role="tab" aria-selected="false" aria-controls="profile-panel">
+                    <span>2</span> Profile
                 </button>
                 <button type="button" class="register-tab" id="guardian-tab" data-tab-target="guardian-panel" role="tab" aria-selected="false" aria-controls="guardian-panel">
-                    <span>2</span> Guardian details
+                    <span>3</span> Guardian
                 </button>
             </div>
 
@@ -50,30 +53,20 @@
                 @csrf
 
                 <section class="register-panel is-active" id="account-panel" role="tabpanel" aria-labelledby="account-tab">
-                    <div class="register-grid">
-                        <div class="form-field full-width">
+                    <div class="register-grid one-column">
+                        <div class="form-field">
                             <label for="name">Full name</label>
                             <input id="name" class="field" name="name" value="{{ old('name') }}" placeholder="Enter your full name" required autocomplete="name">
                         </div>
 
-                        <div class="form-field full-width">
+                        <div class="form-field">
                             <label for="email">Email address</label>
                             <input id="email" class="field" type="email" name="email" value="{{ old('email') }}" placeholder="Enter your email address" required autocomplete="email">
                         </div>
 
                         <div class="form-field">
-                            <label for="date_of_birth">Date of birth</label>
-                            <input id="date_of_birth" class="field" type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" required autocomplete="bday">
-                        </div>
-
-                        <div class="form-field">
-                            <label for="school_institution">School / institution</label>
-                            <input id="school_institution" class="field" name="school_institution" value="{{ old('school_institution') }}" placeholder="Enter school or institution">
-                        </div>
-
-                        <div class="form-field">
                             <label for="password">Password</label>
-                            <input id="password" class="field" type="password" name="password" placeholder="Create a password" required autocomplete="new-password">
+                            <input id="password" class="field" type="password" name="password" placeholder="Create a secure password" required autocomplete="new-password">
                             <small>Use at least 8 characters with upper/lowercase letters and a number.</small>
                         </div>
 
@@ -84,7 +77,30 @@
                     </div>
 
                     <div class="register-actions end">
-                        <button type="button" class="btn btn-primary" id="nextRegistrationStep">
+                        <button type="button" class="btn btn-primary" id="nextToProfile">
+                            Continue <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="register-panel" id="profile-panel" role="tabpanel" aria-labelledby="profile-tab" hidden>
+                    <div class="register-grid one-column">
+                        <div class="form-field">
+                            <label for="date_of_birth">Date of birth</label>
+                            <input id="date_of_birth" class="field" type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" placeholder="Select your date of birth" required autocomplete="bday">
+                        </div>
+
+                        <div class="form-field">
+                            <label for="school_institution">School / institution</label>
+                            <input id="school_institution" class="field" name="school_institution" value="{{ old('school_institution') }}" placeholder="Enter your school, university or institution">
+                        </div>
+                    </div>
+
+                    <div class="register-actions split">
+                        <button type="button" class="btn btn-outline" id="backToAccount">
+                            <i class="fas fa-arrow-left" aria-hidden="true"></i> Back
+                        </button>
+                        <button type="button" class="btn btn-primary" id="nextToGuardian">
                             Continue <i class="fas fa-arrow-right" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -107,7 +123,7 @@
 
                         <div class="form-field">
                             <label for="guardian_relationship">Relationship</label>
-                            <input id="guardian_relationship" class="field" name="guardian_relationship" value="{{ old('guardian_relationship') }}" placeholder="e.g. Parent, guardian, relative">
+                            <input id="guardian_relationship" class="field" name="guardian_relationship" value="{{ old('guardian_relationship') }}" placeholder="Parent, guardian or relative">
                         </div>
 
                         <div class="form-field">
@@ -117,7 +133,7 @@
 
                         <div class="form-field">
                             <label for="guardian_email">Guardian email</label>
-                            <input id="guardian_email" class="field" type="email" name="guardian_email" value="{{ old('guardian_email') }}" placeholder="guardian@example.com" autocomplete="email">
+                            <input id="guardian_email" class="field" type="email" name="guardian_email" value="{{ old('guardian_email') }}" placeholder="Enter guardian email address" autocomplete="email">
                         </div>
                     </div>
 
@@ -127,7 +143,7 @@
                     </label>
 
                     <div class="register-actions split">
-                        <button type="button" class="btn btn-outline" id="previousRegistrationStep">
+                        <button type="button" class="btn btn-outline" id="backToProfile">
                             <i class="fas fa-arrow-left" aria-hidden="true"></i> Back
                         </button>
                         <button type="submit" class="btn btn-primary">
@@ -154,9 +170,14 @@
             #f8f7fc;
     }
 
-    .register-shell {
-        width: min(100%, 700px);
-        margin: 0 auto;
+    .register-shell { width: min(100%, 620px); margin: 0 auto; }
+
+    .register-card {
+        background: #fff;
+        border: 1px solid #e4e7ec;
+        border-radius: 10px;
+        padding: 28px;
+        box-shadow: 0 18px 50px rgba(16, 24, 40, .08);
     }
 
     .register-brand {
@@ -169,14 +190,12 @@
 
     .register-logo,
     .register-logo-fallback {
-        width: 76px;
-        height: 76px;
+        width: 68px;
+        height: 68px;
         margin-bottom: 10px;
     }
 
-    .register-logo {
-        object-fit: contain;
-    }
+    .register-logo { object-fit: contain; }
 
     .register-logo-fallback {
         display: flex;
@@ -186,43 +205,15 @@
         color: var(--primary);
         border: 1px solid #e4e7ec;
         border-radius: 10px;
-        font-size: 30px;
+        font-size: 28px;
     }
 
-    .register-brand strong {
-        color: #182230;
-        font-size: 1.28rem;
-    }
+    .register-brand strong { color: #182230; font-size: 1.25rem; }
+    .register-brand span { margin-top: 5px; color: #667085; font-size: .9rem; }
 
-    .register-brand span {
-        margin-top: 5px;
-        color: #667085;
-        font-size: .9rem;
-    }
-
-    .register-card {
-        background: #fff;
-        border: 1px solid #e4e7ec;
-        border-radius: 10px;
-        padding: 28px;
-        box-shadow: 0 18px 50px rgba(16, 24, 40, .08);
-    }
-
-    .register-heading {
-        text-align: center;
-        margin-bottom: 22px;
-    }
-
-    .register-heading h1 {
-        margin: 0;
-        color: #182230;
-        font-size: clamp(1.7rem, 4vw, 2rem);
-    }
-
-    .register-heading p {
-        margin: 8px 0 0;
-        color: #667085;
-    }
+    .register-heading { text-align: center; margin-bottom: 22px; }
+    .register-heading h1 { margin: 0; color: #182230; font-size: clamp(1.7rem, 4vw, 2rem); }
+    .register-heading p { margin: 8px 0 0; color: #667085; }
 
     .register-alert {
         display: flex;
@@ -236,15 +227,12 @@
         color: #991b1b;
     }
 
-    .register-alert ul {
-        margin: 6px 0 0;
-        padding-left: 18px;
-    }
+    .register-alert ul { margin: 6px 0 0; padding-left: 18px; }
 
     .register-tabs {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
         margin-bottom: 22px;
         padding: 5px;
         border-radius: 10px;
@@ -252,55 +240,39 @@
     }
 
     .register-tab {
-        min-height: 46px;
+        min-height: 44px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 7px;
         border: 0;
         border-radius: 8px;
         background: transparent;
         color: #667085;
         font: inherit;
+        font-size: .88rem;
         font-weight: 800;
         cursor: pointer;
     }
 
     .register-tab span {
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         border-radius: 50%;
         background: #fff;
         border: 1px solid #d0d5dd;
-        font-size: .78rem;
+        font-size: .74rem;
     }
 
-    .register-tab.is-active {
-        background: var(--primary);
-        color: #fff;
-    }
+    .register-tab.is-active { background: var(--primary); color: #fff; }
+    .register-tab.is-active span { color: var(--primary); border-color: #fff; }
+    .register-panel[hidden] { display: none !important; }
 
-    .register-tab.is-active span {
-        color: var(--primary);
-        border-color: #fff;
-    }
-
-    .register-panel[hidden] {
-        display: none !important;
-    }
-
-    .register-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-    }
-
-    .full-width {
-        grid-column: 1 / -1;
-    }
+    .register-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .register-grid.one-column { grid-template-columns: 1fr; }
 
     .form-field label {
         display: block;
@@ -324,21 +296,9 @@
         transition: border-color .2s ease, box-shadow .2s ease;
     }
 
-    .field::placeholder {
-        color: #98a2b3;
-    }
-
-    .field:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 13%, transparent);
-    }
-
-    .form-field small {
-        display: block;
-        margin-top: 6px;
-        color: #667085;
-        line-height: 1.4;
-    }
+    .field::placeholder { color: #98a2b3; }
+    .field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 13%, transparent); }
+    .form-field small { display: block; margin-top: 6px; color: #667085; line-height: 1.4; }
 
     .guardian-intro {
         display: flex;
@@ -351,16 +311,8 @@
         color: #344054;
     }
 
-    .guardian-intro > i {
-        margin-top: 3px;
-        color: var(--primary);
-    }
-
-    .guardian-intro p {
-        margin: 4px 0 0;
-        color: #667085;
-        font-size: .9rem;
-    }
+    .guardian-intro > i { margin-top: 3px; color: var(--primary); }
+    .guardian-intro p { margin: 4px 0 0; color: #667085; font-size: .9rem; }
 
     .consent-row {
         display: flex;
@@ -371,103 +323,33 @@
         line-height: 1.45;
     }
 
-    .consent-row input {
-        margin-top: 3px;
-        accent-color: var(--primary);
-    }
+    .consent-row input { margin-top: 3px; accent-color: var(--primary); }
 
-    .register-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 22px;
-    }
+    .register-actions { display: flex; align-items: center; gap: 10px; margin-top: 22px; }
+    .register-actions.end { justify-content: flex-end; }
+    .register-actions.split { justify-content: space-between; }
+    .register-actions .btn { min-height: 48px; border-radius: 10px; justify-content: center; }
 
-    .register-actions.end {
-        justify-content: flex-end;
-    }
-
-    .register-actions.split {
-        justify-content: space-between;
-    }
-
-    .register-actions .btn {
-        min-height: 48px;
-        border-radius: 10px;
-        justify-content: center;
-    }
-
-    .btn-outline {
-        border: 1px solid var(--primary);
-        background: #fff;
-        color: var(--primary);
-    }
-
+    .btn-outline { border: 1px solid var(--primary); background: #fff; color: var(--primary); }
     .btn-outline:hover,
-    .btn-outline:focus-visible {
-        background: var(--secondary);
-        border-color: var(--secondary);
-        color: #fff;
-    }
+    .btn-outline:focus-visible { background: var(--secondary); border-color: var(--secondary); color: #fff; }
 
-    .register-login-link {
-        margin-top: 22px;
-        text-align: center;
-        color: #667085;
-        font-size: .92rem;
-    }
-
-    .register-login-link a {
-        color: var(--primary);
-        font-weight: 800;
-        text-decoration: none;
-    }
-
+    .register-login-link { margin-top: 22px; text-align: center; color: #667085; font-size: .92rem; }
+    .register-login-link a { color: var(--primary); font-weight: 800; text-decoration: none; }
     .register-login-link a:hover,
-    .register-login-link a:focus-visible {
-        color: var(--secondary);
-        text-decoration: underline;
-    }
+    .register-login-link a:focus-visible { color: var(--secondary); text-decoration: underline; }
 
     @media (max-width: 650px) {
-        .register-page {
-            padding: 24px 14px 36px;
-        }
-
-        .register-card {
-            padding: 22px 18px;
-        }
-
-        .register-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .full-width {
-            grid-column: auto;
-        }
-
-        .register-tabs {
-            grid-template-columns: 1fr;
-        }
-
-        .register-actions.split {
-            flex-direction: column-reverse;
-            align-items: stretch;
-        }
-
-        .register-actions.end {
-            justify-content: stretch;
-        }
-
-        .register-actions .btn {
-            width: 100%;
-        }
-
+        .register-page { padding: 24px 14px 36px; }
+        .register-card { padding: 22px 18px; }
+        .register-grid { grid-template-columns: 1fr; }
+        .register-tab { font-size: .8rem; gap: 5px; }
+        .register-tab span { width: 20px; height: 20px; }
+        .register-actions.split { flex-direction: column-reverse; align-items: stretch; }
+        .register-actions.end { justify-content: stretch; }
+        .register-actions .btn { width: 100%; }
         .register-logo,
-        .register-logo-fallback {
-            width: 66px;
-            height: 66px;
-        }
+        .register-logo-fallback { width: 62px; height: 62px; }
     }
 </style>
 
@@ -475,9 +357,8 @@
     document.addEventListener('DOMContentLoaded', function () {
         const tabs = Array.from(document.querySelectorAll('[data-tab-target]'));
         const panels = Array.from(document.querySelectorAll('.register-panel'));
-        const nextButton = document.getElementById('nextRegistrationStep');
-        const previousButton = document.getElementById('previousRegistrationStep');
         const accountPanel = document.getElementById('account-panel');
+        const profilePanel = document.getElementById('profile-panel');
 
         function activatePanel(panelId) {
             tabs.forEach(function (tab) {
@@ -497,29 +378,42 @@
             if (firstInput) firstInput.focus({preventScroll: true});
         }
 
+        function validatePanel(panel) {
+            if (!panel) return true;
+            const requiredInputs = Array.from(panel.querySelectorAll('[required]'));
+            const invalid = requiredInputs.find(function (input) { return !input.reportValidity(); });
+            return !invalid;
+        }
+
         tabs.forEach(function (tab) {
             tab.addEventListener('click', function () {
-                activatePanel(tab.getAttribute('data-tab-target'));
+                const target = tab.getAttribute('data-tab-target');
+                if (target === 'profile-panel' && !validatePanel(accountPanel)) return;
+                if (target === 'guardian-panel' && (!validatePanel(accountPanel) || !validatePanel(profilePanel))) return;
+                activatePanel(target);
             });
         });
 
-        if (nextButton) {
-            nextButton.addEventListener('click', function () {
-                const requiredInputs = Array.from(accountPanel.querySelectorAll('[required]'));
-                const invalid = requiredInputs.find(function (input) { return !input.reportValidity(); });
-                if (invalid) return;
-                activatePanel('guardian-panel');
-            });
-        }
+        document.getElementById('nextToProfile')?.addEventListener('click', function () {
+            if (validatePanel(accountPanel)) activatePanel('profile-panel');
+        });
 
-        if (previousButton) {
-            previousButton.addEventListener('click', function () {
-                activatePanel('account-panel');
-            });
-        }
+        document.getElementById('backToAccount')?.addEventListener('click', function () {
+            activatePanel('account-panel');
+        });
+
+        document.getElementById('nextToGuardian')?.addEventListener('click', function () {
+            if (validatePanel(profilePanel)) activatePanel('guardian-panel');
+        });
+
+        document.getElementById('backToProfile')?.addEventListener('click', function () {
+            activatePanel('profile-panel');
+        });
 
         @if($errors->has('guardian_name') || $errors->has('guardian_relationship') || $errors->has('guardian_phone') || $errors->has('guardian_email') || $errors->has('guardian_confirmed'))
             activatePanel('guardian-panel');
+        @elseif($errors->has('date_of_birth') || $errors->has('school_institution'))
+            activatePanel('profile-panel');
         @endif
     });
 </script>
