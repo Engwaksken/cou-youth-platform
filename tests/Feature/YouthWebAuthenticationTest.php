@@ -15,8 +15,16 @@ class YouthWebAuthenticationTest extends TestCase
 
     public function test_public_login_is_youth_login_and_admin_login_is_separate(): void
     {
-        $this->get('/login')->assertOk()->assertSee('Youth Login');
-        $this->get('/admin/login')->assertOk()->assertSee('CMS Login');
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('Login')
+            ->assertSee('For Church of Uganda Youth Platform youth members.');
+
+        $this->get('/admin/login')
+            ->assertOk()
+            ->assertSee('Login')
+            ->assertSee('For authorised Church of Uganda Youth Platform administrators.')
+            ->assertDontSee('CMS Login');
     }
 
     public function test_youth_can_register_and_is_signed_in(): void
