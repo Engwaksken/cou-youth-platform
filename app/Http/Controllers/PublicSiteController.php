@@ -67,6 +67,22 @@ final class PublicSiteController extends Controller
         ));
     }
 
+    public function eventShow(Event $event): View
+    {
+        abort_unless($event->status === 'published', 404);
+
+        $event->loadMissing('organisationUnit');
+        $relatedEvents = Event::query()
+            ->where('status', 'published')
+            ->whereKeyNot($event->getKey())
+            ->when($event->category, fn ($q) => $q->where('category', $event->category))
+            ->orderBy('starts_at')
+            ->limit(3)
+            ->get();
+
+        return view('public.event-show', compact('event', 'relatedEvents'));
+    }
+
     public function courses(Request $request): View
     {
         $query = Course::query()->where('is_published', true)->withCount('lessons');
@@ -80,6 +96,21 @@ final class PublicSiteController extends Controller
             ['items' => $query->latest()->paginate(12)->withQueryString()],
             $this->pageContent('courses'),
         ));
+    }
+
+    public function courseShow(Course $course): View
+    {
+        abort_unless((bool) $course->is_published, 404);
+
+        $course->load('lessons');
+        $relatedCourses = Course::query()
+            ->where('is_published', true)
+            ->whereKeyNot($course->getKey())
+            ->latest()
+            ->limit(3)
+            ->get();
+
+        return view('public.course-show', compact('course', 'relatedCourses'));
     }
 
     public function churches(Request $request): View
