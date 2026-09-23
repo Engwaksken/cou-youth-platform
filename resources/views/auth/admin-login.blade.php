@@ -21,15 +21,15 @@
         :root{--primary:#4b2e83;--secondary:#204f78;--text:#182230;--muted:#667085;--border:#d0d5dd;--surface:#fff;--page:#f8f7fc}
         body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 10% 12%,rgba(75,46,131,.08) 0 90px,transparent 91px),radial-gradient(circle at 90% 88%,rgba(32,79,120,.07) 0 120px,transparent 121px),var(--page);font-family:Arial,sans-serif;color:var(--text)}
         .login-shell{width:100%;max-width:430px}
-        .brand{text-align:center;margin-bottom:18px}
-        .brand-logo{width:78px;height:78px;max-width:78px;max-height:78px;object-fit:contain;display:block;margin:0 auto 10px}
-        .brand-fallback{width:78px;height:78px;margin:0 auto 10px;border:1px solid #e4e7ec;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:30px;font-weight:800}
+        .login-card{width:100%;background:var(--surface);padding:30px;border:1px solid #e6e7ec;border-radius:10px;box-shadow:0 18px 50px rgba(16,24,40,.08)}
+        .brand{text-align:center;margin-bottom:22px}
+        .brand-logo{width:68px;height:68px;max-width:68px;max-height:68px;object-fit:contain;display:block;margin:0 auto 10px}
+        .brand-fallback{width:68px;height:68px;margin:0 auto 10px;border:1px solid #e4e7ec;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:28px;font-weight:800}
         .brand strong{display:block;font-size:21px;line-height:1.2}
         .brand span{display:block;margin-top:5px;color:var(--muted);font-size:14px}
-        .login-card{width:100%;background:var(--surface);padding:28px;border:1px solid #e6e7ec;border-radius:10px;box-shadow:0 18px 50px rgba(16,24,40,.08)}
         .heading{text-align:center;margin-bottom:22px}
         h1{margin:0;font-size:28px;line-height:1.15}
-        .subtitle{color:var(--muted);margin:8px auto 0;line-height:1.55;max-width:340px}
+        .subtitle{color:var(--muted);margin:8px auto 0;line-height:1.55;max-width:340px;text-align:center}
         .form-group{margin-bottom:17px}
         label{display:block;margin-bottom:7px;font-weight:700;color:#344054;font-size:14px}
         input[type=email],input[type=password]{width:100%;min-height:50px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:15px;color:var(--text);outline:none;transition:border-color .2s ease,box-shadow .2s ease}
@@ -44,26 +44,23 @@
         .submit-btn{width:100%;border:0;background:var(--primary);color:#fff;padding:13px;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;transition:background .2s ease}
         .submit-btn:hover,.submit-btn:focus-visible{background:var(--secondary);outline:none}
         .error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:10px;padding:10px 12px;margin-bottom:16px}
-        .public-link{text-align:center;margin-top:18px;color:var(--muted);font-size:14px}
-        .public-link a{color:var(--primary);font-weight:700;text-decoration:none}
-        .public-link a:hover,.public-link a:focus-visible{color:var(--secondary);text-decoration:underline}
         [data-auth-flash]{transition:opacity .5s ease}[data-auth-flash].is-fading{opacity:0}
-        @media(max-width:520px){body{align-items:flex-start;padding:24px 14px}.login-card{padding:22px 18px}.brand-logo,.brand-fallback{width:66px;height:66px;max-width:66px;max-height:66px}}
+        @media(max-width:520px){body{align-items:flex-start;padding:24px 14px}.login-card{padding:24px 18px}.brand-logo,.brand-fallback{width:62px;height:62px;max-width:62px;max-height:62px}}
     </style>
 </head>
 <body>
     <main class="login-shell">
-        <div class="brand">
-            @if(!empty($adminLogo))
-                <img class="brand-logo" src="{{ asset('storage/'.$adminLogo) }}" alt="Church of Uganda Youth Platform logo">
-            @else
-                <div class="brand-fallback" aria-hidden="true">COU</div>
-            @endif
-            <strong>COU Youth Platform</strong>
-            <span>Administration</span>
-        </div>
-
         <section class="login-card" aria-labelledby="admin-login-title">
+            <div class="brand">
+                @if(!empty($adminLogo))
+                    <img class="brand-logo" src="{{ asset('storage/'.$adminLogo) }}" alt="Church of Uganda Youth Platform logo">
+                @else
+                    <div class="brand-fallback" aria-hidden="true">COU</div>
+                @endif
+                <strong>COU Youth Platform</strong>
+                <span>Administrator access</span>
+            </div>
+
             <div class="heading">
                 <h1 id="admin-login-title">Login</h1>
                 <div class="subtitle">For authorised Church of Uganda Youth Platform administrators.</div>
@@ -96,8 +93,6 @@
 
                 <button type="submit" class="submit-btn">Sign In</button>
             </form>
-
-            <div class="public-link">Youth member? <a href="{{ route('login') }}">Youth Login</a></div>
         </section>
     </main>
 
