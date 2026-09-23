@@ -7,26 +7,24 @@
 
 <section class="auth-page" aria-labelledby="youth-login-title">
     <div class="auth-shell">
-        <div class="auth-brand-panel" aria-label="COU Youth">
-            @if(!empty($brand['logo_url']))
-                <img
-                    src="{{ $brand['logo_url'] }}"
-                    alt="{{ $brand['short_name'] ?? 'COU Youth' }} logo"
-                    class="auth-logo"
-                >
-            @else
-                <div class="auth-logo-fallback" aria-hidden="true">
-                    <i class="fas fa-church"></i>
-                </div>
-            @endif
+        <section class="auth-card">
+            <div class="auth-brand-panel" aria-label="COU Youth">
+                @if(!empty($brand['logo_url']))
+                    <img
+                        src="{{ $brand['logo_url'] }}"
+                        alt="{{ $brand['short_name'] ?? 'COU Youth' }} logo"
+                        class="auth-logo"
+                    >
+                @else
+                    <div class="auth-logo-fallback" aria-hidden="true">
+                        <i class="fas fa-church"></i>
+                    </div>
+                @endif
 
-            <div class="auth-brand-copy">
                 <strong>{{ $brand['short_name'] ?? 'COU Youth' }}</strong>
                 <span>Faith · Community · Opportunity</span>
             </div>
-        </div>
 
-        <div class="auth-card">
             <div class="auth-heading">
                 <h1 id="youth-login-title">Login</h1>
                 <p>For Church of Uganda Youth Platform youth members.</p>
@@ -106,7 +104,7 @@
                 <i class="fas fa-user-plus" aria-hidden="true"></i>
                 <span>Create youth account</span>
             </a>
-        </div>
+        </section>
     </div>
 </section>
 
@@ -123,8 +121,14 @@
             #f8f7fc;
     }
 
-    .auth-shell {
-        width: min(100%, 460px);
+    .auth-shell { width: min(100%, 460px); }
+
+    .auth-card {
+        background: #fff;
+        border: 1px solid #e6e7ec;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 18px 50px rgba(16, 24, 40, .08);
     }
 
     .auth-brand-panel {
@@ -133,21 +137,19 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        margin-bottom: 18px;
-        padding: 0 6px;
+        margin-bottom: 22px;
     }
 
-    .auth-logo {
-        width: 76px;
-        height: 76px;
-        object-fit: contain;
-        display: block;
+    .auth-logo,
+    .auth-logo-fallback {
+        width: 68px;
+        height: 68px;
         margin-bottom: 10px;
     }
 
+    .auth-logo { object-fit: contain; display: block; }
+
     .auth-logo-fallback {
-        width: 76px;
-        height: 76px;
         border-radius: 10px;
         display: flex;
         align-items: center;
@@ -155,33 +157,19 @@
         background: #fff;
         color: var(--primary);
         border: 1px solid color-mix(in srgb, var(--primary) 15%, #e5e7eb);
-        font-size: 30px;
-        margin-bottom: 10px;
+        font-size: 28px;
     }
 
-    .auth-brand-copy strong,
-    .auth-brand-copy span {
-        display: block;
-    }
-
-    .auth-brand-copy strong {
+    .auth-brand-panel strong {
         color: #182230;
-        font-size: 1.28rem;
+        font-size: 1.25rem;
         line-height: 1.2;
     }
 
-    .auth-brand-copy span {
+    .auth-brand-panel span {
         margin-top: 5px;
         color: #667085;
         font-size: .9rem;
-    }
-
-    .auth-card {
-        background: #fff;
-        border: 1px solid #e6e7ec;
-        border-radius: 10px;
-        padding: 28px;
-        box-shadow: 0 18px 50px rgba(16, 24, 40, .08);
     }
 
     .auth-heading {
@@ -216,10 +204,7 @@
         font-size: .92rem;
     }
 
-    .auth-form {
-        display: grid;
-        gap: 16px;
-    }
+    .auth-form { display: grid; gap: 16px; }
 
     .auth-field label,
     .auth-label-row label {
@@ -249,16 +234,9 @@
         text-decoration: underline;
     }
 
-    .auth-field > label {
-        display: block;
-        margin-bottom: 7px;
-    }
+    .auth-field > label { display: block; margin-bottom: 7px; }
 
-    .auth-input-wrap {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
+    .auth-input-wrap { position: relative; display: flex; align-items: center; }
 
     .auth-input-wrap > i {
         position: absolute;
@@ -280,9 +258,7 @@
         transition: border-color .2s ease, box-shadow .2s ease;
     }
 
-    .auth-input-wrap input::placeholder {
-        color: #98a2b3;
-    }
+    .auth-input-wrap input::placeholder { color: #98a2b3; }
 
     .auth-input-wrap input:focus {
         border-color: var(--primary);
@@ -372,27 +348,15 @@
     }
 
     @media (max-width: 560px) {
-        .auth-page {
-            align-items: flex-start;
-            padding: 24px 14px 36px;
-        }
-
-        .auth-card {
-            padding: 22px 18px;
-        }
-
+        .auth-page { align-items: flex-start; padding: 24px 14px 36px; }
+        .auth-card { padding: 24px 18px; }
         .auth-logo,
-        .auth-logo-fallback {
-            width: 66px;
-            height: 66px;
-        }
+        .auth-logo-fallback { width: 62px; height: 62px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
         .auth-input-wrap input,
-        .auth-secondary-action {
-            transition: none;
-        }
+        .auth-secondary-action { transition: none; }
     }
 </style>
 
