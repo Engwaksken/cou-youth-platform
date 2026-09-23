@@ -60,6 +60,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/me', [AuthController::class, 'me']);
+        Route::patch('/me', [AuthController::class, 'updateProfile']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::post('/auth/email/request', [AuthRecoveryController::class, 'requestEmailVerification']);
         Route::post('/auth/email/verify', [AuthRecoveryController::class, 'verifyEmail']);
