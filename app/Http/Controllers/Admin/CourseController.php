@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\OrganisationUnit;
+use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +16,8 @@ use Illuminate\View\View;
 
 final class CourseController extends Controller
 {
+    public function __construct(private PlatformUpdateNotificationService $updates) {}
+
     public function index(Request $request): View
     {
         $query = Course::with('lessons')->withCount('lessons');
@@ -55,7 +58,19 @@ final class CourseController extends Controller
             throw ValidationException::withMessages(['image' => ['Upload a card image when Image is selected.']]);
         }
         $data = $this->storeVisualFiles($request, $data);
-        Course::create([...$data, 'is_published' => $request->boolean('is_published')]);
+        $course = Course::create([...$data, 'is_published' => $request->boolean('is_published')]);
+
+        if ($course->is_published) {
+            $this->updates->notifyYouth(
+                'New course: '.$course->title,
+                $course->description ?: 'A new learning course is available on the Church of Uganda Youth Platform.',
+                route('public.courses.show', $course),
+                $course->organisation_unit_id,
+                $course->age_category,
+                $request->user()?->id,
+            );
+        }
+
         return back()->with('success', 'Course created.');
     }
 
@@ -65,17 +80,47 @@ final class CourseController extends Controller
         if (($data['visual_type'] ?? 'icon') === 'image' && ! $request->hasFile('image') && ! $course->image_path) {
             throw ValidationException::withMessages(['image' => ['Upload a card image when Image is selected.']]);
         }
+        $wasPublished = (bool) $course->is_published;
         $data = $this->storeVisualFiles($request, $data, $course);
         $course->update([...$data, 'is_published' => $request->boolean('is_published')]);
+
+        if ($course->is_published) {
+            $this->updates->notifyYouth(
+                $wasPublished ? 'Course updated: '.$course->title : 'New course: '.$course->title,
+                $course->description ?: 'Course information has been updated on the Church of Uganda Youth Platform.',
+                route('public.courses.show', $course),
+                $course->organisation_unit_id,
+                $course->age_category,
+                $request->user()?->id,
+            );
+        }
+
         return back()->with('success', 'Course updated.');
     }
 
-    public function destroy(Course $course)
+    public function destroy(Request $request, Course $course)
     {
+        $title = $course->title;
+        $wasPublished = (bool) $course->is_published;
+        $unitId = $course->organisation_unit_id;
+        $ageCategory = $course->age_category;
+
         foreach ([$course->image_path, $course->banner_path] as $path) {
             if ($path) Storage::disk('public')->delete($path);
         }
         $course->delete();
+
+        if ($wasPublished) {
+            $this->updates->notifyYouth(
+                'Course removed: '.$title,
+                'This course is no longer available on the Church of Uganda Youth Platform.',
+                null,
+                $unitId,
+                $ageCategory,
+                $request->user()?->id,
+            );
+        }
+
         return back()->with('success', 'Course deleted.');
     }
 
@@ -88,11 +133,23 @@ final class CourseController extends Controller
             'position' => 'nullable|integer|min:1',
             'is_published' => 'sometimes|boolean',
         ]);
-        $course->lessons()->create([
+        $lesson = $course->lessons()->create([
             ...$data,
             'position' => $data['position'] ?? ($course->lessons()->max('position') + 1),
             'is_published' => $request->boolean('is_published'),
         ]);
+
+        if ($course->is_published && $lesson->is_published) {
+            $this->updates->notifyYouth(
+                'New lesson in '.$course->title,
+                'A new lesson, “'.$lesson->title.'”, is now available.',
+                route('public.courses.show', $course),
+                $course->organisation_unit_id,
+                $course->age_category,
+                $request->user()?->id,
+            );
+        }
+
         return back()->with('success', 'Lesson added.');
     }
 
