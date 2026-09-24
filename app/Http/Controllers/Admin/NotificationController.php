@@ -7,11 +7,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PlatformNotification;
 use App\Services\Access\HierarchyScopeService;
+use App\Services\Notifications\TargetedNotificationService;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    public function __construct(private HierarchyScopeService $scope) {}
+    public function __construct(
+        private HierarchyScopeService $scope,
+        private TargetedNotificationService $delivery,
+    ) {}
 
     public function index(Request $request)
     {
@@ -46,8 +50,18 @@ class NotificationController extends Controller
     {
         $data = $this->validated($request);
         $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
-        PlatformNotification::create($data + ['created_by' => $request->user()->id, 'is_active' => true]);
-        return back()->with('success', 'Notification queued successfully.');
+
+        $notification = PlatformNotification::create($data + [
+            'created_by' => $request->user()->id,
+            'is_active' => true,
+        ]);
+
+        if (! $notification->scheduled_at || $notification->scheduled_at->isPast()) {
+            $count = $this->delivery->dispatch($notification);
+            return back()->with('success', "Notification sent to {$count} youth account(s).");
+        }
+
+        return back()->with('success', 'Notification scheduled successfully.');
     }
 
     public function update(Request $request, PlatformNotification $notification)
