@@ -8,12 +8,16 @@ use App\Http\Controllers\Controller;
 use App\Models\LifeGroup;
 use App\Models\LifeGroupMember;
 use App\Services\Access\HierarchyScopeService;
+use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 final class LifeGroupController extends Controller
 {
-    public function __construct(private HierarchyScopeService $scope) {}
+    public function __construct(
+        private HierarchyScopeService $scope,
+        private PlatformUpdateNotificationService $updates,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -54,7 +58,18 @@ final class LifeGroupController extends Controller
         if (! empty($data['organisation_unit_id']) && ! $this->scope->canManage($request->user(), (int) $data['organisation_unit_id'])) {
             abort(403);
         }
-        LifeGroup::create($data + ['is_active' => true]);
+
+        $group = LifeGroup::create($data + ['is_active' => true]);
+
+        $this->updates->notifyYouth(
+            'New Life Group: '.$group->name,
+            'A new Life Group is available. Open the app to view meeting details and join where eligible.',
+            route('home'),
+            $group->organisation_unit_id,
+            'all',
+            $request->user()?->id,
+        );
+
         return back()->with('success', 'Life Group created successfully.');
     }
 
@@ -63,7 +78,20 @@ final class LifeGroupController extends Controller
         if ($lifeGroup->organisation_unit_id && ! $this->scope->canManage($request->user(), $lifeGroup->organisation_unit_id)) {
             abort(403);
         }
+
         $lifeGroup->update($this->validated($request));
+
+        if ($lifeGroup->is_active) {
+            $this->updates->notifyYouth(
+                'Life Group updated: '.$lifeGroup->name,
+                'Life Group information has changed. Open the app to review the latest meeting details.',
+                route('home'),
+                $lifeGroup->organisation_unit_id,
+                'all',
+                $request->user()?->id,
+            );
+        }
+
         return back()->with('success', 'Life Group updated successfully.');
     }
 
@@ -72,7 +100,18 @@ final class LifeGroupController extends Controller
         if ($lifeGroup->organisation_unit_id && ! $this->scope->canManage($request->user(), $lifeGroup->organisation_unit_id)) {
             abort(403);
         }
+
         $lifeGroup->update(['is_active' => false]);
+
+        $this->updates->notifyYouth(
+            'Life Group unavailable: '.$lifeGroup->name,
+            'This Life Group has been deactivated. Open the app to find other available groups.',
+            route('home'),
+            $lifeGroup->organisation_unit_id,
+            'all',
+            $request->user()?->id,
+        );
+
         return back()->with('success', 'Life Group deactivated.');
     }
 
