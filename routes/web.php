@@ -65,6 +65,7 @@ Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->grou
     Route::resource('organisation-units', OrganisationUnitController::class)->except(['show', 'create', 'edit']);
     Route::resource('content', ContentController::class)->except(['show', 'create', 'edit']);
     Route::resource('events', EventController::class)->except(['show', 'create', 'edit']);
+    Route::put('events/{event}/registrations/{registration}/attendance', [EventController::class, 'updateAttendance'])->name('events.attendance.update');
     Route::resource('life-groups', LifeGroupController::class)->except(['show', 'create', 'edit']);
     Route::resource('courses', CourseController::class)->except(['show', 'create', 'edit']);
 
