@@ -17,13 +17,16 @@ class YouthWebAuthenticationTest extends TestCase
     {
         $this->get('/login')
             ->assertOk()
-            ->assertSee('Login')
-            ->assertSee('For Church of Uganda Youth Platform youth members.');
+            ->assertSee('Sign In')
+            ->assertSee('Create youth account')
+            ->assertDontSee('For Church of Uganda Youth Platform youth members.')
+            ->assertDontSee('CMS Login');
 
         $this->get('/admin/login')
             ->assertOk()
             ->assertSee('Login')
             ->assertSee('For authorised Church of Uganda Youth Platform administrators.')
+            ->assertDontSee('Create youth account')
             ->assertDontSee('CMS Login');
     }
 
