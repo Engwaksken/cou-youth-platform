@@ -11,11 +11,15 @@ use App\Models\Course;
 use App\Models\DonationCampaign;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\LifeGroup;
 use App\Models\PageCard;
 use App\Models\PageSlide;
+use App\Models\PrayerRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 final class PublicSiteController extends Controller
@@ -113,6 +117,29 @@ final class PublicSiteController extends Controller
         return view('public.course-show', compact('course', 'relatedCourses'));
     }
 
+    public function lifeGroups(Request $request): View
+    {
+        $query = LifeGroup::query()
+            ->where('is_active', true)
+            ->with('organisationUnit')
+            ->withCount('members');
+
+        if ($request->filled('q')) {
+            $search = trim((string) $request->query('q'));
+            $query->where(function ($q) use ($search): void {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('meeting_location', 'like', "%{$search}%")
+                    ->orWhereHas('organisationUnit', fn ($unit) => $unit->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        return view('public.life-groups', array_merge(
+            ['items' => $query->orderBy('name')->paginate(12)->withQueryString()],
+            $this->pageContent('life-groups'),
+        ));
+    }
+
     public function churches(Request $request): View
     {
         $query = ChurchLocation::query()->with('organisationUnit');
@@ -141,6 +168,38 @@ final class PublicSiteController extends Controller
             compact('campaigns'),
             $this->pageContent('donate'),
         ));
+    }
+
+    public function prayer(Request $request): View
+    {
+        $requests = PrayerRequest::query()
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->paginate(10);
+
+        return view('public.prayer', compact('requests'));
+    }
+
+    public function storePrayer(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'subject' => ['required', 'string', 'max:255'],
+            'message' => ['required', 'string', 'max:5000'],
+            'visibility' => ['required', Rule::in(['private', 'pastoral_team', 'public_anonymous'])],
+        ]);
+
+        PrayerRequest::query()->create([
+            'user_id' => $request->user()->id,
+            'organisation_unit_id' => null,
+            'subject' => trim($data['subject']),
+            'message' => trim($data['message']),
+            'visibility' => $data['visibility'],
+            'status' => 'submitted',
+            'requires_safeguarding_review' => false,
+            'assigned_to' => null,
+        ]);
+
+        return redirect()->route('public.prayer')->with('success', 'Your prayer request has been submitted securely.');
     }
 
     public function about(): View
