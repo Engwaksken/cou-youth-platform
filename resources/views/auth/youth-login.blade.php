@@ -324,7 +324,7 @@
         background: #eaecf0;
     }
 
-    .auth-secondary-action {
+    .auth-card .auth-secondary-action {
         min-height: 50px;
         display: flex;
         align-items: center;
@@ -336,15 +336,24 @@
         background: #fff;
         font-weight: 800;
         text-decoration: none;
-        transition: background .2s ease, color .2s ease, border-color .2s ease;
+        transition: background-color .2s ease, color .2s ease, border-color .2s ease;
     }
 
-    .auth-secondary-action:hover,
-    .auth-secondary-action:focus-visible {
-        background: var(--secondary) !important;
+    .auth-card .auth-secondary-action:hover,
+    .auth-card .auth-secondary-action:focus-visible {
+        background-color: var(--secondary) !important;
         border-color: var(--secondary) !important;
         color: #fff !important;
+        box-shadow: none !important;
+        text-decoration: none !important;
         outline: none;
+    }
+
+    .auth-card .auth-secondary-action:hover i,
+    .auth-card .auth-secondary-action:hover span,
+    .auth-card .auth-secondary-action:focus-visible i,
+    .auth-card .auth-secondary-action:focus-visible span {
+        color: #fff !important;
     }
 
     @media (max-width: 560px) {
