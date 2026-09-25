@@ -36,7 +36,7 @@
     @forelse($enrolments as $enrolment)
         <a class="list-row" href="{{ $enrolment->course ? route('public.courses.show', $enrolment->course) : route('youth.learning') }}">
             <span class="list-icon"><i class="fas fa-book-open"></i></span>
-            <span><strong>{{ $enrolment->course?->title ?? 'Course' }}</strong><small>{{ ucfirst((string) data_get($enrolment, 'status', 'Enrolled')) }}</small></span>
+            <span><strong>{{ $enrolment->course?->title ?? 'Course' }}</strong><small>{{ $enrolment->completed_at ? 'Completed' : ((int) $enrolment->progress_percent > 0 ? (int) $enrolment->progress_percent.'% complete' : 'Enrolled') }}</small></span>
             <i class="fas fa-chevron-right"></i>
         </a>
     @empty
