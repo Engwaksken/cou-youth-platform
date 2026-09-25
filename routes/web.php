@@ -45,15 +45,15 @@ Route::post('/e/{token}', [PublicSiteController::class, 'storeRegistrationByToke
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [YouthAuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [YouthAuthController::class, 'login'])->name('login.attempt');
+    Route::post('/login', [YouthAuthController::class, 'login'])->middleware('throttle:youth-login')->name('login.attempt');
     Route::get('/signup', [YouthAuthController::class, 'showRegister'])->name('register');
-    Route::post('/signup', [YouthAuthController::class, 'register'])->name('register.store');
+    Route::post('/signup', [YouthAuthController::class, 'register'])->middleware('throttle:registration')->name('register.store');
     Route::get('/forgot-password', [YouthAuthController::class, 'showForgot'])->name('password.request');
-    Route::post('/forgot-password', [YouthAuthController::class, 'requestReset'])->name('password.email');
+    Route::post('/forgot-password', [YouthAuthController::class, 'requestReset'])->middleware('throttle:password-recovery')->name('password.email');
     Route::get('/reset-password', [YouthAuthController::class, 'showReset'])->name('password.reset.form');
-    Route::post('/reset-password', [YouthAuthController::class, 'resetPassword'])->name('password.update');
+    Route::post('/reset-password', [YouthAuthController::class, 'resetPassword'])->middleware('throttle:password-recovery')->name('password.update');
     Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
-    Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.attempt');
+    Route::post('/admin/login', [AdminAuthController::class, 'login'])->middleware('throttle:admin-login')->name('admin.login.attempt');
 });
 
 Route::post('/logout', [YouthAuthController::class, 'logout'])->middleware('auth')->name('logout');
