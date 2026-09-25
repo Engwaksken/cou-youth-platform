@@ -29,6 +29,7 @@ use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\YouthAuthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PublicSiteController;
+use App\Http\Controllers\YouthPortalController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -60,6 +61,19 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [YouthAuthController::class, 'logout'])->name('logout');
     Route::post('/youth-assistant', [YouthAssistantController::class, 'reply'])->middleware('throttle:30,1')->name('youth-assistant.reply');
+
+    Route::get('/dashboard', [YouthPortalController::class, 'dashboard'])->name('youth.dashboard');
+    Route::get('/profile', [YouthPortalController::class, 'profile'])->name('youth.profile');
+    Route::put('/profile', [YouthPortalController::class, 'updateProfile'])->name('youth.profile.update');
+    Route::get('/my-life-groups', [YouthPortalController::class, 'lifeGroups'])->name('youth.life-groups');
+    Route::post('/my-life-groups/{lifeGroup}/join', [YouthPortalController::class, 'joinLifeGroup'])->name('youth.life-groups.join');
+    Route::delete('/my-life-groups/{lifeGroup}/leave', [YouthPortalController::class, 'leaveLifeGroup'])->name('youth.life-groups.leave');
+    Route::get('/notifications', [YouthPortalController::class, 'notifications'])->name('youth.notifications');
+    Route::patch('/notifications/read-all', [YouthPortalController::class, 'readAllNotifications'])->name('youth.notifications.read-all');
+    Route::patch('/notifications/{receipt}/read', [YouthPortalController::class, 'readNotification'])->name('youth.notifications.read');
+    Route::get('/my-learning', [YouthPortalController::class, 'learning'])->name('youth.learning');
+    Route::get('/media-services', [YouthPortalController::class, 'media'])->name('youth.media');
+
     Route::get('/prayer', [PublicSiteController::class, 'prayer'])->name('public.prayer');
     Route::post('/prayer', [PublicSiteController::class, 'storePrayer'])->middleware('throttle:10,1')->name('public.prayer.store');
 });

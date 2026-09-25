@@ -65,9 +65,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 </a>
 <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open navigation menu" aria-controls="mainNav" aria-expanded="false"><i class="fas fa-bars" aria-hidden="true"></i></button>
 <div class="nav-links">
-<a href="{{ route('public.news') }}">News</a><a href="{{ route('public.events') }}">Events</a><a href="{{ route('public.courses') }}">Courses</a><a href="{{ route('public.churches') }}">Church Locator</a><a href="{{ route('public.donate') }}">Donate</a><a href="{{ route('public.about') }}">About</a>
+<a href="{{ route('public.news') }}">News</a><a href="{{ route('public.events') }}">Events</a><a href="{{ route('public.courses') }}">Courses</a><a href="{{ route('public.life-groups') }}">Life Groups</a><a href="{{ route('public.churches') }}">Church Locator</a><a href="{{ route('public.donate') }}">Donate</a><a href="{{ route('public.about') }}">About</a>
+@auth<a href="{{ route('youth.dashboard') }}">Dashboard</a><a href="{{ route('youth.notifications') }}">Notifications</a>@endauth
 </div>
-<div class="auth-actions">@auth<span class="muted">{{ auth()->user()->name }}</span><form method="post" action="{{ route('logout') }}">@csrf<button class="btn" type="submit">Logout</button></form>@else<a class="btn" href="{{ route('login') }}">Youth Login</a><a class="btn btn-primary" href="{{ route('register') }}">Sign Up</a>@endauth</div>
+<div class="auth-actions">@auth<a class="btn" href="{{ route('youth.profile') }}"><i class="fas fa-user"></i> {{ auth()->user()->name }}</a><form method="post" action="{{ route('logout') }}">@csrf<button class="btn" type="submit">Logout</button></form>@else<a class="btn" href="{{ route('login') }}">Youth Login</a><a class="btn btn-primary" href="{{ route('register') }}">Sign Up</a>@endauth</div>
 </nav>
 </header>
 <main id="main-content" class="container" tabindex="-1">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('content')</main>
