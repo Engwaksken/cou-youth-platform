@@ -29,12 +29,8 @@
         <button class="tab active" data-tab-target="ai-settings">
             <i class="fas fa-sliders"></i> AI Settings <span class="tab-count">{{ $settings->count() }}</span>
         </button>
-        <button class="tab" data-tab-target="ai-overview">
-            <i class="fas fa-chart-column"></i> Overview
-        </button>
-        <button class="tab" data-tab-target="ai-usage">
-            <i class="fas fa-list"></i> Usage <span class="tab-count">{{ $recentUsage->total() }}</span>
-        </button>
+        <button class="tab" data-tab-target="ai-overview"><i class="fas fa-chart-column"></i> Overview</button>
+        <button class="tab" data-tab-target="ai-usage"><i class="fas fa-list"></i> Usage <span class="tab-count">{{ $recentUsage->total() }}</span></button>
     </div>
 
     <section id="ai-settings" class="tab-panel active">
@@ -49,20 +45,21 @@
                     <p>AI features will remain unavailable until an administrator activates one saved configuration.</p>
                 @endif
             </div>
-            <span class="badge {{ $activeSetting ? 'badge-success' : 'badge-danger' }}">
-                {{ $activeSetting ? 'Active' : 'Inactive' }}
-            </span>
+            <span class="badge {{ $activeSetting ? 'badge-success' : 'badge-danger' }}">{{ $activeSetting ? 'Active' : 'Inactive' }}</span>
         </div>
 
-        <form id="bulkSettingsForm" method="POST" action="{{ route('admin.ai.settings.bulk-destroy') }}" class="card table-card" data-confirm-title="Delete selected AI settings?" data-confirm-message="The selected AI settings will be permanently deleted. This action cannot be undone.">
+        <form id="bulkSettingsForm" method="POST" action="{{ route('admin.ai.settings.bulk-destroy') }}" data-confirm-title="Delete selected AI settings?" data-confirm-message="The selected AI settings will be permanently deleted. This action cannot be undone.">
             @csrf
             @method('DELETE')
+        </form>
+
+        <div class="card table-card">
             <div class="table-toolbar">
                 <div>
                     <strong>Saved AI configurations</strong>
                     <small>Store multiple providers or models and activate only the one that should serve requests.</small>
                 </div>
-                <button type="submit" class="btn btn-danger" id="deleteSelectedSettings" disabled>
+                <button type="submit" form="bulkSettingsForm" class="btn btn-danger" id="deleteSelectedSettings" disabled>
                     <i class="fas fa-trash"></i> Delete Selected
                 </button>
             </div>
@@ -72,18 +69,13 @@
                     <thead>
                         <tr>
                             <th class="check-col"><input type="checkbox" data-check-all="settings" aria-label="Select all AI settings"></th>
-                            <th>Provider / Model</th>
-                            <th>Endpoint</th>
-                            <th>Limits</th>
-                            <th>Status</th>
-                            <th>Updated</th>
-                            <th>Actions</th>
+                            <th>Provider / Model</th><th>Endpoint</th><th>Limits</th><th>Status</th><th>Updated</th><th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($settings as $item)
                             <tr>
-                                <td><input type="checkbox" name="ids[]" value="{{ $item->id }}" data-check-item="settings" aria-label="Select {{ $item->provider }} {{ $item->model }}"></td>
+                                <td><input type="checkbox" form="bulkSettingsForm" name="ids[]" value="{{ $item->id }}" data-check-item="settings" aria-label="Select {{ $item->provider }} {{ $item->model }}"></td>
                                 <td><strong>{{ strtoupper($item->provider) }}</strong><small>{{ $item->model }}</small></td>
                                 <td>{{ $item->api_endpoint ?: 'Default provider endpoint' }}</td>
                                 <td><span>{{ number_format((int) $item->daily_limit) }} daily</span><small>{{ number_format((int) $item->monthly_limit) }} monthly / {{ number_format((int) $item->per_user_daily_limit) }} per user</small></td>
@@ -112,7 +104,7 @@
                     </tbody>
                 </table>
             </div>
-        </form>
+        </div>
     </section>
 
     <section id="ai-overview" class="tab-panel">
