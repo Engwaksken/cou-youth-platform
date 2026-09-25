@@ -2,7 +2,7 @@
 @section('title', 'Notifications | COU Youth')
 @section('content')
 <section class="hero"><span class="section-kicker">UPDATES</span><h1>Notifications</h1><p>See platform updates, learning alerts, events and messages relevant to your youth journey.</p></section>
-<div class="toolbar"><a class="btn" href="{{ route('youth.dashboard') }}"><i class="fas fa-arrow-left"></i> Dashboard</a><form method="POST" action="{{ route('youth.notifications.read-all') }}">@csrf @method('PATCH')<button class="btn btn-primary" type="submit"><i class="fas fa-check-double"></i> Mark all read</button></form></div>
+<div class="toolbar"><a class="btn" href="{{ route('youth.dashboard') }}"><i class="fas fa-arrow-left"></i> Dashboard</a><a class="btn" href="{{ route('youth.notification-preferences') }}"><i class="fas fa-sliders"></i> Preferences</a><form method="POST" action="{{ route('youth.notifications.read-all') }}">@csrf @method('PATCH')<button class="btn btn-primary" type="submit"><i class="fas fa-check-double"></i> Mark all read</button></form></div>
 <div class="notification-list">
 @forelse($receipts as $receipt)
 @if($receipt->notification)
