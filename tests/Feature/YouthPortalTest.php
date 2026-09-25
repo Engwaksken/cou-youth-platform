@@ -86,7 +86,7 @@ final class YouthPortalTest extends TestCase
         $this->assertDatabaseHas('life_group_members', [
             'life_group_id' => $group->id,
             'user_id' => $user->id,
-            'status' => 'inactive',
+            'status' => 'left',
         ]);
     }
 
