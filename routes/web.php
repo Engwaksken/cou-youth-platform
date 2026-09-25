@@ -37,6 +37,7 @@ Route::get('/events', [PublicSiteController::class, 'events'])->name('public.eve
 Route::get('/events/{event}', [PublicSiteController::class, 'eventShow'])->name('public.events.show');
 Route::get('/courses', [PublicSiteController::class, 'courses'])->name('public.courses');
 Route::get('/courses/{course}', [PublicSiteController::class, 'courseShow'])->name('public.courses.show');
+Route::get('/life-groups', [PublicSiteController::class, 'lifeGroups'])->name('public.life-groups');
 Route::get('/churches', [PublicSiteController::class, 'churches'])->name('public.churches');
 Route::get('/donate', [PublicSiteController::class, 'donate'])->name('public.donate');
 Route::get('/about', [PublicSiteController::class, 'about'])->name('public.about');
@@ -56,8 +57,12 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/admin/login', [AdminAuthController::class, 'login'])->middleware('throttle:admin-login')->name('admin.login.attempt');
 });
 
-Route::post('/logout', [YouthAuthController::class, 'logout'])->middleware('auth')->name('logout');
-Route::post('/youth-assistant', [YouthAssistantController::class, 'reply'])->middleware(['auth', 'throttle:30,1'])->name('youth-assistant.reply');
+Route::middleware('auth')->group(function (): void {
+    Route::post('/logout', [YouthAuthController::class, 'logout'])->name('logout');
+    Route::post('/youth-assistant', [YouthAssistantController::class, 'reply'])->middleware('throttle:30,1')->name('youth-assistant.reply');
+    Route::get('/prayer', [PublicSiteController::class, 'prayer'])->name('public.prayer');
+    Route::post('/prayer', [PublicSiteController::class, 'storePrayer'])->middleware('throttle:10,1')->name('public.prayer.store');
+});
 
 Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
