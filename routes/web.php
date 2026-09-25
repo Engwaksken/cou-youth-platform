@@ -112,8 +112,14 @@ Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->grou
     Route::get('financial-reports', [PlanningFinanceController::class, 'financialReports'])->name('financial-reports.index');
 
     Route::get('ai', [AiSettingController::class, 'index'])->name('ai.index');
-    Route::put('ai', [AiSettingController::class, 'update'])->name('ai.update');
+    Route::post('ai/settings', [AiSettingController::class, 'store'])->name('ai.settings.store');
+    Route::put('ai/settings/{aiSetting}', [AiSettingController::class, 'update'])->name('ai.settings.update');
+    Route::post('ai/settings/{aiSetting}/activate', [AiSettingController::class, 'activate'])->name('ai.settings.activate');
+    Route::delete('ai/settings/{aiSetting}', [AiSettingController::class, 'destroy'])->name('ai.settings.destroy');
+    Route::delete('ai/settings', [AiSettingController::class, 'bulkDestroySettings'])->name('ai.settings.bulk-destroy');
+    Route::delete('ai/usage', [AiSettingController::class, 'bulkDestroyUsage'])->name('ai.usage.bulk-destroy');
     Route::post('ai/test', [AiSettingController::class, 'test'])->name('ai.test');
+
     Route::get('prayer', [PrayerRequestController::class, 'index'])->name('prayer.index');
     Route::put('prayer/{prayerRequest}', [PrayerRequestController::class, 'update'])->name('prayer.update');
     Route::get('moderation', [ModerationController::class, 'index'])->name('moderation.index');
