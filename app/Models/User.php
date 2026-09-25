@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -13,9 +16,21 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
+    public const CMS_ROLES = [
+        'super_admin',
+        'provincial_admin',
+        'diocesan_admin',
+        'archdeaconry_admin',
+        'parish_admin',
+        'local_church_admin',
+        'content_manager',
+        'events_manager',
+        'safeguarding_officer',
+        'finance_admin',
+        'donations_manager',
+    ];
+
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
@@ -25,8 +40,6 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
      * @var list<string>
      */
     protected $hidden = [
@@ -34,16 +47,24 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function organisationRoles(): HasMany
+    {
+        return $this->hasMany(UserOrganisationRole::class);
+    }
+
+    public function hasCmsAccess(): bool
+    {
+        return $this->organisationRoles()
+            ->where('is_active', true)
+            ->whereIn('role', self::CMS_ROLES)
+            ->exists();
     }
 }
