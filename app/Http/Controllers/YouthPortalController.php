@@ -9,7 +9,6 @@ use App\Models\CourseEnrolment;
 use App\Models\LifeGroup;
 use App\Models\LifeGroupMember;
 use App\Models\MediaAsset;
-use App\Models\PlatformNotification;
 use App\Models\PlatformNotificationReceipt;
 use App\Models\YouthProfile;
 use Illuminate\Http\RedirectResponse;
@@ -151,7 +150,8 @@ final class YouthPortalController extends Controller
         LifeGroupMember::query()
             ->where('life_group_id', $lifeGroup->id)
             ->where('user_id', $request->user()->id)
-            ->update(['status' => 'inactive']);
+            ->whereIn('status', ['pending', 'active'])
+            ->update(['status' => 'left']);
 
         return back()->with('success', 'You have left '.$lifeGroup->name.'.');
     }
