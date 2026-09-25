@@ -5,7 +5,7 @@
 @section('content')
 @php($brand = app(\App\Services\Branding\BrandingService::class)->data())
 
-<section class="auth-page" aria-labelledby="youth-login-title">
+<section class="auth-page" aria-label="Youth login">
     <div class="auth-shell">
         <section class="auth-card">
             <div class="auth-brand-panel" aria-label="COU Youth">
@@ -23,11 +23,6 @@
 
                 <strong>{{ $brand['short_name'] ?? 'COU Youth' }}</strong>
                 <span>Faith · Community · Opportunity</span>
-            </div>
-
-            <div class="auth-heading">
-                <h1 id="youth-login-title">Login</h1>
-                <p>For Church of Uganda Youth Platform youth members.</p>
             </div>
 
             @if($errors->any())
@@ -137,7 +132,7 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        margin-bottom: 22px;
+        margin-bottom: 24px;
     }
 
     .auth-logo,
@@ -170,25 +165,6 @@
         margin-top: 5px;
         color: #667085;
         font-size: .9rem;
-    }
-
-    .auth-heading {
-        margin-bottom: 22px;
-        text-align: center;
-    }
-
-    .auth-heading h1 {
-        margin: 0;
-        color: #182230;
-        font-size: clamp(1.7rem, 4vw, 2rem);
-        line-height: 1.15;
-    }
-
-    .auth-heading p {
-        margin: 8px auto 0;
-        max-width: 360px;
-        color: #667085;
-        line-height: 1.55;
     }
 
     .auth-alert {
@@ -324,7 +300,8 @@
         background: #eaecf0;
     }
 
-    .auth-card .auth-secondary-action {
+    .auth-card a.auth-secondary-action,
+    .auth-card a.auth-secondary-action:visited {
         min-height: 50px;
         display: flex;
         align-items: center;
@@ -332,27 +309,31 @@
         gap: 9px;
         border: 1px solid var(--primary);
         border-radius: 10px;
-        color: var(--primary);
-        background: #fff;
+        color: var(--primary) !important;
+        background: #fff !important;
         font-weight: 800;
-        text-decoration: none;
+        text-decoration: none !important;
         transition: background-color .2s ease, color .2s ease, border-color .2s ease;
     }
 
-    .auth-card .auth-secondary-action:hover,
-    .auth-card .auth-secondary-action:focus-visible {
+    .auth-card a.auth-secondary-action:hover,
+    .auth-card a.auth-secondary-action:focus,
+    .auth-card a.auth-secondary-action:focus-visible {
+        background: var(--secondary) !important;
         background-color: var(--secondary) !important;
         border-color: var(--secondary) !important;
         color: #fff !important;
         box-shadow: none !important;
         text-decoration: none !important;
-        outline: none;
+        outline: none !important;
     }
 
-    .auth-card .auth-secondary-action:hover i,
-    .auth-card .auth-secondary-action:hover span,
-    .auth-card .auth-secondary-action:focus-visible i,
-    .auth-card .auth-secondary-action:focus-visible span {
+    .auth-card a.auth-secondary-action:hover i,
+    .auth-card a.auth-secondary-action:hover span,
+    .auth-card a.auth-secondary-action:focus i,
+    .auth-card a.auth-secondary-action:focus span,
+    .auth-card a.auth-secondary-action:focus-visible i,
+    .auth-card a.auth-secondary-action:focus-visible span {
         color: #fff !important;
     }
 
