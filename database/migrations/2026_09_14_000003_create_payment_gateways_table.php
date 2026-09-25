@@ -13,7 +13,11 @@ return new class extends Migration {
             $table->string('slug')->unique();
             $table->string('provider');
             $table->string('currency', 3)->default('UGX');
-            $table->json('credentials')->nullable();
+
+            // Laravel's encrypted:array cast stores an encrypted string, not JSON.
+            // Use LONGTEXT so MySQL/MariaDB does not reject the ciphertext with a JSON constraint.
+            $table->longText('credentials')->nullable();
+
             $table->json('settings')->nullable();
             $table->boolean('is_test_mode')->default(true);
             $table->boolean('is_enabled')->default(false);

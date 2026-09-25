@@ -10,6 +10,9 @@ use App\Models\Course;
 use App\Models\DonationCampaign;
 use App\Models\Event;
 use App\Models\LifeGroup;
+use App\Models\PageCard;
+use App\Models\PageSlide;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -22,6 +25,7 @@ class HomeController extends Controller
         $courses = collect();
         $churchLocations = collect();
         $donationCampaigns = collect();
+        $annualTheme = null;
 
         $stats = [
             'events' => 0,
@@ -31,6 +35,19 @@ class HomeController extends Controller
             'donation_campaigns' => 0,
         ];
 
+        if (Schema::hasTable('annual_themes')) {
+            $themeQuery = DB::table('annual_themes');
+
+            if (Schema::hasColumn('annual_themes', 'is_published')) {
+                $themeQuery->where('is_published', true);
+            }
+
+            $annualTheme = $themeQuery
+                ->orderByRaw('CASE WHEN year = ? THEN 0 ELSE 1 END', [(int) now()->year])
+                ->orderByDesc('year')
+                ->first();
+        }
+
         if (Schema::hasTable('contents')) {
             $query = Content::query();
 
@@ -39,12 +56,7 @@ class HomeController extends Controller
             }
 
             if (Schema::hasColumn('contents', 'type')) {
-                $query->whereIn('type', [
-                    'news',
-                    'announcement',
-                    'devotion',
-                    'opportunity',
-                ]);
+                $query->whereIn('type', ['news', 'announcement', 'devotion', 'opportunity']);
             }
 
             if (Schema::hasColumn('contents', 'published_at')) {
@@ -73,18 +85,7 @@ class HomeController extends Controller
                 $query->latest();
             }
 
-            $upcomingEvents = $query
-                ->limit(6)
-                ->get()
-                ->map(function (Event $event): Event {
-                    // The existing public Blade supports start_date/event_date.
-                    // Expose the canonical starts_at value without duplicating database columns.
-                    if ($event->starts_at && empty($event->start_date)) {
-                        $event->setAttribute('start_date', $event->starts_at);
-                    }
-
-                    return $event;
-                });
+            $upcomingEvents = $query->limit(6)->get();
 
             $stats['events'] = Event::query()
                 ->when(
@@ -120,24 +121,11 @@ class HomeController extends Controller
         }
 
         if (Schema::hasTable('church_locations')) {
-            $query = ChurchLocation::query()->with('organisationUnit');
-
-            $churchLocations = $query
+            $churchLocations = ChurchLocation::query()
+                ->with('organisationUnit')
                 ->latest()
                 ->limit(6)
-                ->get()
-                ->map(function (ChurchLocation $church): ChurchLocation {
-                    $unit = $church->organisationUnit;
-
-                    // Normalize fields expected by the public Blade while retaining
-                    // the current normalized church_locations schema.
-                    $church->setAttribute('name', $unit?->name ?? 'Church of Uganda');
-                    $church->setAttribute('phone', $church->contact_phone ?? $unit?->phone);
-                    $church->setAttribute('email', $church->contact_email ?? $unit?->email);
-                    $church->setAttribute('location', $church->address ?? $unit?->address);
-
-                    return $church;
-                });
+                ->get();
 
             $stats['church_locations'] = ChurchLocation::count();
         }
@@ -146,9 +134,7 @@ class HomeController extends Controller
             $query = DonationCampaign::query()
                 ->withSum([
                     'donations as amount_raised' => fn ($q) => $q->whereIn('status', [
-                        'paid',
-                        'completed',
-                        'successful',
+                        'paid', 'completed', 'successful',
                     ]),
                 ], 'amount');
 
@@ -156,20 +142,19 @@ class HomeController extends Controller
                 $query->whereIn('status', ['published', 'active', 'open']);
             }
 
-            if (Schema::hasColumn('donation_campaigns', 'starts_at')) {
-                $query->where(function ($q): void {
-                    $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
-                });
-            }
-
-            if (Schema::hasColumn('donation_campaigns', 'ends_at')) {
-                $query->where(function ($q): void {
-                    $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
-                });
-            }
-
             $donationCampaigns = $query->latest()->limit(3)->get();
             $stats['donation_campaigns'] = $donationCampaigns->count();
+        }
+
+        $slides = collect();
+        $cards = collect();
+
+        if (Schema::hasTable('page_slides')) {
+            $slides = PageSlide::query()->forPage('home')->active()->ordered()->get();
+        }
+
+        if (Schema::hasTable('page_cards')) {
+            $cards = PageCard::query()->forPage('home')->active()->ordered()->get();
         }
 
         return view('welcome', compact(
@@ -178,7 +163,10 @@ class HomeController extends Controller
             'courses',
             'churchLocations',
             'donationCampaigns',
+            'annualTheme',
             'stats',
+            'slides',
+            'cards',
         ));
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\{
     AuthController,
     AuthRecoveryController,
+    BrandingController,
     CertificateController,
     CertificatePdfController,
     ChatbotController,
@@ -32,13 +33,14 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function (): void {
     Route::get('/health', HealthController::class)->middleware('throttle:60,1');
     Route::get('/release', [ReleaseController::class, 'show'])->middleware('throttle:60,1');
+    Route::get('/branding', BrandingController::class)->middleware('throttle:120,1');
 
-    Route::post('/register', [RegistrationController::class, 'store']);
-    Route::post('/auth/login', [AuthController::class, 'login']);
-    Route::post('/auth/password/request', [AuthRecoveryController::class, 'requestPasswordReset']);
-    Route::post('/auth/password/reset', [AuthRecoveryController::class, 'resetPassword']);
-    Route::post('/auth/otp/request', [AuthRecoveryController::class, 'requestLoginOtp']);
-    Route::post('/auth/otp/verify', [AuthRecoveryController::class, 'verifyLoginOtp']);
+    Route::post('/register', [RegistrationController::class, 'store'])->middleware('throttle:registration');
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:youth-login');
+    Route::post('/auth/password/request', [AuthRecoveryController::class, 'requestPasswordReset'])->middleware('throttle:password-recovery');
+    Route::post('/auth/password/reset', [AuthRecoveryController::class, 'resetPassword'])->middleware('throttle:password-recovery');
+    Route::post('/auth/otp/request', [AuthRecoveryController::class, 'requestLoginOtp'])->middleware('throttle:otp-request');
+    Route::post('/auth/otp/verify', [AuthRecoveryController::class, 'verifyLoginOtp'])->middleware('throttle:otp-verify');
 
     Route::post('/payments/webhooks/{gatewaySlug}', [PaymentWebhookController::class, 'handle'])
         ->middleware('throttle:120,1');
@@ -58,6 +60,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/me', [AuthController::class, 'me']);
+        Route::patch('/me', [AuthController::class, 'updateProfile']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::post('/auth/email/request', [AuthRecoveryController::class, 'requestEmailVerification']);
         Route::post('/auth/email/verify', [AuthRecoveryController::class, 'verifyEmail']);

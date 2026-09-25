@@ -6,17 +6,30 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\EventRegistration;
 use App\Services\Access\HierarchyScopeService;
+use App\Services\Notifications\PlatformUpdateNotificationService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 final class EventController extends Controller
 {
-    public function __construct(private HierarchyScopeService $scope) {}
+    public function __construct(
+        private HierarchyScopeService $scope,
+        private PlatformUpdateNotificationService $updates,
+    ) {}
 
     public function index(Request $request): View
     {
-        $query = Event::with('organisationUnit');
+        $query = Event::query()
+            ->with(['organisationUnit', 'registrations' => fn ($q) => $q->latest()])
+            ->withCount([
+                'registrations',
+                'registrations as attended_count' => fn ($q) => $q->where('attendance_status', 'attended'),
+                'registrations as absent_count' => fn ($q) => $q->where('attendance_status', 'absent'),
+            ]);
+
         $search = trim((string) $request->query('q', ''));
         $status = (string) $request->query('status', '');
 
@@ -51,32 +64,98 @@ final class EventController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
         if (! empty($data['organisation_unit_id']) && ! $this->scope->canManage($request->user(), (int) $data['organisation_unit_id'])) {
             abort(403);
         }
+
         $data['created_by'] = $request->user()->id;
-        Event::create($data);
+        $event = Event::create($data);
+
+        if ($event->status === 'published') {
+            $this->updates->notifyYouth(
+                'New event: '.$event->title,
+                'A new youth event has been published. Open the event to see the date, venue and registration details.',
+                route('public.events.show', $event),
+                $event->organisation_unit_id,
+                $event->target_age_categories,
+                $request->user()->id,
+            );
+        }
+
         return back()->with('success', 'Event created successfully.');
     }
 
-    public function update(Request $request, Event $event)
+    public function update(Request $request, Event $event): RedirectResponse
     {
         if ($event->organisation_unit_id && ! $this->scope->canManage($request->user(), $event->organisation_unit_id)) {
             abort(403);
         }
+
+        $wasPublished = $event->status === 'published';
         $event->update($this->validated($request));
+
+        if ($event->status === 'published') {
+            $this->updates->notifyYouth(
+                $wasPublished ? 'Event updated: '.$event->title : 'New event: '.$event->title,
+                $wasPublished
+                    ? 'Event information has been updated. Open the event to review the latest details.'
+                    : 'A new youth event has been published. Open the event to see the latest details.',
+                route('public.events.show', $event),
+                $event->organisation_unit_id,
+                $event->target_age_categories,
+                $request->user()->id,
+            );
+        }
+
         return back()->with('success', 'Event updated successfully.');
     }
 
-    public function destroy(Request $request, Event $event)
+    public function updateAttendance(Request $request, Event $event, EventRegistration $registration): RedirectResponse
+    {
+        abort_unless((int) $registration->event_id === (int) $event->id, 404);
+
+        if ($event->organisation_unit_id && ! $this->scope->canManage($request->user(), $event->organisation_unit_id)) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'attendance_status' => 'required|in:registered,attended,absent',
+        ]);
+
+        $registration->update([
+            'attendance_status' => $data['attendance_status'],
+            'attended_at' => $data['attendance_status'] === 'attended' ? now() : null,
+        ]);
+
+        return back()->with('success', 'Attendance updated successfully.');
+    }
+
+    public function destroy(Request $request, Event $event): RedirectResponse
     {
         if ($event->organisation_unit_id && ! $this->scope->canManage($request->user(), $event->organisation_unit_id)) {
             abort(403);
         }
+
+        $title = $event->title;
+        $unitId = $event->organisation_unit_id;
+        $ages = $event->target_age_categories;
+        $wasPublished = $event->status === 'published';
         $event->delete();
+
+        if ($wasPublished) {
+            $this->updates->notifyYouth(
+                'Event removed: '.$title,
+                'This event has been removed from the Church of Uganda Youth Platform.',
+                null,
+                $unitId,
+                $ages,
+                $request->user()->id,
+            );
+        }
+
         return back()->with('success', 'Event deleted.');
     }
 

@@ -6,11 +6,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MediaAsset;
+use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class MediaAssetController extends Controller
 {
+    public function __construct(private PlatformUpdateNotificationService $updates) {}
+
     public function index(Request $request)
     {
         $query = MediaAsset::query();
@@ -48,7 +51,7 @@ class MediaAssetController extends Controller
         $file = $request->file('file');
         $path = $file->store('media', 'public');
 
-        MediaAsset::create([
+        $media = MediaAsset::create([
             'title' => $data['title'],
             'type' => $data['type'],
             'alt_text' => $data['alt_text'] ?? null,
@@ -57,6 +60,17 @@ class MediaAssetController extends Controller
             'file_size' => $file->getSize(),
             'is_published' => $request->boolean('is_published'),
         ]);
+
+        if ($media->is_published) {
+            $this->updates->notifyYouth(
+                'New media: '.$media->title,
+                'New '.$media->type.' content is available on the Church of Uganda Youth Platform.',
+                route('home'),
+                null,
+                'all',
+                $request->user()?->id,
+            );
+        }
 
         return back()->with('success', 'Media uploaded.');
     }
@@ -83,13 +97,39 @@ class MediaAssetController extends Controller
         }
 
         $media->update($attributes);
+
+        if ($media->is_published) {
+            $this->updates->notifyYouth(
+                'Media updated: '.$media->title,
+                'Published media content has been updated. Open the app to view the latest version.',
+                route('home'),
+                null,
+                'all',
+                $request->user()?->id,
+            );
+        }
+
         return back()->with('success', 'Media updated.');
     }
 
-    public function destroy(MediaAsset $media)
+    public function destroy(Request $request, MediaAsset $media)
     {
+        $title = $media->title;
+        $wasPublished = (bool) $media->is_published;
         if ($media->file_path) Storage::disk('public')->delete($media->file_path);
         $media->delete();
+
+        if ($wasPublished) {
+            $this->updates->notifyYouth(
+                'Media removed: '.$title,
+                'This media item is no longer available on the Church of Uganda Youth Platform.',
+                null,
+                null,
+                'all',
+                $request->user()?->id,
+            );
+        }
+
         return back()->with('success', 'Media deleted.');
     }
 

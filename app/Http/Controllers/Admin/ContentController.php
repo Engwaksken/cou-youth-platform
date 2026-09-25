@@ -7,12 +7,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Content;
 use App\Services\Access\HierarchyScopeService;
+use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ContentController extends Controller
 {
-    public function __construct(private HierarchyScopeService $scope) {}
+    public function __construct(
+        private HierarchyScopeService $scope,
+        private PlatformUpdateNotificationService $updates,
+    ) {}
 
     public function index(Request $request)
     {
@@ -51,7 +55,20 @@ class ContentController extends Controller
         $data['created_by'] = $request->user()->id;
         $data['slug'] = $this->uniqueSlug($data['title']);
         if (($data['status'] ?? 'draft') === 'published') $data['published_at'] = now();
-        Content::create($data);
+
+        $content = Content::create($data);
+
+        if ($content->status === 'published') {
+            $this->updates->notifyYouth(
+                'New '.str_replace('_', ' ', $content->type).': '.$content->title,
+                $content->summary ?: 'New content has been published on the Church of Uganda Youth Platform.',
+                route('public.news'),
+                $content->organisation_unit_id,
+                $content->target_age_categories,
+                $request->user()->id,
+            );
+        }
+
         return back()->with('success', 'Content saved successfully.');
     }
 
@@ -62,6 +79,18 @@ class ContentController extends Controller
         if (($data['title'] ?? null) !== $content->title) $data['slug'] = $this->uniqueSlug($data['title'], $content->id);
         if (($data['status'] ?? null) === 'published' && ! $content->published_at) $data['published_at'] = now();
         $content->update($data);
+
+        if ($content->status === 'published') {
+            $this->updates->notifyYouth(
+                'Updated '.str_replace('_', ' ', $content->type).': '.$content->title,
+                $content->summary ?: 'Published content has been updated. Open the platform to view the latest information.',
+                route('public.news'),
+                $content->organisation_unit_id,
+                $content->target_age_categories,
+                $request->user()->id,
+            );
+        }
+
         return back()->with('success', 'Content updated successfully.');
     }
 

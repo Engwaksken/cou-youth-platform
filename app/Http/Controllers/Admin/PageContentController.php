@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PageCardRequest;
+use App\Http\Requests\PageSlideRequest;
 use App\Models\PageCard;
 use App\Models\PageSlide;
 use Illuminate\Http\Request;
@@ -20,19 +22,10 @@ class PageContentController extends Controller
         return view('admin.page_content.index', ['page' => $page, 'slides' => $slides, 'cards' => $cards]);
     }
 
-    public function storeSlide(Request $request)
+    public function storeSlide(PageSlideRequest $request)
     {
-        $data = $request->validate([
-            'page' => 'required|string|max:50',
-            'title' => 'nullable|string|max:180',
-            'subtitle' => 'nullable|string|max:255',
-            'media_type' => 'required|in:image,video',
-            'media_file' => 'nullable|file|max:10240',
-            'media_path' => 'nullable|string|max:255',
-            'link_url' => 'nullable|string|max:255',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $data = $request->validated();
+        unset($data['media_path']);
         if ($request->hasFile('media_file')) {
             $data['media_path'] = $request->file('media_file')->store('slides', 'public');
         }
@@ -42,19 +35,10 @@ class PageContentController extends Controller
         return back()->with('success', 'Slide added.');
     }
 
-    public function updateSlide(Request $request, PageSlide $slide)
+    public function updateSlide(PageSlideRequest $request, PageSlide $slide)
     {
-        $data = $request->validate([
-            'page' => 'required|string|max:50',
-            'title' => 'nullable|string|max:180',
-            'subtitle' => 'nullable|string|max:255',
-            'media_type' => 'required|in:image,video',
-            'media_file' => 'nullable|file|max:10240',
-            'media_path' => 'nullable|string|max:255',
-            'link_url' => 'nullable|string|max:255',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $data = $request->validated();
+        unset($data['media_path']);
         if ($request->hasFile('media_file')) {
             if ($slide->media_path) Storage::disk('public')->delete($slide->media_path);
             $data['media_path'] = $request->file('media_file')->store('slides', 'public');
@@ -72,19 +56,10 @@ class PageContentController extends Controller
         return back()->with('success', 'Slide deleted.');
     }
 
-    public function storeCard(Request $request)
+    public function storeCard(PageCardRequest $request)
     {
-        $data = $request->validate([
-            'page' => 'required|string|max:50',
-            'title' => 'nullable|string|max:180',
-            'body' => 'nullable|string|max:2000',
-            'icon' => 'nullable|string|max:80',
-            'image_file' => 'nullable|file|max:10240',
-            'image_path' => 'nullable|string|max:255',
-            'link_url' => 'nullable|string|max:255',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $data = $request->validated();
+        unset($data['image_path']);
         if ($request->hasFile('image_file')) {
             $data['image_path'] = $request->file('image_file')->store('cards', 'public');
         }
@@ -94,19 +69,10 @@ class PageContentController extends Controller
         return back()->with('success', 'Card added.');
     }
 
-    public function updateCard(Request $request, PageCard $card)
+    public function updateCard(PageCardRequest $request, PageCard $card)
     {
-        $data = $request->validate([
-            'page' => 'required|string|max:50',
-            'title' => 'nullable|string|max:180',
-            'body' => 'nullable|string|max:2000',
-            'icon' => 'nullable|string|max:80',
-            'image_file' => 'nullable|file|max:10240',
-            'image_path' => 'nullable|string|max:255',
-            'link_url' => 'nullable|string|max:255',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $data = $request->validated();
+        unset($data['image_path']);
         if ($request->hasFile('image_file')) {
             if ($card->image_path) Storage::disk('public')->delete($card->image_path);
             $data['image_path'] = $request->file('image_file')->store('cards', 'public');

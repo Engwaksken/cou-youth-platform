@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Donation;
 use App\Models\DonationCampaign;
+use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -15,6 +16,8 @@ use Illuminate\View\View;
 
 class DonationController extends Controller
 {
+    public function __construct(private PlatformUpdateNotificationService $updates) {}
+
     public function index(Request $request): View
     {
         $search = trim((string) $request->string('search'));
@@ -77,13 +80,24 @@ class DonationController extends Controller
             'allow_anonymous' => ['sometimes', 'boolean'],
         ]);
 
-        DonationCampaign::create([
+        $campaign = DonationCampaign::create([
             ...$validated,
             'slug' => $this->uniqueSlug($validated['title']),
             'currency' => strtoupper($validated['currency']),
             'allow_anonymous' => $request->boolean('allow_anonymous'),
             'created_by' => $request->user()?->id,
         ]);
+
+        if (in_array($campaign->status, ['published', 'active'], true)) {
+            $this->updates->notifyYouth(
+                'New donation campaign: '.$campaign->title,
+                $campaign->description ?: 'A new youth ministry donation campaign is available.',
+                route('public.donate'),
+                null,
+                'all',
+                $request->user()?->id,
+            );
+        }
 
         return back()->with('success', 'Donation campaign created successfully.');
     }
@@ -110,10 +124,21 @@ class DonationController extends Controller
             'allow_anonymous' => $request->boolean('allow_anonymous'),
         ]);
 
+        if (in_array($campaign->status, ['published', 'active'], true)) {
+            $this->updates->notifyYouth(
+                'Donation campaign updated: '.$campaign->title,
+                $campaign->description ?: 'Donation campaign information has been updated.',
+                route('public.donate'),
+                null,
+                'all',
+                $request->user()?->id,
+            );
+        }
+
         return back()->with('success', 'Donation campaign updated successfully.');
     }
 
-    public function destroyCampaign(DonationCampaign $campaign): RedirectResponse
+    public function destroyCampaign(Request $request, DonationCampaign $campaign): RedirectResponse
     {
         if ($campaign->donations()->exists()) {
             return back()->withErrors([
@@ -121,7 +146,20 @@ class DonationController extends Controller
             ]);
         }
 
+        $title = $campaign->title;
+        $wasVisible = in_array($campaign->status, ['published', 'active'], true);
         $campaign->delete();
+
+        if ($wasVisible) {
+            $this->updates->notifyYouth(
+                'Donation campaign removed: '.$title,
+                'This donation campaign is no longer available.',
+                route('public.donate'),
+                null,
+                'all',
+                $request->user()?->id,
+            );
+        }
 
         return back()->with('success', 'Donation campaign deleted successfully.');
     }
@@ -133,7 +171,7 @@ class DonationController extends Controller
         $counter = 2;
 
         while (DonationCampaign::query()
-            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
             ->where('slug', $slug)
             ->exists()) {
             $slug = $base.'-'.$counter++;

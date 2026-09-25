@@ -1,11 +1,17 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
+
 use App\Http\Controllers\Controller;
-use App\Models\{ChurchLocation,OrganisationUnit};
+use App\Models\ChurchLocation;
+use App\Models\OrganisationUnit;
+use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\Request;
 
 class ChurchLocationController extends Controller
 {
+    public function __construct(private PlatformUpdateNotificationService $updates) {}
+
     public function index(Request $r)
     {
         $q = ChurchLocation::with('organisationUnit')->latest();
@@ -43,12 +49,68 @@ class ChurchLocationController extends Controller
         ]);
     }
 
-    public function store(Request $r){$d=$this->validated($r);ChurchLocation::create($d);return back()->with('success','Church location added.');}
-    public function update(Request $r,ChurchLocation $churchLocation){$churchLocation->update($this->validated($r));return back()->with('success','Church location updated.');}
-    public function destroy(ChurchLocation $churchLocation){$churchLocation->delete();return back()->with('success','Church location deleted.');}
+    public function store(Request $r)
+    {
+        $location = ChurchLocation::create($this->validated($r));
+
+        $this->updates->notifyYouth(
+            'Church location added: '.$location->name,
+            'A Church of Uganda location has been added or made available in the Church Locator.',
+            route('public.churches'),
+            $location->organisation_unit_id,
+            'all',
+            $r->user()?->id,
+        );
+
+        return back()->with('success','Church location added.');
+    }
+
+    public function update(Request $r, ChurchLocation $churchLocation)
+    {
+        $churchLocation->update($this->validated($r));
+
+        $this->updates->notifyYouth(
+            'Church location updated: '.$churchLocation->name,
+            'Church location, contact or fellowship information has been updated.',
+            route('public.churches'),
+            $churchLocation->organisation_unit_id,
+            'all',
+            $r->user()?->id,
+        );
+
+        return back()->with('success','Church location updated.');
+    }
+
+    public function destroy(Request $r, ChurchLocation $churchLocation)
+    {
+        $name = $churchLocation->name;
+        $unitId = $churchLocation->organisation_unit_id;
+        $churchLocation->delete();
+
+        $this->updates->notifyYouth(
+            'Church location removed: '.$name,
+            'This location is no longer available in the Church Locator.',
+            route('public.churches'),
+            $unitId,
+            'all',
+            $r->user()?->id,
+        );
+
+        return back()->with('success','Church location deleted.');
+    }
 
     private function validated(Request $r): array
     {
-        return $r->validate(['organisation_unit_id'=>'required|exists:organisation_units,id','name'=>'required|string|max:190','address'=>'nullable|string|max:500','latitude'=>'nullable|numeric|between:-90,90','longitude'=>'nullable|numeric|between:-180,180','service_times'=>'nullable|string|max:1000','youth_fellowship_times'=>'nullable|string|max:1000','phone'=>'nullable|string|max:40','email'=>'nullable|email|max:190']);
+        return $r->validate([
+            'organisation_unit_id'=>'required|exists:organisation_units,id',
+            'name'=>'required|string|max:190',
+            'address'=>'nullable|string|max:500',
+            'latitude'=>'nullable|numeric|between:-90,90',
+            'longitude'=>'nullable|numeric|between:-180,180',
+            'service_times'=>'nullable|string|max:1000',
+            'youth_fellowship_times'=>'nullable|string|max:1000',
+            'phone'=>'nullable|string|max:40',
+            'email'=>'nullable|email|max:190',
+        ]);
     }
 }
