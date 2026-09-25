@@ -1,7 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -21,7 +26,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        View::composer('*', function ($view) {
+        $this->configureRateLimiters();
+
+        View::composer('*', function ($view): void {
             try {
                 $systemName = \App\Models\SiteSetting::get('system_name', 'Church of Uganda Youth Platform') ?: 'Church of Uganda Youth Platform';
                 $logo = \App\Models\SiteSetting::get('logo');
@@ -35,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
             if (! is_string($logo) || $logo === '' || ! Storage::disk('public')->exists($logo)) {
                 $logo = null;
             }
+
             if (! is_string($favicon) || $favicon === '' || ! Storage::disk('public')->exists($favicon)) {
                 $favicon = null;
             }
@@ -43,5 +51,33 @@ class AppServiceProvider extends ServiceProvider
             $view->with('logo', $logo);
             $view->with('favicon', $favicon);
         });
+    }
+
+    private function configureRateLimiters(): void
+    {
+        RateLimiter::for('youth-login', fn (Request $request): Limit => Limit::perMinute(5)
+            ->by($this->requestIdentity($request, 'email')));
+
+        RateLimiter::for('admin-login', fn (Request $request): Limit => Limit::perMinute(5)
+            ->by($this->requestIdentity($request, 'email')));
+
+        RateLimiter::for('registration', fn (Request $request): Limit => Limit::perMinute(5)
+            ->by($request->ip()));
+
+        RateLimiter::for('password-recovery', fn (Request $request): Limit => Limit::perMinute(5)
+            ->by($this->requestIdentity($request, 'email')));
+
+        RateLimiter::for('otp-request', fn (Request $request): Limit => Limit::perMinute(3)
+            ->by($this->requestIdentity($request, 'email')));
+
+        RateLimiter::for('otp-verify', fn (Request $request): Limit => Limit::perMinute(10)
+            ->by($this->requestIdentity($request, 'email')));
+    }
+
+    private function requestIdentity(Request $request, string $field): string
+    {
+        $value = strtolower(trim((string) $request->input($field, '')));
+
+        return ($value !== '' ? $value : 'anonymous').'|'.$request->ip();
     }
 }
