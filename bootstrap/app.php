@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureCmsAccess;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,27 +14,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-
         $middleware->alias([
             'cms.access' => EnsureCmsAccess::class,
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Authentication Redirects
-        |--------------------------------------------------------------------------
-        |
-        | Guests attempting to access protected pages go to /login.
-        | Logged-in users attempting to access guest pages such as /login
-        | go directly to the CMS dashboard.
-        |
-        */
-
         $middleware->redirectGuestsTo('/login');
 
-        $middleware->redirectUsersTo('/admin');
+        $middleware->redirectUsersTo(function (Request $request): string {
+            $user = $request->user();
+
+            return $user && $user->hasCmsAccess() ? '/admin' : '/';
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Central exception rendering is added in the next hardening phase.
     })
     ->create();
