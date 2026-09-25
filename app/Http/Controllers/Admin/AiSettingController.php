@@ -107,7 +107,7 @@ class AiSettingController extends Controller
         DB::transaction(function () use ($aiSetting, $data): void {
             if ($data['is_enabled']) {
                 AiSetting::query()
-                    ->whereKeyNot($aiSetting->getKey())
+                    ->where('id', '!=', $aiSetting->getKey())
                     ->update(['is_enabled' => false]);
             }
 
