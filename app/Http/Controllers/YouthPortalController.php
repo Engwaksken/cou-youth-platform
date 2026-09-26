@@ -6,21 +6,26 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\CourseEnrolment;
+use App\Models\GuardianConsent;
 use App\Models\LifeGroup;
 use App\Models\LifeGroupMember;
 use App\Models\MediaAsset;
 use App\Models\PlatformNotificationReceipt;
 use App\Models\YouthProfile;
+use App\Services\Safeguarding\AgeCategoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use InvalidArgumentException;
 
 final class YouthPortalController extends Controller
 {
+    public function __construct(private readonly AgeCategoryService $ages) {}
+
     public function dashboard(Request $request): View
     {
         $user = $request->user();
@@ -197,7 +202,6 @@ final class YouthPortalController extends Controller
     {
         $data = $request->validate([
             'date_of_birth' => ['required', 'date', 'before:today'],
-            'age_category' => ['required', Rule::in(['teen', 'youth', 'young_adult'])],
             'organisation_unit_id' => ['nullable', 'exists:organisation_units,id'],
             'school_institution' => ['nullable', 'string', 'max:190'],
             'interests' => ['nullable', 'string', 'max:2000'],
@@ -206,6 +210,21 @@ final class YouthPortalController extends Controller
             'ministry_interests' => ['nullable', 'string', 'max:2000'],
             'profile_public' => ['sometimes', 'boolean'],
         ]);
+
+        try {
+            $data['age_category'] = $this->ages->resolve($data['date_of_birth']);
+        } catch (InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'date_of_birth' => $exception->getMessage(),
+            ]);
+        }
+
+        if ($data['age_category'] === 'teen'
+            && ! GuardianConsent::query()->where('user_id', $request->user()->id)->exists()) {
+            throw ValidationException::withMessages([
+                'date_of_birth' => 'Guardian consent is required for accounts in the teen age category.',
+            ]);
+        }
 
         foreach (['interests', 'talents', 'skills', 'ministry_interests'] as $field) {
             $data[$field] = collect(explode(',', (string) ($data[$field] ?? '')))
@@ -246,17 +265,39 @@ final class YouthPortalController extends Controller
 
     public function joinLifeGroup(Request $request, LifeGroup $lifeGroup): RedirectResponse
     {
-        abort_unless($lifeGroup->is_active, 404);
+        $userId = (int) $request->user()->id;
 
-        $activeCount = $lifeGroup->members()->where('status', 'active')->count();
-        if ($lifeGroup->member_limit && $activeCount >= $lifeGroup->member_limit) {
-            return back()->withErrors(['life_group' => 'This Life Group has reached its member limit.']);
-        }
+        DB::transaction(function () use ($lifeGroup, $userId): void {
+            $lockedGroup = LifeGroup::query()->whereKey($lifeGroup->id)->lockForUpdate()->firstOrFail();
+            abort_unless($lockedGroup->is_active, 404);
 
-        LifeGroupMember::updateOrCreate(
-            ['life_group_id' => $lifeGroup->id, 'user_id' => $request->user()->id],
-            ['role' => 'member', 'status' => 'active'],
-        );
+            $existing = LifeGroupMember::query()
+                ->where('life_group_id', $lockedGroup->id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if ($existing?->status === 'active') {
+                return;
+            }
+
+            if ($lockedGroup->member_limit) {
+                $activeCount = LifeGroupMember::query()
+                    ->where('life_group_id', $lockedGroup->id)
+                    ->where('status', 'active')
+                    ->count();
+
+                if ($activeCount >= $lockedGroup->member_limit) {
+                    throw ValidationException::withMessages([
+                        'life_group' => 'This Life Group has reached its member limit.',
+                    ]);
+                }
+            }
+
+            LifeGroupMember::query()->updateOrCreate(
+                ['life_group_id' => $lockedGroup->id, 'user_id' => $userId],
+                ['role' => 'member', 'status' => 'active'],
+            );
+        });
 
         return back()->with('success', 'You have joined '.$lifeGroup->name.'.');
     }
@@ -288,8 +329,21 @@ final class YouthPortalController extends Controller
         abort_unless((int) $receipt->user_id === (int) $request->user()->id, 403);
         $receipt->update(['read_at' => $receipt->read_at ?: now()]);
 
-        $url = $receipt->notification?->action_url;
-        return $url ? redirect()->to($url) : back()->with('success', 'Notification marked as read.');
+        $url = trim((string) ($receipt->notification?->action_url ?? ''));
+        if ($url === '') {
+            return back()->with('success', 'Notification marked as read.');
+        }
+
+        if (str_starts_with($url, '/') && ! str_starts_with($url, '//')) {
+            return redirect()->to($url);
+        }
+
+        if (filter_var($url, FILTER_VALIDATE_URL)
+            && strtolower((string) parse_url($url, PHP_URL_SCHEME)) === 'https') {
+            return redirect()->away($url);
+        }
+
+        return back()->with('success', 'Notification marked as read.');
     }
 
     public function readAllNotifications(Request $request): RedirectResponse
