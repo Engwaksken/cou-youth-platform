@@ -103,10 +103,11 @@ final class YouthPortalTest extends TestCase
             ->assertRedirect('/profile')
             ->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('youth_profiles', [
-            'user_id' => $user->id,
-            'date_of_birth' => '2004-01-01',
-            'age_category' => 'youth',
-        ]);
+        $profile = \App\Models\YouthProfile::query()
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $this->assertSame('2004-01-01', $profile->date_of_birth->toDateString());
+        $this->assertSame('youth', $profile->age_category);
     }
 }
