@@ -1,6 +1,6 @@
-@extends('public.layout')
+@extends('youth.layout')
 @section('title', 'Prayer & Pastoral Support | COU Youth')
-@section('content')
+@section('youth_content')
 <section class="hero">
 <span class="section-kicker">PRAYER & CARE</span>
 <h1>Prayer & Pastoral Support</h1>
