@@ -1,6 +1,6 @@
-@extends('public.layout')
+@extends('youth.layout')
 @section('title', 'My Profile | COU Youth')
-@section('content')
+@section('youth_content')
 <section class="hero"><span class="section-kicker">MY PROFILE</span><h1>Youth profile</h1><p>Keep your information up to date so your learning, groups and opportunities can be more relevant to you.</p></section>
 
 @if($errors->any())<div class="form-errors" role="alert"><strong>Please correct the following:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
