@@ -164,7 +164,7 @@
         @endif
         <div class="shortcut-row">
             <a href="{{ route('youth.calendar') }}"><i class="fas fa-calendar-days"></i> Calendar</a>
-            <a href="{{ route('public.donate') }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-hand-holding-heart"></i> Donate</a>
+            <a href="{{ route('youth.donations') }}"><i class="fas fa-hand-holding-heart"></i> Donate</a>
             <a href="{{ route('youth.media') }}"><i class="fas fa-photo-film"></i> Media</a>
             <a href="{{ route('public.prayer') }}"><i class="fas fa-hands-praying"></i> Prayer</a>
         </div>
@@ -227,7 +227,7 @@
 
     <div class="financial-grid">
         <article class="card dashboard-panel">
-            <div class="panel-title"><div><span class="section-kicker">DONATIONS</span><h2>Donation history</h2></div><a class="btn btn-primary" href="{{ route('public.donate') }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-plus"></i> Donate</a></div>
+            <div class="panel-title"><div><span class="section-kicker">DONATIONS</span><h2>Donation history</h2></div><a class="btn btn-primary" href="{{ route('youth.donations') }}"><i class="fas fa-plus"></i> Donate</a></div>
             <div class="finance-list">
                 @if($donations && $donations->count())
                     @foreach($donations as $donation)
