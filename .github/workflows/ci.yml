@@ -1,0 +1,65 @@
+name: Laravel CI
+
+on:
+  push:
+    branches: ['main', 'audit/**', 'fix/**', 'dev/**']
+  pull_request:
+    branches: ['main']
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl, pdo_sqlite, sqlite3, bcmath
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate Composer metadata
+        run: composer validate --no-check-publish
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: PHP syntax check
+        run: find app routes database tests -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          touch database/database.sqlite
+          php artisan key:generate
+          php artisan optimize:clear
+
+      - name: Run database migrations
+        run: php artisan migrate --force
+
+      - name: Run Laravel tests
+        run: php artisan test
+
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Composer security audit
+        run: composer audit --no-interaction
+
+      - name: NPM security audit
+        run: npm audit --audit-level=high
