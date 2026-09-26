@@ -21,7 +21,10 @@ final class LifeGroupController extends Controller
 
     public function index(Request $request): View
     {
-        $query = LifeGroup::with('organisationUnit')->withCount('members');
+        $base = LifeGroup::query();
+        $this->scope->scopeQuery($base, $request->user());
+
+        $query = (clone $base)->with('organisationUnit')->withCount('members');
         $search = trim((string) $request->query('q', ''));
         $status = (string) $request->query('status', 'active');
 
@@ -40,13 +43,15 @@ final class LifeGroupController extends Controller
             $query->where('is_active', false);
         }
 
+        $groupIds = (clone $base)->select('id');
+
         return view('admin.life_groups.index', [
             'groups' => $query->orderBy('name')->paginate(12)->withQueryString(),
             'stats' => [
-                'total' => LifeGroup::count(),
-                'active' => LifeGroup::where('is_active', true)->count(),
-                'inactive' => LifeGroup::where('is_active', false)->count(),
-                'members' => LifeGroupMember::count(),
+                'total' => (clone $base)->count(),
+                'active' => (clone $base)->where('is_active', true)->count(),
+                'inactive' => (clone $base)->where('is_active', false)->count(),
+                'members' => LifeGroupMember::query()->whereIn('life_group_id', $groupIds)->count(),
             ],
             'filters' => ['q' => $search, 'status' => $status],
         ]);
@@ -55,9 +60,7 @@ final class LifeGroupController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
-        if (! empty($data['organisation_unit_id']) && ! $this->scope->canManage($request->user(), (int) $data['organisation_unit_id'])) {
-            abort(403);
-        }
+        $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
 
         $group = LifeGroup::create($data + ['is_active' => true]);
 
@@ -75,11 +78,11 @@ final class LifeGroupController extends Controller
 
     public function update(Request $request, LifeGroup $lifeGroup)
     {
-        if ($lifeGroup->organisation_unit_id && ! $this->scope->canManage($request->user(), $lifeGroup->organisation_unit_id)) {
-            abort(403);
-        }
+        $this->authoriseUnit($request, $lifeGroup->organisation_unit_id);
+        $data = $this->validated($request);
+        $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
 
-        $lifeGroup->update($this->validated($request));
+        $lifeGroup->update($data);
 
         if ($lifeGroup->is_active) {
             $this->updates->notifyYouth(
@@ -97,10 +100,7 @@ final class LifeGroupController extends Controller
 
     public function destroy(Request $request, LifeGroup $lifeGroup)
     {
-        if ($lifeGroup->organisation_unit_id && ! $this->scope->canManage($request->user(), $lifeGroup->organisation_unit_id)) {
-            abort(403);
-        }
-
+        $this->authoriseUnit($request, $lifeGroup->organisation_unit_id);
         $lifeGroup->update(['is_active' => false]);
 
         $this->updates->notifyYouth(
@@ -115,17 +115,25 @@ final class LifeGroupController extends Controller
         return back()->with('success', 'Life Group deactivated.');
     }
 
+    private function authoriseUnit(Request $request, mixed $unitId): void
+    {
+        $normalised = $unitId === null || $unitId === '' ? null : (int) $unitId;
+        if (! $this->scope->canManage($request->user(), $normalised)) {
+            abort(403);
+        }
+    }
+
     private function validated(Request $request): array
     {
         return $request->validate([
             'organisation_unit_id' => 'nullable|exists:organisation_units,id',
-            'name' => 'required|max:180',
-            'description' => 'nullable',
+            'name' => 'required|string|max:180',
+            'description' => 'nullable|string',
             'leader_user_id' => 'nullable|exists:users,id',
             'member_limit' => 'required|integer|min:2|max:12',
-            'meeting_day' => 'nullable|max:20',
+            'meeting_day' => 'nullable|string|max:20',
             'meeting_time' => 'nullable',
-            'meeting_location' => 'nullable|max:180',
+            'meeting_location' => 'nullable|string|max:180',
         ]);
     }
 }
