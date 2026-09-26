@@ -17,7 +17,7 @@ final class OrganisationUnitController extends Controller
     public function index(Request $request): View
     {
         $base = OrganisationUnit::query();
-        if (! $this->isSuper($request)) {
+        if (! $this->scope->isSuperAdmin($request->user())) {
             $base->whereIn('id', $this->scope->allowedUnitIds($request->user()));
         }
 
@@ -66,18 +66,25 @@ final class OrganisationUnitController extends Controller
             'email' => 'nullable|email',
             'phone' => 'nullable|max:40',
         ]);
-        if ($data['type'] !== 'province' && ! $this->isSuper($request) && ! $this->scope->canManage($request->user(), $data['parent_id'] ?? null)) {
-            abort(403);
+
+        if ($data['type'] === 'province' && ! $this->scope->isSuperAdmin($request->user())) {
+            abort(403, 'Only a super administrator may create a province.');
         }
+
+        if ($data['type'] !== 'province' && ! $this->scope->canManage($request->user(), $data['parent_id'] ?? null)) {
+            abort(403, 'You may only add units below a church unit you manage.');
+        }
+
         OrganisationUnit::create($data + ['is_active' => true]);
         return back()->with('success', 'Church structure added successfully.');
     }
 
     public function update(Request $request, OrganisationUnit $organisationUnit)
     {
-        if (! $this->isSuper($request) && ! $this->scope->canManage($request->user(), $organisationUnit->id)) {
+        if (! $this->scope->canManage($request->user(), $organisationUnit->id)) {
             abort(403);
         }
+
         $organisationUnit->update($request->validate([
             'name' => 'required|max:160',
             'code' => 'nullable|max:50',
@@ -85,21 +92,19 @@ final class OrganisationUnitController extends Controller
             'phone' => 'nullable|max:40',
             'is_active' => 'boolean',
         ]));
+
         return back()->with('success', 'Church structure updated successfully.');
     }
 
     public function destroy(Request $request, OrganisationUnit $organisationUnit)
     {
-        if (! $this->isSuper($request) && ! $this->scope->canManage($request->user(), $organisationUnit->id)) {
+        if (! $this->scope->canManage($request->user(), $organisationUnit->id)) {
             abort(403);
         }
+
         abort_if($organisationUnit->children()->exists(), 422, 'Move or remove child units first.');
         $organisationUnit->delete();
-        return back()->with('success', 'Church structure removed.');
-    }
 
-    private function isSuper(Request $request): bool
-    {
-        return method_exists($request->user(), 'hasRole') && $request->user()->hasRole('super_admin');
+        return back()->with('success', 'Church structure removed.');
     }
 }
