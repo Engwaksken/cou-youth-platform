@@ -1,6 +1,6 @@
-@extends('public.layout')
+@extends('youth.layout')
 @section('title', 'Media & Online Services | COU Youth')
-@section('content')
+@section('youth_content')
 <section class="hero"><span class="section-kicker">MEDIA & WORSHIP</span><h1>Media and online services</h1><p>Watch published youth media, join live services and revisit completed online sessions.</p></section>
 
 @if($services->isNotEmpty())
