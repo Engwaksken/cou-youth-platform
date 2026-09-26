@@ -1,10 +1,20 @@
 @extends('youth.layout')
 @section('title', 'My Profile | COU Youth')
 @section('youth_content')
+@php
+    $interestCount = count($profile?->interests ?? []);
+    $talentCount = count($profile?->talents ?? []);
+    $skillCount = count($profile?->skills ?? []);
+    $ministryCount = count($profile?->ministry_interests ?? []);
+@endphp
 <section class="hero"><span class="section-kicker">MY PROFILE</span><h1>Youth profile</h1><p>Keep your information up to date so your learning, groups and opportunities can be more relevant to you.</p></section>
-
+<div class="page-stats">
+    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-heart"></i></span><div><strong>{{ $interestCount }}</strong><span>Interests</span></div></div>
+    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-star"></i></span><div><strong>{{ $talentCount }}</strong><span>Talents</span></div></div>
+    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-screwdriver-wrench"></i></span><div><strong>{{ $skillCount }}</strong><span>Skills</span></div></div>
+    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-church"></i></span><div><strong>{{ $ministryCount }}</strong><span>Ministry interests</span></div></div>
+</div>
 @if($errors->any())<div class="form-errors" role="alert"><strong>Please correct the following:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
-
 <form class="card profile-form" method="POST" action="{{ route('youth.profile.update') }}">
 @csrf @method('PUT')
 <div class="form-grid">
@@ -20,7 +30,5 @@
 <label class="privacy-option"><input type="checkbox" name="profile_public" value="1" @checked(old('profile_public',$profile?->profile_public))><span><strong>Allow my profile to be visible in approved youth community features</strong><small>Your account and sensitive information remain protected.</small></span></label>
 <div class="form-actions"><a class="btn" href="{{ route('youth.dashboard') }}">Back to dashboard</a><button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i> Save profile</button></div>
 </form>
-<style>
-.section-kicker{font-size:.74rem;font-weight:900;letter-spacing:.12em;color:var(--primary)}.profile-form{max-width:900px;margin:auto}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.form-grid label{font-size:.84rem;font-weight:800;color:#344054}.form-grid input,.form-grid select{width:100%;margin-top:6px;border:1px solid #d0d5dd;border-radius:10px;padding:12px;background:#fff;color:var(--text)}.span-2{grid-column:span 2}.privacy-option{display:flex;gap:12px;align-items:flex-start;margin:20px 0;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}.privacy-option input{margin-top:5px}.privacy-option strong,.privacy-option small{display:block}.privacy-option small{color:var(--muted);margin-top:3px}.form-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}.form-errors{max-width:900px;margin:0 auto 18px;padding:14px 16px;border:1px solid #f5b7b1;background:#fff1f0;color:#8a1c16;border-radius:10px}.form-errors ul{margin-bottom:0}@media(max-width:700px){.form-grid{grid-template-columns:1fr}.span-2{grid-column:auto}}
-</style>
+<style>.profile-form{max-width:900px;margin:auto}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.form-grid label{font-size:.84rem;font-weight:800;color:#344054}.form-grid input,.form-grid select{width:100%;margin-top:6px;border:1px solid #d0d5dd;border-radius:10px;padding:12px;background:#fff;color:var(--text)}.span-2{grid-column:span 2}.privacy-option{display:flex;gap:12px;align-items:flex-start;margin:20px 0;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}.privacy-option input{margin-top:5px}.privacy-option strong,.privacy-option small{display:block}.privacy-option small{color:var(--muted);margin-top:3px}.form-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}.form-errors{max-width:900px;margin:0 auto 18px;padding:14px 16px;border:1px solid #f5b7b1;background:#fff1f0;color:#8a1c16;border-radius:10px}.form-errors ul{margin-bottom:0}@media(max-width:700px){.form-grid{grid-template-columns:1fr}.span-2{grid-column:auto}}</style>
 @endsection
