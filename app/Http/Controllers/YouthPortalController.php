@@ -53,16 +53,28 @@ final class YouthPortalController extends Controller
                 ->get()
             : collect();
 
+        $currentTheme = Schema::hasTable('annual_themes')
+            ? DB::table('annual_themes')
+                ->where('is_published', true)
+                ->where('year', now()->year)
+                ->first()
+            : null;
+
         return view('youth.dashboard', [
             'profile' => $profile,
             'enrolments' => $enrolments,
             'notifications' => $notifications,
             'upcomingServices' => $upcomingServices,
+            'currentTheme' => $currentTheme,
             'stats' => [
                 'life_groups' => $memberships,
                 'courses' => CourseEnrolment::where('user_id', $user->id)->count(),
                 'unread' => PlatformNotificationReceipt::where('user_id', $user->id)->whereNull('read_at')->count(),
                 'prayers' => Schema::hasTable('prayer_requests') ? DB::table('prayer_requests')->where('user_id', $user->id)->count() : 0,
+                'events' => Schema::hasTable('event_registrations') ? DB::table('event_registrations')->where('user_id', $user->id)->count() : 0,
+                'certificates' => Schema::hasTable('course_certificates') ? DB::table('course_certificates')->where('user_id', $user->id)->count() : 0,
+                'media' => Schema::hasTable('media_assets') ? DB::table('media_assets')->where('is_published', true)->count() : 0,
+                'services' => Schema::hasTable('online_services') ? DB::table('online_services')->whereIn('status', ['scheduled', 'live'])->count() : 0,
             ],
         ]);
     }
@@ -207,10 +219,9 @@ final class YouthPortalController extends Controller
 
     public function media(): View
     {
-        $media = MediaAsset::query()
-            ->where('is_published', true)
-            ->latest()
-            ->paginate(12);
+        $media = Schema::hasTable('media_assets')
+            ? MediaAsset::query()->where('is_published', true)->latest()->paginate(12)
+            : new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12, 1, ['path' => request()->url(), 'query' => request()->query()]);
 
         $services = Schema::hasTable('online_services')
             ? DB::table('online_services')
@@ -222,5 +233,37 @@ final class YouthPortalController extends Controller
             : collect();
 
         return view('youth.media', compact('media', 'services'));
+    }
+
+    public function annualTheme(): View
+    {
+        $themes = Schema::hasTable('annual_themes')
+            ? DB::table('annual_themes')->where('is_published', true)->orderByDesc('year')->get()
+            : collect();
+
+        return view('youth.annual-theme', compact('themes'));
+    }
+
+    public function calendar(): View
+    {
+        $events = Schema::hasTable('events')
+            ? DB::table('events')
+                ->where('status', 'published')
+                ->where('starts_at', '>=', now()->startOfMonth()->subMonth())
+                ->orderBy('starts_at')
+                ->limit(100)
+                ->get()
+            : collect();
+
+        $services = Schema::hasTable('online_services')
+            ? DB::table('online_services')
+                ->whereIn('status', ['scheduled', 'live'])
+                ->where('starts_at', '>=', now()->startOfMonth()->subMonth())
+                ->orderBy('starts_at')
+                ->limit(100)
+                ->get()
+            : collect();
+
+        return view('youth.calendar', compact('events', 'services'));
     }
 }
