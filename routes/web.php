@@ -73,6 +73,8 @@ Route::middleware('auth')->group(function (): void {
     Route::patch('/notifications/{receipt}/read', [YouthPortalController::class, 'readNotification'])->name('youth.notifications.read');
     Route::get('/my-learning', [YouthPortalController::class, 'learning'])->name('youth.learning');
     Route::get('/media-services', [YouthPortalController::class, 'media'])->name('youth.media');
+    Route::get('/annual-theme', [YouthPortalController::class, 'annualTheme'])->name('youth.annual-theme');
+    Route::get('/calendar', [YouthPortalController::class, 'calendar'])->name('youth.calendar');
 
     Route::get('/prayer', [PublicSiteController::class, 'prayer'])->name('public.prayer');
     Route::post('/prayer', [PublicSiteController::class, 'storePrayer'])->middleware('throttle:10,1')->name('public.prayer.store');
