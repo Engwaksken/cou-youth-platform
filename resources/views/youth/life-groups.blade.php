@@ -1,6 +1,6 @@
-@extends('public.layout')
+@extends('youth.layout')
 @section('title', 'My Life Groups | COU Youth')
-@section('content')
+@section('youth_content')
 <section class="hero"><span class="section-kicker">COMMUNITY</span><h1>Life Groups</h1><p>Join an active youth fellowship, connect with others and grow through Scripture, prayer and service.</p></section>
 @if($errors->has('life_group'))<div class="form-errors" role="alert">{{ $errors->first('life_group') }}</div>@endif
 <div class="group-grid">
