@@ -1,8 +1,18 @@
 @extends('youth.layout')
 @section('title', 'My Learning | COU Youth')
 @section('youth_content')
+@php
+    $pageEnrolments = collect($enrolments->items());
+    $completedOnPage = $pageEnrolments->filter(fn($item) => !empty($item->completed_at))->count();
+    $inProgressOnPage = $pageEnrolments->filter(fn($item) => empty($item->completed_at) && (int) $item->progress_percent > 0)->count();
+@endphp
 <section class="hero"><span class="section-kicker">LEARNING</span><h1>My learning</h1><p>Review your enrolled courses and discover published learning that matches your youth profile.</p></section>
-
+<div class="page-stats">
+    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-book-open"></i></span><div><strong>{{ $enrolments->total() }}</strong><span>Total enrolments</span></div></div>
+    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-circle-check"></i></span><div><strong>{{ $completedOnPage }}</strong><span>Completed on this page</span></div></div>
+    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-bars-progress"></i></span><div><strong>{{ $inProgressOnPage }}</strong><span>In progress on this page</span></div></div>
+    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-lightbulb"></i></span><div><strong>{{ $availableCourses->count() }}</strong><span>Recommended courses</span></div></div>
+</div>
 <section class="learning-section">
 <div class="section-head"><div><span class="section-kicker">ENROLLED</span><h2>Your courses</h2></div><a class="btn" href="{{ route('public.courses') }}">Browse catalogue</a></div>
 <div class="course-grid">
@@ -21,21 +31,12 @@
 </div>
 <div class="pagination">{{ $enrolments->links() }}</div>
 </section>
-
 @if($availableCourses->isNotEmpty())
-<section class="learning-section">
-<div class="section-head"><div><span class="section-kicker">RECOMMENDED</span><h2>Available for you</h2></div></div>
-<div class="course-grid">
+<section class="learning-section"><div class="section-head"><div><span class="section-kicker">RECOMMENDED</span><h2>Available for you</h2></div></div><div class="course-grid">
 @foreach($availableCourses as $course)
-<article class="card course-card">
-@if($course->image_path)<img class="course-image" src="{{ asset('storage/'.$course->image_path) }}" alt="">@else<div class="course-icon"><i class="{{ $course->icon_class ?: 'fas fa-graduation-cap' }}"></i></div>@endif
-<h3>{{ $course->title }}</h3><p class="muted">{{ \Illuminate\Support\Str::limit($course->description,130) }}</p><a class="btn" href="{{ route('public.courses.show',$course) }}">View course</a>
-</article>
+<article class="card course-card">@if($course->image_path)<img class="course-image" src="{{ asset('storage/'.$course->image_path) }}" alt="">@else<div class="course-icon"><i class="{{ $course->icon_class ?: 'fas fa-graduation-cap' }}"></i></div>@endif<h3>{{ $course->title }}</h3><p class="muted">{{ \Illuminate\Support\Str::limit($course->description,130) }}</p><a class="btn" href="{{ route('public.courses.show',$course) }}">View course</a></article>
 @endforeach
-</div>
-</section>
+</div></section>
 @endif
-<style>
-.section-kicker{font-size:.74rem;font-weight:900;letter-spacing:.12em;color:var(--primary)}.learning-section{margin-bottom:34px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:15px}.section-head h2{margin:2px 0 0}.course-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.course-card{display:flex;flex-direction:column;gap:12px}.course-card h3{margin:0}.course-card .btn{margin-top:auto}.course-icon{width:46px;height:46px;border-radius:10px;background:#f0ebf8;color:var(--primary);display:grid;place-items:center;font-size:1.15rem}.course-image{width:100%;height:150px;object-fit:cover}.course-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.8rem;color:#475467}.progress-wrap{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}.progress-wrap strong{font-size:.8rem;color:var(--primary)}.progress-bar{height:8px;background:#ece8f3;border-radius:999px;overflow:hidden}.progress-bar span{display:block;height:100%;background:var(--primary);border-radius:999px}.empty-card{grid-column:1/-1;text-align:center;padding:30px}@media(max-width:900px){.course-grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.course-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-direction:column}}
-</style>
+<style>.learning-section{margin-bottom:34px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:15px}.section-head h2{margin:2px 0 0}.course-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.course-card{display:flex;flex-direction:column;gap:12px}.course-card h3{margin:0}.course-card .btn{margin-top:auto}.course-icon{width:46px;height:46px;border-radius:10px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font-size:1.15rem}.course-image{width:100%;height:150px;object-fit:cover}.course-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.8rem;color:#475467}.progress-wrap{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}.progress-wrap strong{font-size:.8rem;color:var(--primary)}.progress-bar{height:8px;background:#ece8f3;border-radius:999px;overflow:hidden}.progress-bar span{display:block;height:100%;background:var(--primary);border-radius:999px}.empty-card{grid-column:1/-1;text-align:center;padding:30px}@media(max-width:900px){.course-grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.course-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-direction:column}}</style>
 @endsection
