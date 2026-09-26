@@ -1,6 +1,6 @@
-@extends('public.layout')
+@extends('youth.layout')
 @section('title', 'My Certificates | COU Youth')
-@section('content')
+@section('youth_content')
 <section class="hero"><span class="section-kicker">ACHIEVEMENTS</span><h1>My certificates</h1><p>View certificates issued after completing eligible discipleship and learning courses.</p></section>
 <section class="certificate-section">
 <div class="certificate-grid">
