@@ -1,6 +1,6 @@
-@extends('public.layout')
+@extends('youth.layout')
 @section('title', 'My Events | COU Youth')
-@section('content')
+@section('youth_content')
 <section class="hero"><span class="section-kicker">EVENTS</span><h1>My events</h1><p>Track your registrations, attendance and upcoming Church of Uganda youth events.</p></section>
 
 <section class="activity-section">
