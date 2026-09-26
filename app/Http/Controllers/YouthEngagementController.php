@@ -140,8 +140,6 @@ final class YouthEngagementController extends Controller
                 'user_id' => $request->user()->id,
             ],
             [
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
                 'status' => 'registered',
                 'payment_status' => (float) $event->fee > 0 ? 'pending' : 'not_required',
             ],
