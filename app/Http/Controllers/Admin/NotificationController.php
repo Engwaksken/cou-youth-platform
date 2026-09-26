@@ -19,7 +19,10 @@ class NotificationController extends Controller
 
     public function index(Request $request)
     {
-        $query = PlatformNotification::query()->with('organisationUnit')->latest();
+        $base = PlatformNotification::query();
+        $this->scope->scopeQuery($base, $request->user());
+
+        $query = (clone $base)->with('organisationUnit')->latest();
         $search = trim((string) $request->query('q', ''));
         $channel = (string) $request->query('channel', '');
         $ageCategory = (string) $request->query('age_category', '');
@@ -36,12 +39,12 @@ class NotificationController extends Controller
         return view('admin.notifications.index', [
             'items' => $query->paginate(12)->withQueryString(),
             'stats' => [
-                'total' => PlatformNotification::count(),
-                'active' => PlatformNotification::where('is_active', true)->count(),
-                'scheduled' => PlatformNotification::whereNotNull('scheduled_at')->where('scheduled_at', '>', now())->count(),
-                'all_channel' => PlatformNotification::where('channel', 'all')->count(),
+                'total' => (clone $base)->count(),
+                'active' => (clone $base)->where('is_active', true)->count(),
+                'scheduled' => (clone $base)->whereNotNull('scheduled_at')->where('scheduled_at', '>', now())->count(),
+                'all_channel' => (clone $base)->where('channel', 'all')->count(),
             ],
-            'chart' => PlatformNotification::query()->selectRaw('channel, COUNT(*) as total')->groupBy('channel')->pluck('total', 'channel'),
+            'chart' => (clone $base)->selectRaw('channel, COUNT(*) as total')->groupBy('channel')->pluck('total', 'channel'),
             'filters' => ['q' => $search, 'channel' => $channel, 'age_category' => $ageCategory],
         ]);
     }
@@ -66,17 +69,18 @@ class NotificationController extends Controller
 
     public function update(Request $request, PlatformNotification $notification)
     {
+        $this->authoriseUnit($request, $notification->organisation_unit_id);
+
         $data = $this->validated($request);
         $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
+
         $notification->update($data + ['is_active' => $request->boolean('is_active')]);
         return back()->with('success', 'Notification updated successfully.');
     }
 
     public function destroy(Request $request, PlatformNotification $notification)
     {
-        if ($notification->organisation_unit_id) {
-            $this->authoriseUnit($request, $notification->organisation_unit_id);
-        }
+        $this->authoriseUnit($request, $notification->organisation_unit_id);
         $notification->delete();
         return back()->with('success', 'Notification deleted.');
     }
@@ -89,14 +93,16 @@ class NotificationController extends Controller
             'channel' => 'required|in:in_app,push,email,all',
             'organisation_unit_id' => 'nullable|exists:organisation_units,id',
             'age_category' => 'required|in:teen,youth,young_adult,all',
-            'action_url' => 'nullable|max:255',
+            'action_url' => ['nullable', 'string', 'max:255', 'regex:/^(\/|https:\/\/[^\s]+)$/'],
             'scheduled_at' => 'nullable|date',
         ]);
     }
 
     private function authoriseUnit(Request $request, mixed $unitId): void
     {
-        if (! empty($unitId) && ! $this->scope->canManage($request->user(), (int) $unitId)) {
+        $normalised = $unitId === null || $unitId === '' ? null : (int) $unitId;
+
+        if (! $this->scope->canManage($request->user(), $normalised)) {
             abort(403);
         }
     }
