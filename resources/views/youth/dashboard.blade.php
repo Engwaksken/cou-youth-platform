@@ -1,6 +1,6 @@
-@extends('public.layout')
+@extends('youth.layout')
 @section('title', 'My Dashboard | COU Youth')
-@section('content')
+@section('youth_content')
 <section class="hero youth-hero">
     <span class="section-kicker">MY COU YOUTH</span>
     <h1>Welcome, {{ auth()->user()->name }}</h1>
