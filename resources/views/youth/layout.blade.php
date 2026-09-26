@@ -48,7 +48,7 @@
         </a>
     </div>
     <div class="top-actions">
-        <span class="user-name">{{ auth()->user()->name }}</span>
+        <span class="user-name">Welcome, {{ auth()->user()->name }}</span>
         <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-light" type="submit"><i class="fas fa-right-from-bracket"></i> Logout</button></form>
     </div>
 </div>
