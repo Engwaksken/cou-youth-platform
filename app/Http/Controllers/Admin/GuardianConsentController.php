@@ -1,49 +1,101 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
+
 use App\Http\Controllers\Controller;
 use App\Models\GuardianConsent;
+use App\Models\YouthProfile;
+use App\Services\Access\HierarchyScopeService;
 use Illuminate\Http\Request;
 
-class GuardianConsentController extends Controller
+final class GuardianConsentController extends Controller
 {
-    public function index(Request $r)
+    public function __construct(private readonly HierarchyScopeService $scope) {}
+
+    public function index(Request $request)
     {
-        $q = GuardianConsent::with('user')->latest();
-        if ($r->filled('status')) $q->where('status', $r->status);
-        if ($r->filled('q')) {
-            $search = trim((string) $r->q);
-            $q->where(function ($builder) use ($search) {
-                $builder->where('guardian_name','like',"%{$search}%")
-                    ->orWhere('guardian_email','like',"%{$search}%")
-                    ->orWhere('guardian_phone','like',"%{$search}%")
-                    ->orWhereHas('user', fn($user) => $user->where('name','like',"%{$search}%")->orWhere('email','like',"%{$search}%"));
+        $base = $this->scopedQuery($request);
+        $query = (clone $base)->with('user')->latest();
+
+        if ($request->filled('status')) {
+            $query->where('status', (string) $request->status);
+        }
+        if ($request->filled('q')) {
+            $search = trim((string) $request->q);
+            $query->where(function ($builder) use ($search): void {
+                $builder->where('guardian_name', 'like', "%{$search}%")
+                    ->orWhere('guardian_email', 'like', "%{$search}%")
+                    ->orWhere('guardian_phone', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($user) => $user
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%"));
             });
         }
 
         $stats = [
-            'total' => GuardianConsent::count(),
-            'pending' => GuardianConsent::where('status','pending')->count(),
-            'approved' => GuardianConsent::where('status','approved')->count(),
-            'rejected' => GuardianConsent::where('status','rejected')->count(),
+            'total' => (clone $base)->count(),
+            'pending' => (clone $base)->where('status', 'pending')->count(),
+            'approved' => (clone $base)->where('status', 'approved')->count(),
+            'rejected' => (clone $base)->where('status', 'rejected')->count(),
         ];
-        $chart = GuardianConsent::selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total','status');
+        $chart = (clone $base)->selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status');
 
         return view('admin.safeguarding.consents', [
-            'consents' => $q->paginate(12)->withQueryString(),
+            'consents' => $query->paginate(12)->withQueryString(),
             'stats' => $stats,
             'chart' => $chart,
         ]);
     }
 
-    public function approve(Request $r, GuardianConsent $guardianConsent)
+    public function approve(Request $request, GuardianConsent $guardianConsent)
     {
-        $guardianConsent->update(['status'=>'approved','verified_by'=>$r->user()->id,'verified_at'=>now()]);
-        return back()->with('success','Guardian consent approved.');
+        $this->authoriseConsent($request, $guardianConsent);
+        $guardianConsent->update([
+            'status' => 'approved',
+            'verified_by' => $request->user()->id,
+            'verified_at' => now(),
+        ]);
+
+        return back()->with('success', 'Guardian consent approved.');
     }
 
-    public function reject(Request $r, GuardianConsent $guardianConsent)
+    public function reject(Request $request, GuardianConsent $guardianConsent)
     {
-        $guardianConsent->update(['status'=>'rejected','verified_by'=>$r->user()->id,'verified_at'=>now()]);
-        return back()->with('success','Guardian consent rejected.');
+        $this->authoriseConsent($request, $guardianConsent);
+        $guardianConsent->update([
+            'status' => 'rejected',
+            'verified_by' => $request->user()->id,
+            'verified_at' => now(),
+        ]);
+
+        return back()->with('success', 'Guardian consent rejected.');
+    }
+
+    private function scopedQuery(Request $request)
+    {
+        $query = GuardianConsent::query();
+        if (! $this->scope->isSuperAdmin($request->user())) {
+            $query->whereIn('user_id', YouthProfile::query()
+                ->whereIn('organisation_unit_id', $this->scope->allowedUnitIds($request->user()))
+                ->select('user_id'));
+        }
+
+        return $query;
+    }
+
+    private function authoriseConsent(Request $request, GuardianConsent $consent): void
+    {
+        if ($this->scope->isSuperAdmin($request->user())) {
+            return;
+        }
+
+        $allowed = YouthProfile::query()
+            ->where('user_id', $consent->user_id)
+            ->whereIn('organisation_unit_id', $this->scope->allowedUnitIds($request->user()))
+            ->exists();
+
+        abort_unless($allowed, 403);
     }
 }
