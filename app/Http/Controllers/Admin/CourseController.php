@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\OrganisationUnit;
+use App\Services\Access\HierarchyScopeService;
 use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -16,11 +17,17 @@ use Illuminate\View\View;
 
 final class CourseController extends Controller
 {
-    public function __construct(private PlatformUpdateNotificationService $updates) {}
+    public function __construct(
+        private PlatformUpdateNotificationService $updates,
+        private HierarchyScopeService $scope,
+    ) {}
 
     public function index(Request $request): View
     {
-        $query = Course::with('lessons')->withCount('lessons');
+        $base = Course::query();
+        $this->scope->scopeQuery($base, $request->user());
+
+        $query = (clone $base)->with('lessons')->withCount('lessons');
         $search = trim((string) $request->query('q', ''));
         $status = (string) $request->query('status', '');
 
@@ -38,14 +45,22 @@ final class CourseController extends Controller
             $query->where('is_published', false);
         }
 
+        $allowedUnitIds = $this->scope->allowedUnitIds($request->user());
+        $units = OrganisationUnit::query()
+            ->when(! $this->scope->isSuperAdmin($request->user()), fn ($builder) => $builder->whereIn('id', $allowedUnitIds))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $courseIds = (clone $base)->select('id');
+
         return view('admin.courses.index', [
             'courses' => $query->latest()->paginate(12)->withQueryString(),
-            'units' => OrganisationUnit::orderBy('name')->get(['id', 'name']),
+            'units' => $units,
             'stats' => [
-                'total' => Course::count(),
-                'published' => Course::where('is_published', true)->count(),
-                'draft' => Course::where('is_published', false)->count(),
-                'lessons' => Lesson::count(),
+                'total' => (clone $base)->count(),
+                'published' => (clone $base)->where('is_published', true)->count(),
+                'draft' => (clone $base)->where('is_published', false)->count(),
+                'lessons' => Lesson::query()->whereIn('course_id', $courseIds)->count(),
             ],
             'filters' => ['q' => $search, 'status' => $status],
         ]);
@@ -54,6 +69,8 @@ final class CourseController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
+
         if (($data['visual_type'] ?? 'icon') === 'image' && ! $request->hasFile('image')) {
             throw ValidationException::withMessages(['image' => ['Upload a card image when Image is selected.']]);
         }
@@ -76,7 +93,10 @@ final class CourseController extends Controller
 
     public function update(Request $request, Course $course)
     {
+        $this->authoriseUnit($request, $course->organisation_unit_id);
         $data = $this->validated($request);
+        $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
+
         if (($data['visual_type'] ?? 'icon') === 'image' && ! $request->hasFile('image') && ! $course->image_path) {
             throw ValidationException::withMessages(['image' => ['Upload a card image when Image is selected.']]);
         }
@@ -100,6 +120,8 @@ final class CourseController extends Controller
 
     public function destroy(Request $request, Course $course)
     {
+        $this->authoriseUnit($request, $course->organisation_unit_id);
+
         $title = $course->title;
         $wasPublished = (bool) $course->is_published;
         $unitId = $course->organisation_unit_id;
@@ -126,16 +148,18 @@ final class CourseController extends Controller
 
     public function storeLesson(Request $request, Course $course)
     {
+        $this->authoriseUnit($request, $course->organisation_unit_id);
+
         $data = $request->validate([
             'title' => 'required|string|max:190',
             'body' => 'nullable|string',
-            'media_url' => 'nullable|url|max:2048',
+            'media_url' => 'nullable|url:http,https|max:2048',
             'position' => 'nullable|integer|min:1',
             'is_published' => 'sometimes|boolean',
         ]);
         $lesson = $course->lessons()->create([
             ...$data,
-            'position' => $data['position'] ?? ($course->lessons()->max('position') + 1),
+            'position' => $data['position'] ?? ((int) $course->lessons()->max('position') + 1),
             'is_published' => $request->boolean('is_published'),
         ]);
 
@@ -153,11 +177,20 @@ final class CourseController extends Controller
         return back()->with('success', 'Lesson added.');
     }
 
-    public function destroyLesson(Course $course, Lesson $lesson)
+    public function destroyLesson(Request $request, Course $course, Lesson $lesson)
     {
         abort_unless($lesson->course_id === $course->id, 404);
+        $this->authoriseUnit($request, $course->organisation_unit_id);
         $lesson->delete();
         return back()->with('success', 'Lesson deleted.');
+    }
+
+    private function authoriseUnit(Request $request, mixed $unitId): void
+    {
+        $normalised = $unitId === null || $unitId === '' ? null : (int) $unitId;
+        if (! $this->scope->canManage($request->user(), $normalised)) {
+            abort(403);
+        }
     }
 
     private function validated(Request $request): array
