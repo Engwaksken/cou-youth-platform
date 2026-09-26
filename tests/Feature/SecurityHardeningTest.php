@@ -13,13 +13,13 @@ class SecurityHardeningTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_regular_youth_is_redirected_home_from_guest_only_pages(): void
+    public function test_regular_youth_is_redirected_to_dashboard_from_guest_only_pages(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user)
             ->get('/login')
-            ->assertRedirect('/');
+            ->assertRedirect('/dashboard');
     }
 
     public function test_active_cms_user_is_redirected_to_admin_from_guest_only_pages(): void
