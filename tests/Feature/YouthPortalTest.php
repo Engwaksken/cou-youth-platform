@@ -105,7 +105,7 @@ final class YouthPortalTest extends TestCase
 
         $this->assertDatabaseHas('youth_profiles', [
             'user_id' => $user->id,
-            'date_of_birth' => '2004-01-01 00:00:00',
+            'date_of_birth' => '2004-01-01',
             'age_category' => 'youth',
         ]);
     }
