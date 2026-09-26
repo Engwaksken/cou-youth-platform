@@ -43,6 +43,7 @@ final class EnsureCmsModuleAccess
             'admin.guardian-consents.*',
             'admin.prayer.*',
             'admin.moderation.*',
+            'admin.comments.*',
         ],
         'finance_admin' => [
             'admin.dashboard',
@@ -82,8 +83,7 @@ final class EnsureCmsModuleAccess
         }
 
         foreach ($roles as $assignment) {
-            $patterns = self::ROLE_ROUTE_PATTERNS[$assignment->role] ?? [];
-            if ($this->matchesAny($routeName, $patterns)) {
+            if ($this->matchesAny($routeName, self::ROLE_ROUTE_PATTERNS[$assignment->role] ?? [])) {
                 return $next($request);
             }
 
