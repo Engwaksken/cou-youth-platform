@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
-class AdminAuthController extends Controller
+final class AdminAuthController extends Controller
 {
     public function showLoginForm(): View
     {
@@ -24,14 +24,21 @@ class AdminAuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $remember = $request->boolean('remember');
-
-        if (! Auth::attempt($credentials, $remember)) {
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors([
-                    'email' => 'The provided credentials are incorrect.',
-                ]);
+                ->withErrors(['email' => 'The provided credentials are incorrect.']);
+        }
+
+        $user = $request->user();
+        if (! $user || ! $user->hasCmsAccess()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => 'This account does not have active CMS access.']);
         }
 
         $request->session()->regenerate();
@@ -42,10 +49,9 @@ class AdminAuthController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('admin.login');
     }
 }
