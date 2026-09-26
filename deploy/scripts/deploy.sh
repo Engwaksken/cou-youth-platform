@@ -17,20 +17,12 @@ restore_application() {
 
 trap restore_application EXIT
 
-if ! command -v php >/dev/null 2>&1; then
-    echo "PHP is required for deployment." >&2
-    exit 1
-fi
-
-if ! command -v composer >/dev/null 2>&1; then
-    echo "Composer is required for deployment." >&2
-    exit 1
-fi
-
-if ! command -v npm >/dev/null 2>&1; then
-    echo "npm is required to build production frontend assets." >&2
-    exit 1
-fi
+for command in php composer npm mysqldump; do
+    if ! command -v "$command" >/dev/null 2>&1; then
+        echo "$command is required for production deployment." >&2
+        exit 1
+    fi
+done
 
 # Build frontend assets before downtime. Prefer npm ci once a lock file is committed.
 if [[ -f package-lock.json ]]; then
@@ -40,6 +32,9 @@ else
     npm install --no-audit --no-fund
 fi
 npm run build
+
+# Never run production schema migrations without a fresh database snapshot.
+php artisan cou:backup --database-only
 
 php artisan down --render="errors::503" || php artisan down
 maintenance=1
