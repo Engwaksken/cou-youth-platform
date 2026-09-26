@@ -49,6 +49,15 @@ final class HierarchyScopeService
         return $all->values();
     }
 
+    public function scopeQuery($query, $user, string $column = 'organisation_unit_id')
+    {
+        if ($this->isSuperAdmin($user)) {
+            return $query;
+        }
+
+        return $query->whereIn($column, $this->allowedUnitIds($user));
+    }
+
     public function canManage($user, ?int $unitId): bool
     {
         if (! $user) {
