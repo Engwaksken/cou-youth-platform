@@ -50,54 +50,33 @@
         <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-light" type="submit"><i class="fas fa-right-from-bracket"></i> Logout</button></form>
     </div>
 </div>
-
 <div class="wrap">
     <aside class="side" id="portalSidebar" aria-label="Youth portal navigation">
-        <div class="side-brand">
-            @if(!empty($sysLogoUrl))<span class="brand-logo-shell"><img class="brand-logo" src="{{ $sysLogoUrl }}" alt=""></span>@else<span class="brand-logo-shell"><i class="fas fa-church" style="color:var(--primary)"></i></span>@endif
-            <div class="side-brand-copy"><strong>{{ $brand['short_name'] ?? 'COU Youth Platform' }}</strong><small>{{ $brand['tagline'] ?? 'Connect • Grow • Serve' }}</small></div>
-        </div>
-
+        <div class="side-brand">@if(!empty($sysLogoUrl))<span class="brand-logo-shell"><img class="brand-logo" src="{{ $sysLogoUrl }}" alt=""></span>@else<span class="brand-logo-shell"><i class="fas fa-church" style="color:var(--primary)"></i></span>@endif<div class="side-brand-copy"><strong>{{ $brand['short_name'] ?? 'COU Youth Platform' }}</strong><small>{{ $brand['tagline'] ?? 'Connect • Grow • Serve' }}</small></div></div>
         <div class="nav-label">Overview</div>
         <a href="{{ route('youth.dashboard') }}" class="{{ request()->routeIs('youth.dashboard') ? 'active' : '' }}"><i class="fas fa-gauge-high"></i> Dashboard</a>
         <a href="{{ route('home') }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-up-right-from-square"></i> Public Website</a>
-
         <div class="nav-label">My Account</div>
         <a href="{{ route('youth.profile') }}" class="{{ request()->routeIs('youth.profile*') ? 'active' : '' }}"><i class="fas fa-user-pen"></i> My Profile</a>
         <a href="{{ route('youth.notifications') }}" class="{{ request()->routeIs('youth.notifications*') ? 'active' : '' }}"><i class="fas fa-bell"></i> Notifications</a>
         <a href="{{ route('youth.notification-preferences') }}" class="{{ request()->routeIs('youth.notification-preferences*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Preferences</a>
-
         <div class="nav-label">Growth & Community</div>
         <a href="{{ route('youth.learning') }}" class="{{ request()->routeIs('youth.learning') ? 'active' : '' }}"><i class="fas fa-graduation-cap"></i> My Learning</a>
         <a href="{{ route('youth.life-groups') }}" class="{{ request()->routeIs('youth.life-groups*') ? 'active' : '' }}"><i class="fas fa-people-group"></i> Life Groups</a>
         <a href="{{ route('youth.events') }}" class="{{ request()->routeIs('youth.events*') ? 'active' : '' }}"><i class="fas fa-calendar-check"></i> My Events</a>
+        <a href="{{ route('youth.calendar') }}" class="{{ request()->routeIs('youth.calendar') ? 'active' : '' }}"><i class="fas fa-calendar-days"></i> Calendar</a>
         <a href="{{ route('youth.certificates') }}" class="{{ request()->routeIs('youth.certificates') ? 'active' : '' }}"><i class="fas fa-certificate"></i> Certificates</a>
         <a href="{{ route('public.prayer') }}" class="{{ request()->routeIs('public.prayer*') ? 'active' : '' }}"><i class="fas fa-hands-praying"></i> Prayer Support</a>
-
         <div class="nav-label">Resources</div>
+        <a href="{{ route('youth.annual-theme') }}" class="{{ request()->routeIs('youth.annual-theme') ? 'active' : '' }}"><i class="fas fa-book-bible"></i> Annual Theme</a>
         <a href="{{ route('youth.media') }}" class="{{ request()->routeIs('youth.media') ? 'active' : '' }}"><i class="fas fa-photo-film"></i> Media & Services</a>
+        <a href="{{ route('public.donate') }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-hand-holding-heart"></i> Donate</a>
     </aside>
-
     <div class="side-backdrop" id="sideBackdrop"></div>
-
-    <main class="main" id="main-content">
-        @if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif
-        @yield('youth_content')
-    </main>
+    <main class="main" id="main-content">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('youth_content')</main>
 </div>
-
 <script>
-document.addEventListener('DOMContentLoaded',()=>{
-    const btn=document.getElementById('menuToggle');
-    const side=document.getElementById('portalSidebar');
-    const backdrop=document.getElementById('sideBackdrop');
-    if(!btn||!side||!backdrop)return;
-    const close=()=>{side.classList.remove('open');backdrop.classList.remove('open')};
-    btn.addEventListener('click',()=>{side.classList.toggle('open');backdrop.classList.toggle('open')});
-    backdrop.addEventListener('click',close);
-    side.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));
-    window.addEventListener('resize',()=>{if(window.innerWidth>800)close()});
-});
+document.addEventListener('DOMContentLoaded',()=>{const btn=document.getElementById('menuToggle');const side=document.getElementById('portalSidebar');const backdrop=document.getElementById('sideBackdrop');if(!btn||!side||!backdrop)return;const close=()=>{side.classList.remove('open');backdrop.classList.remove('open')};btn.addEventListener('click',()=>{side.classList.toggle('open');backdrop.classList.toggle('open')});backdrop.addEventListener('click',close);side.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));window.addEventListener('resize',()=>{if(window.innerWidth>800)close()});});
 </script>
 </body>
 </html>
