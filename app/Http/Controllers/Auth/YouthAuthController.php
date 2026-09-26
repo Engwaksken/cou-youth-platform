@@ -42,7 +42,7 @@ final class YouthAuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('home'));
+        return redirect()->intended(route('youth.dashboard'));
     }
 
     public function showRegister(): View
@@ -114,7 +114,7 @@ final class YouthAuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('home')->with('success', 'Your youth account has been created successfully.');
+        return redirect()->route('youth.dashboard')->with('success', 'Your youth account has been created successfully.');
     }
 
     public function showForgot(): View
