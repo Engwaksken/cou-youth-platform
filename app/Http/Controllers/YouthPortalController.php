@@ -13,6 +13,7 @@ use App\Models\PlatformNotificationReceipt;
 use App\Models\YouthProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -24,34 +25,92 @@ final class YouthPortalController extends Controller
     {
         $user = $request->user();
         $profile = YouthProfile::with('organisationUnit')->where('user_id', $user->id)->first();
+        $search = trim((string) $request->query('q', ''));
+        $period = (string) $request->query('period', 'month');
+        $allowedPeriods = ['today', 'week', 'month', 'year', 'all'];
+        if (! in_array($period, $allowedPeriods, true)) {
+            $period = 'month';
+        }
 
-        $memberships = LifeGroupMember::query()
+        $periodBounds = match ($period) {
+            'today' => [now()->startOfDay(), now()->endOfDay()],
+            'week' => [now()->startOfWeek(), now()->endOfWeek()],
+            'month' => [now()->startOfMonth(), now()->endOfMonth()],
+            'year' => [now()->startOfYear(), now()->endOfYear()],
+            default => [null, null],
+        };
+
+        $applyPeriod = static function ($query, string $column = 'created_at') use ($periodBounds) {
+            [$from, $to] = $periodBounds;
+            if ($from && $to) {
+                $query->whereBetween($column, [$from, $to]);
+            }
+
+            return $query;
+        };
+
+        $membershipQuery = LifeGroupMember::query()
             ->where('user_id', $user->id)
-            ->where('status', 'active')
-            ->count();
+            ->where('status', 'active');
+        $applyPeriod($membershipQuery);
+        $memberships = $membershipQuery->count();
 
-        $enrolments = CourseEnrolment::query()
+        $enrolmentQuery = CourseEnrolment::query()
             ->where('user_id', $user->id)
             ->with('course')
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->whereHas('course', function ($courseQuery) use ($search): void {
+                    $courseQuery->where(function ($nested) use ($search): void {
+                        $nested->where('title', 'like', '%'.$search.'%')
+                            ->orWhere('description', 'like', '%'.$search.'%');
+                    });
+                });
+            });
+        $applyPeriod($enrolmentQuery);
+        $enrolments = $enrolmentQuery
             ->latest()
-            ->limit(5)
-            ->get();
+            ->paginate(6, ['*'], 'learning_page')
+            ->withQueryString();
 
-        $notifications = PlatformNotificationReceipt::query()
+        $notificationQuery = PlatformNotificationReceipt::query()
             ->with('notification')
             ->where('user_id', $user->id)
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->whereHas('notification', function ($notificationQuery) use ($search): void {
+                    $notificationQuery->where(function ($nested) use ($search): void {
+                        $nested->where('title', 'like', '%'.$search.'%')
+                            ->orWhere('body', 'like', '%'.$search.'%');
+                    });
+                });
+            });
+        $applyPeriod($notificationQuery);
+        $notifications = $notificationQuery
             ->latest()
-            ->limit(5)
-            ->get();
+            ->paginate(6, ['*'], 'updates_page')
+            ->withQueryString();
 
-        $upcomingServices = Schema::hasTable('online_services')
-            ? DB::table('online_services')
+        if (Schema::hasTable('online_services')) {
+            $serviceQuery = DB::table('online_services')
                 ->whereIn('status', ['scheduled', 'live'])
-                ->where('starts_at', '>=', now()->subHours(3))
+                ->when($search !== '', function ($query) use ($search): void {
+                    $query->where(function ($nested) use ($search): void {
+                        $nested->where('title', 'like', '%'.$search.'%')
+                            ->orWhere('speaker', 'like', '%'.$search.'%')
+                            ->orWhere('platform', 'like', '%'.$search.'%');
+                    });
+                });
+            $applyPeriod($serviceQuery, 'starts_at');
+            $upcomingServices = $serviceQuery
                 ->orderBy('starts_at')
-                ->limit(4)
-                ->get()
-            : collect();
+                ->paginate(6, ['*'], 'ministry_page')
+                ->withQueryString();
+        } else {
+            $upcomingServices = new LengthAwarePaginator([], 0, 6, 1, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+                'pageName' => 'ministry_page',
+            ]);
+        }
 
         $currentTheme = Schema::hasTable('annual_themes')
             ? DB::table('annual_themes')
@@ -60,21 +119,66 @@ final class YouthPortalController extends Controller
                 ->first()
             : null;
 
+        $courseStats = CourseEnrolment::query()->where('user_id', $user->id);
+        $applyPeriod($courseStats);
+
+        $unreadStats = PlatformNotificationReceipt::query()
+            ->where('user_id', $user->id)
+            ->whereNull('read_at');
+        $applyPeriod($unreadStats);
+
+        $eventStats = Schema::hasTable('event_registrations')
+            ? DB::table('event_registrations')->where('user_id', $user->id)
+            : null;
+        if ($eventStats) {
+            $applyPeriod($eventStats);
+        }
+
+        $certificateStats = Schema::hasTable('course_certificates')
+            ? DB::table('course_certificates')->where('user_id', $user->id)
+            : null;
+        if ($certificateStats) {
+            $applyPeriod($certificateStats);
+        }
+
+        $prayerStats = Schema::hasTable('prayer_requests')
+            ? DB::table('prayer_requests')->where('user_id', $user->id)
+            : null;
+        if ($prayerStats) {
+            $applyPeriod($prayerStats);
+        }
+
+        $mediaStats = Schema::hasTable('media_assets')
+            ? DB::table('media_assets')->where('is_published', true)
+            : null;
+        if ($mediaStats) {
+            $applyPeriod($mediaStats);
+        }
+
+        $serviceStats = Schema::hasTable('online_services')
+            ? DB::table('online_services')->whereIn('status', ['scheduled', 'live'])
+            : null;
+        if ($serviceStats) {
+            $applyPeriod($serviceStats, 'starts_at');
+        }
+
         return view('youth.dashboard', [
             'profile' => $profile,
             'enrolments' => $enrolments,
             'notifications' => $notifications,
             'upcomingServices' => $upcomingServices,
             'currentTheme' => $currentTheme,
+            'search' => $search,
+            'period' => $period,
             'stats' => [
                 'life_groups' => $memberships,
-                'courses' => CourseEnrolment::where('user_id', $user->id)->count(),
-                'unread' => PlatformNotificationReceipt::where('user_id', $user->id)->whereNull('read_at')->count(),
-                'prayers' => Schema::hasTable('prayer_requests') ? DB::table('prayer_requests')->where('user_id', $user->id)->count() : 0,
-                'events' => Schema::hasTable('event_registrations') ? DB::table('event_registrations')->where('user_id', $user->id)->count() : 0,
-                'certificates' => Schema::hasTable('course_certificates') ? DB::table('course_certificates')->where('user_id', $user->id)->count() : 0,
-                'media' => Schema::hasTable('media_assets') ? DB::table('media_assets')->where('is_published', true)->count() : 0,
-                'services' => Schema::hasTable('online_services') ? DB::table('online_services')->whereIn('status', ['scheduled', 'live'])->count() : 0,
+                'courses' => $courseStats->count(),
+                'unread' => $unreadStats->count(),
+                'prayers' => $prayerStats?->count() ?? 0,
+                'events' => $eventStats?->count() ?? 0,
+                'certificates' => $certificateStats?->count() ?? 0,
+                'media' => $mediaStats?->count() ?? 0,
+                'services' => $serviceStats?->count() ?? 0,
             ],
         ]);
     }
@@ -221,7 +325,7 @@ final class YouthPortalController extends Controller
     {
         $media = Schema::hasTable('media_assets')
             ? MediaAsset::query()->where('is_published', true)->latest()->paginate(12)
-            : new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12, 1, ['path' => request()->url(), 'query' => request()->query()]);
+            : new LengthAwarePaginator([], 0, 12, 1, ['path' => request()->url(), 'query' => request()->query()]);
 
         $services = Schema::hasTable('online_services')
             ? DB::table('online_services')
