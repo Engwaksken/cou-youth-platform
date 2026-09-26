@@ -12,13 +12,37 @@ use Symfony\Component\HttpFoundation\Response;
 final class EnsureCmsModuleAccess
 {
     /** @var list<string> */
-    private const FULL_ACCESS_ROLES = [
-        'super_admin',
+    private const HIERARCHY_ADMIN_ROLES = [
         'provincial_admin',
         'diocesan_admin',
         'archdeaconry_admin',
         'parish_admin',
         'local_church_admin',
+    ];
+
+    /** @var list<string> */
+    private const HIERARCHY_ADMIN_PATTERNS = [
+        'admin.dashboard',
+        'admin.organisation-units.*',
+        'admin.content.*',
+        'admin.events.*',
+        'admin.life-groups.*',
+        'admin.courses.*',
+        'admin.quizzes.*',
+        'admin.work-plans.*',
+        'admin.annual-themes.*',
+        'admin.calendar.*',
+        'admin.media.*',
+        'admin.online-services.*',
+        'admin.church-locations.*',
+        'admin.prayer.*',
+        'admin.moderation.*',
+        'admin.comments.*',
+        'admin.reports.*',
+        'admin.guardian-consents.*',
+        'admin.notifications.*',
+        'admin.page-content.*',
+        'admin.bulk.*',
     ];
 
     /** @var array<string, list<string>> */
@@ -73,13 +97,18 @@ final class EnsureCmsModuleAccess
             ->where('is_active', true)
             ->get(['role', 'permissions']);
 
-        if ($roles->contains(fn ($assignment): bool => in_array($assignment->role, self::FULL_ACCESS_ROLES, true))) {
+        if ($roles->contains(fn ($assignment): bool => $assignment->role === 'super_admin')) {
             return $next($request);
         }
 
         $routeName = (string) optional($request->route())->getName();
         if ($routeName === '') {
             abort(403, 'You do not have permission to access this CMS module.');
+        }
+
+        if ($roles->contains(fn ($assignment): bool => in_array($assignment->role, self::HIERARCHY_ADMIN_ROLES, true))
+            && $this->matchesAny($routeName, self::HIERARCHY_ADMIN_PATTERNS)) {
+            return $next($request);
         }
 
         foreach ($roles as $assignment) {
