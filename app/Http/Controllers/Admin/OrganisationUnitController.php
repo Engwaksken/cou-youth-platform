@@ -60,11 +60,11 @@ final class OrganisationUnitController extends Controller
     {
         $data = $request->validate([
             'parent_id' => 'nullable|exists:organisation_units,id',
-            'type' => 'required|in:province,diocese,archdeaconry,parish,local_church,chaplaincy,institution',
-            'name' => 'required|max:160',
-            'code' => 'nullable|max:50',
+            'type' => 'required|in:province,diocese,archdeaconry,parish,local_church,fellowship,chaplaincy,institution',
+            'name' => 'required|string|max:160',
+            'code' => 'nullable|string|max:50',
             'email' => 'nullable|email',
-            'phone' => 'nullable|max:40',
+            'phone' => 'nullable|string|max:40',
         ]);
 
         if ($data['type'] === 'province' && ! $this->scope->isSuperAdmin($request->user())) {
@@ -86,10 +86,10 @@ final class OrganisationUnitController extends Controller
         }
 
         $organisationUnit->update($request->validate([
-            'name' => 'required|max:160',
-            'code' => 'nullable|max:50',
+            'name' => 'required|string|max:160',
+            'code' => 'nullable|string|max:50',
             'email' => 'nullable|email',
-            'phone' => 'nullable|max:40',
+            'phone' => 'nullable|string|max:40',
             'is_active' => 'boolean',
         ]));
 
