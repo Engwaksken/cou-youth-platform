@@ -1,6 +1,6 @@
-@extends('public.layout')
+@extends('youth.layout')
 @section('title', 'My Learning | COU Youth')
-@section('content')
+@section('youth_content')
 <section class="hero"><span class="section-kicker">LEARNING</span><h1>My learning</h1><p>Review your enrolled courses and discover published learning that matches your youth profile.</p></section>
 
 <section class="learning-section">
