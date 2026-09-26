@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use RuntimeException;
 use Throwable;
 
 final class YouthDonationController extends Controller
@@ -176,7 +177,7 @@ final class YouthDonationController extends Controller
 
             $checkoutUrl = trim((string) ($payment['checkout_url'] ?? ''));
             if ($checkoutUrl !== '') {
-                return redirect()->away($checkoutUrl);
+                return redirect()->away($this->safeCheckoutUrl($checkoutUrl));
             }
 
             return redirect()
@@ -190,5 +191,21 @@ final class YouthDonationController extends Controller
                 ->withInput()
                 ->withErrors(['payment' => 'We could not start your payment. Please try again or choose another payment method.']);
         }
+    }
+
+    private function safeCheckoutUrl(string $url): string
+    {
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new RuntimeException('Payment provider returned an invalid checkout URL.');
+        }
+
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        $allowedSchemes = app()->environment('production') ? ['https'] : ['http', 'https'];
+
+        if (! in_array($scheme, $allowedSchemes, true)) {
+            throw new RuntimeException('Payment provider returned an insecure checkout URL.');
+        }
+
+        return $url;
     }
 }
