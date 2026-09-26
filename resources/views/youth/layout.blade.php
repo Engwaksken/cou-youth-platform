@@ -72,7 +72,7 @@
         <div class="nav-label">Resources</div>
         <a href="{{ route('youth.annual-theme') }}" class="{{ request()->routeIs('youth.annual-theme') ? 'active' : '' }}"><i class="fas fa-book-bible"></i> Annual Theme</a>
         <a href="{{ route('youth.media') }}" class="{{ request()->routeIs('youth.media') ? 'active' : '' }}"><i class="fas fa-photo-film"></i> Media & Services</a>
-        <a href="{{ route('public.donate') }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-hand-holding-heart"></i> Donate</a>
+        <a href="{{ route('youth.donations') }}" class="{{ request()->routeIs('youth.donations*') ? 'active' : '' }}"><i class="fas fa-hand-holding-heart"></i> Donate & History</a>
     </aside>
     <div class="side-backdrop" id="sideBackdrop"></div>
     <main class="main" id="main-content">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('youth_content')</main>
