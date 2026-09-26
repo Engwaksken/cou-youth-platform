@@ -1,6 +1,6 @@
-@extends('public.layout')
+@extends('youth.layout')
 @section('title', 'Notification Preferences | COU Youth')
-@section('content')
+@section('youth_content')
 <section class="hero"><span class="section-kicker">PREFERENCES</span><h1>Notification preferences</h1><p>Choose how you want to receive updates and the topics you want to hear about.</p></section>
 <section class="card preference-card">
 <form method="POST" action="{{ route('youth.notification-preferences.update') }}">@csrf @method('PUT')
