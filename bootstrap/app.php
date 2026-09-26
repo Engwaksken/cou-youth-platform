@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureCmsAccess;
+use App\Http\Middleware\EnsureCmsModuleAccess;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'cms.access' => EnsureCmsAccess::class,
+            'cms.module' => EnsureCmsModuleAccess::class,
         ]);
 
         $middleware->redirectGuestsTo('/login');
