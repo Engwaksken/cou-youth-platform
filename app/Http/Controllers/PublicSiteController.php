@@ -18,6 +18,7 @@ use App\Models\PrayerRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -156,10 +157,16 @@ final class PublicSiteController extends Controller
         ));
     }
 
-    public function donate(): View
+    public function donate(Request $request): View|RedirectResponse
     {
+        if ($request->user()) {
+            return redirect()->route('youth.donations');
+        }
+
         $campaigns = DonationCampaign::query()
             ->whereIn('status', ['published', 'active', 'open'])
+            ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+            ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
             ->withSum(['donations as amount_raised' => fn ($q) => $q->whereIn('status', ['successful', 'paid', 'completed'])], 'amount')
             ->latest()
             ->paginate(9);
@@ -207,30 +214,105 @@ final class PublicSiteController extends Controller
         return view('public.about', $this->pageContent('about'));
     }
 
-    public function registerByToken(string $token)
+    public function registerByToken(string $token): View|RedirectResponse
     {
-        $event = Event::where('qr_token', $token)->firstOrFail();
+        $event = Event::query()->where('qr_token', $token)->firstOrFail();
+        abort_unless($event->status === 'published', 404);
+
         if ($event->allow_external_registration && $event->external_registration_url) {
-            return redirect()->away($event->external_registration_url);
+            return redirect()->away($this->safeExternalUrl($event->external_registration_url));
         }
+
+        abort_unless($event->registration_required, 404);
+        abort_if($event->registration_deadline && now()->gt($event->registration_deadline), 410, 'Registration for this event has closed.');
+
+        if ($event->capacity) {
+            $used = $event->registrations()
+                ->whereIn('status', ['registered', 'confirmed', 'attended'])
+                ->count();
+            abort_if($used >= $event->capacity, 410, 'This event has reached capacity.');
+        }
+
         return view('public.event-register', compact('event'));
     }
 
-    public function storeRegistrationByToken(StoreEventRegistrationRequest $request, string $token)
+    public function storeRegistrationByToken(StoreEventRegistrationRequest $request, string $token): RedirectResponse
     {
-        $event = Event::where('qr_token', $token)->firstOrFail();
+        $event = Event::query()->where('qr_token', $token)->firstOrFail();
+        abort_unless($event->status === 'published', 404);
+
         if ($event->allow_external_registration && $event->external_registration_url) {
-            return redirect()->away($event->external_registration_url);
+            return redirect()->away($this->safeExternalUrl($event->external_registration_url));
         }
+
+        if (! $event->registration_required) {
+            return back()->withErrors(['event' => 'Registration is not required for this event.']);
+        }
+
         $data = $request->validated();
-        EventRegistration::create([
-            'event_id' => $event->id,
-            'user_id' => $request->user()?->id,
-            'name' => $data['name'] ?? null,
-            'phone' => $data['phone'] ?? null,
-            'email' => $data['email'] ?? null,
-            'status' => 'registered',
-        ]);
+        $userId = $request->user()?->id;
+
+        DB::transaction(function () use ($event, $data, $userId): void {
+            $lockedEvent = Event::query()->whereKey($event->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedEvent->registration_deadline && now()->gt($lockedEvent->registration_deadline)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'event' => 'Registration for this event has closed.',
+                ]);
+            }
+
+            if ($userId) {
+                $existing = EventRegistration::query()
+                    ->where('event_id', $lockedEvent->id)
+                    ->where('user_id', $userId)
+                    ->first();
+
+                if ($existing) {
+                    return;
+                }
+            }
+
+            if ($lockedEvent->capacity) {
+                $used = EventRegistration::query()
+                    ->where('event_id', $lockedEvent->id)
+                    ->whereIn('status', ['registered', 'confirmed', 'attended'])
+                    ->count();
+
+                if ($used >= $lockedEvent->capacity) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'event' => 'This event has reached capacity.',
+                    ]);
+                }
+            }
+
+            EventRegistration::query()->create([
+                'event_id' => $lockedEvent->id,
+                'user_id' => $userId,
+                'name' => trim((string) $data['name']),
+                'phone' => isset($data['phone']) ? trim((string) $data['phone']) : null,
+                'email' => isset($data['email']) ? strtolower(trim((string) $data['email'])) : null,
+                'status' => 'registered',
+                'payment_status' => (float) $lockedEvent->fee > 0 ? 'pending' : 'not_required',
+            ]);
+        });
+
         return back()->with('success', 'Registration successful.');
+    }
+
+    private function safeExternalUrl(string $url): string
+    {
+        $url = trim($url);
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            abort(422, 'The external registration link is not valid.');
+        }
+
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        $allowedSchemes = app()->environment('production') ? ['https'] : ['http', 'https'];
+
+        if (! in_array($scheme, $allowedSchemes, true)) {
+            abort(422, 'The external registration link is not secure.');
+        }
+
+        return $url;
     }
 }
