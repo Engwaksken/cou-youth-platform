@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Donation;
 use App\Models\PaymentGateway;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 final class PaymentGatewayController extends Controller
@@ -44,14 +46,12 @@ final class PaymentGatewayController extends Controller
             $query->where('is_test_mode', false);
         }
 
-        $items = $query
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->paginate(12)
-            ->withQueryString();
-
         return view('admin.payment_gateways.index', [
-            'items' => $items,
+            'items' => $query
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->paginate(12)
+                ->withQueryString(),
             'stats' => [
                 'total' => PaymentGateway::count(),
                 'enabled' => PaymentGateway::where('is_enabled', true)->count(),
@@ -70,6 +70,7 @@ final class PaymentGatewayController extends Controller
     {
         $this->normaliseRequestSlug($request);
         $data = $this->validated($request);
+        $this->assertSecureProviderUrls($request);
         $modelData = Arr::only($data, ['name', 'slug', 'provider', 'currency', 'sort_order']);
 
         PaymentGateway::create([
@@ -89,13 +90,12 @@ final class PaymentGatewayController extends Controller
     {
         $this->normaliseRequestSlug($request);
         $data = $this->validated($request, $paymentGateway);
+        $this->assertSecureProviderUrls($request);
         $modelData = Arr::only($data, ['name', 'slug', 'provider', 'currency', 'sort_order']);
 
         $existingSettings = is_array($paymentGateway->settings) ? $paymentGateway->settings : [];
         $existingCredentials = is_array($paymentGateway->credentials) ? $paymentGateway->credentials : [];
 
-        // Backward compatibility: older records stored webhook_secret in plain settings JSON.
-        // Move it into the encrypted credentials payload the next time an administrator saves.
         if (! filled($existingCredentials['webhook_secret'] ?? null)
             && filled($existingSettings['webhook_secret'] ?? null)) {
             $existingCredentials['webhook_secret'] = (string) $existingSettings['webhook_secret'];
@@ -117,6 +117,12 @@ final class PaymentGatewayController extends Controller
 
     public function destroy(PaymentGateway $paymentGateway): RedirectResponse
     {
+        if (Donation::query()->where('payment_gateway_id', $paymentGateway->id)->exists()) {
+            return back()->withErrors([
+                'gateway' => 'This payment gateway has donation history and cannot be deleted. Disable it instead.',
+            ]);
+        }
+
         $paymentGateway->delete();
 
         return back()->with('success', 'Payment gateway deleted successfully.');
@@ -133,10 +139,10 @@ final class PaymentGatewayController extends Controller
             'provider' => ['required', 'string', 'max:80'],
             'currency' => ['required', 'string', 'size:3'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
-            'callback_url' => ['nullable', 'url', 'max:2048'],
-            'webhook_url' => ['nullable', 'url', 'max:2048'],
-            'initialize_url' => ['nullable', 'url', 'max:2048'],
-            'base_url' => ['nullable', 'url', 'max:2048'],
+            'callback_url' => ['nullable', 'url:http,https', 'max:2048'],
+            'webhook_url' => ['nullable', 'url:http,https', 'max:2048'],
+            'initialize_url' => ['nullable', 'url:http,https', 'max:2048'],
+            'base_url' => ['nullable', 'url:http,https', 'max:2048'],
             'target_environment' => ['nullable', 'string', 'max:80'],
             'country' => ['nullable', 'string', 'size:2'],
             'timeout' => ['nullable', 'integer', 'min:5', 'max:120'],
@@ -148,6 +154,29 @@ final class PaymentGatewayController extends Controller
             'client_id' => ['nullable', 'string', 'max:2000'],
             'client_secret' => ['nullable', 'string', 'max:2000'],
         ]);
+    }
+
+    private function assertSecureProviderUrls(Request $request): void
+    {
+        if (! app()->environment('production')) {
+            return;
+        }
+
+        $errors = [];
+        foreach (['callback_url', 'webhook_url', 'initialize_url', 'base_url'] as $field) {
+            if (! $request->filled($field)) {
+                continue;
+            }
+
+            $url = trim((string) $request->input($field));
+            if (strtolower((string) parse_url($url, PHP_URL_SCHEME)) !== 'https') {
+                $errors[$field] = 'Production payment URLs must use HTTPS.';
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     private function credentials(Request $request, array $existing = []): array
@@ -176,8 +205,6 @@ final class PaymentGatewayController extends Controller
     private function settings(Request $request, array $existing = []): array
     {
         $settings = $existing;
-
-        // Secrets never belong in the unencrypted settings JSON.
         unset($settings['webhook_secret']);
 
         foreach (['callback_url', 'webhook_url', 'initialize_url', 'base_url', 'target_environment', 'country'] as $field) {

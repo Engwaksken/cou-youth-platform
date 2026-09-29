@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Middleware\AuditCmsMutations;
 use App\Http\Middleware\EnsureCmsAccess;
+use App\Http\Middleware\EnsureCmsModuleAccess;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,8 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(SecurityHeaders::class);
+        $middleware->append(AuditCmsMutations::class);
+
         $middleware->alias([
             'cms.access' => EnsureCmsAccess::class,
+            'cms.module' => EnsureCmsModuleAccess::class,
         ]);
 
         $middleware->redirectGuestsTo('/login');
@@ -26,10 +33,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(function (Request $request): string {
             $user = $request->user();
 
-            return $user && $user->hasCmsAccess() ? '/admin' : '/';
+            return $user && $user->hasCmsAccess() ? '/admin' : '/dashboard';
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Central exception rendering is added in the next hardening phase.
+        // Laravel's production exception renderer is used for web responses.
+        // API controllers return intentionally sanitised JSON errors.
     })
     ->create();

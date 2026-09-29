@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\YouthDonationController;
 use App\Http\Controllers\YouthEngagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,4 +17,9 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/notification-preferences', [YouthEngagementController::class, 'preferences'])->name('youth.notification-preferences');
     Route::put('/notification-preferences', [YouthEngagementController::class, 'updatePreferences'])->name('youth.notification-preferences.update');
+
+    Route::get('/my-contributions', [YouthDonationController::class, 'index'])->name('youth.donations');
+    Route::post('/my-contributions/donate', [YouthDonationController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('youth.donations.store');
 });

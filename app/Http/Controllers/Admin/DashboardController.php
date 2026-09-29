@@ -12,34 +12,73 @@ use App\Models\GuardianConsent;
 use App\Models\LifeGroup;
 use App\Models\OrganisationUnit;
 use App\Models\YouthProfile;
+use App\Services\Access\HierarchyScopeService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 final class DashboardController extends Controller
 {
-    public function index(): View
+    public function __construct(private readonly HierarchyScopeService $scope) {}
+
+    public function index(Request $request): View
     {
+        $user = $request->user();
+        $isSuper = $this->scope->isSuperAdmin($user);
+        $allowedUnitIds = $this->scope->allowedUnitIds($user);
+
+        $youthBase = YouthProfile::query();
+        $eventBase = Event::query();
+        $lifeGroupBase = LifeGroup::query();
+        $contentBase = Content::query();
+        $unitBase = OrganisationUnit::query();
+
+        if (! $isSuper) {
+            $youthBase->whereIn('organisation_unit_id', $allowedUnitIds);
+            $eventBase->whereIn('organisation_unit_id', $allowedUnitIds);
+            $lifeGroupBase->whereIn('organisation_unit_id', $allowedUnitIds);
+            $contentBase->whereIn('organisation_unit_id', $allowedUnitIds);
+            $unitBase->whereIn('id', $allowedUnitIds);
+        }
+
+        $donationBase = Donation::query();
+        if (! $isSuper) {
+            $donationBase->whereIn('user_id', YouthProfile::query()
+                ->whereIn('organisation_unit_id', $allowedUnitIds)
+                ->select('user_id'));
+        }
+
+        $consentBase = GuardianConsent::query();
+        if (! $isSuper) {
+            $consentBase->whereIn('user_id', YouthProfile::query()
+                ->whereIn('organisation_unit_id', $allowedUnitIds)
+                ->select('user_id'));
+        }
+
         $stats = [
-            'youth' => YouthProfile::count(),
-            'units' => OrganisationUnit::where('is_active', true)->count(),
-            'events' => Event::count(),
-            'life_groups' => LifeGroup::where('is_active', true)->count(),
-            'pending_consents' => GuardianConsent::where('status', 'pending')->count(),
-            'published_content' => Content::where('status', 'published')->count(),
-            'donations' => (float) Donation::where('status', 'successful')->sum('amount'),
+            'youth' => (clone $youthBase)->count(),
+            'units' => (clone $unitBase)->where('is_active', true)->count(),
+            'events' => (clone $eventBase)->count(),
+            'life_groups' => (clone $lifeGroupBase)->where('is_active', true)->count(),
+            'pending_consents' => (clone $consentBase)->where('status', 'pending')->count(),
+            'published_content' => (clone $contentBase)->where('status', 'published')->count(),
+            'donations' => (float) (clone $donationBase)
+                ->whereIn('status', ['successful', 'paid', 'completed'])
+                ->sum('amount'),
         ];
 
         $months = collect(range(5, 0))->map(fn (int $offset) => now()->startOfMonth()->subMonths($offset));
         $from = $months->first()?->copy()->startOfMonth() ?? now()->startOfMonth();
 
-        $youthByMonth = YouthProfile::query()
+        $youthByMonth = (clone $youthBase)
             ->where('created_at', '>=', $from)
             ->get(['created_at'])
             ->groupBy(fn (YouthProfile $profile) => $profile->created_at?->format('Y-m'))
             ->map->count();
 
-        $donationsByMonth = Donation::query()
-            ->where('status', 'successful')
+        $donationsByMonth = (clone $donationBase)
+            ->whereIn('status', ['successful', 'paid', 'completed'])
             ->where('created_at', '>=', $from)
             ->get(['amount', 'created_at'])
             ->groupBy(fn (Donation $donation) => $donation->created_at?->format('Y-m'))
@@ -51,7 +90,7 @@ final class DashboardController extends Controller
             'donations' => (float) ($donationsByMonth[$month->format('Y-m')] ?? 0),
         ])->values();
 
-        $eventStatus = Event::query()
+        $eventStatus = (clone $eventBase)
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');

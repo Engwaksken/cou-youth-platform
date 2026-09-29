@@ -22,7 +22,10 @@ final class EventController extends Controller
 
     public function index(Request $request): View
     {
-        $query = Event::query()
+        $base = Event::query();
+        $this->scope->scopeQuery($base, $request->user());
+
+        $query = (clone $base)
             ->with(['organisationUnit', 'registrations' => fn ($q) => $q->latest()])
             ->withCount([
                 'registrations',
@@ -46,7 +49,7 @@ final class EventController extends Controller
             $query->where('status', $status);
         }
 
-        $statusCounts = Event::query()
+        $statusCounts = (clone $base)
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -54,10 +57,10 @@ final class EventController extends Controller
         return view('admin.events.index', [
             'events' => $query->orderByDesc('starts_at')->paginate(12)->withQueryString(),
             'stats' => [
-                'total' => Event::count(),
-                'published' => Event::where('status', 'published')->count(),
-                'upcoming' => Event::where('starts_at', '>=', now())->whereNotIn('status', ['cancelled', 'completed'])->count(),
-                'completed' => Event::where('status', 'completed')->count(),
+                'total' => (clone $base)->count(),
+                'published' => (clone $base)->where('status', 'published')->count(),
+                'upcoming' => (clone $base)->where('starts_at', '>=', now())->whereNotIn('status', ['cancelled', 'completed'])->count(),
+                'completed' => (clone $base)->where('status', 'completed')->count(),
             ],
             'statusCounts' => $statusCounts,
             'filters' => ['q' => $search, 'status' => $status],
@@ -67,9 +70,7 @@ final class EventController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
-        if (! empty($data['organisation_unit_id']) && ! $this->scope->canManage($request->user(), (int) $data['organisation_unit_id'])) {
-            abort(403);
-        }
+        $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
 
         $data['created_by'] = $request->user()->id;
         $event = Event::create($data);
@@ -90,12 +91,12 @@ final class EventController extends Controller
 
     public function update(Request $request, Event $event): RedirectResponse
     {
-        if ($event->organisation_unit_id && ! $this->scope->canManage($request->user(), $event->organisation_unit_id)) {
-            abort(403);
-        }
+        $this->authoriseUnit($request, $event->organisation_unit_id);
+        $data = $this->validated($request);
+        $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
 
         $wasPublished = $event->status === 'published';
-        $event->update($this->validated($request));
+        $event->update($data);
 
         if ($event->status === 'published') {
             $this->updates->notifyYouth(
@@ -116,10 +117,7 @@ final class EventController extends Controller
     public function updateAttendance(Request $request, Event $event, EventRegistration $registration): RedirectResponse
     {
         abort_unless((int) $registration->event_id === (int) $event->id, 404);
-
-        if ($event->organisation_unit_id && ! $this->scope->canManage($request->user(), $event->organisation_unit_id)) {
-            abort(403);
-        }
+        $this->authoriseUnit($request, $event->organisation_unit_id);
 
         $data = $request->validate([
             'attendance_status' => 'required|in:registered,attended,absent',
@@ -135,9 +133,7 @@ final class EventController extends Controller
 
     public function destroy(Request $request, Event $event): RedirectResponse
     {
-        if ($event->organisation_unit_id && ! $this->scope->canManage($request->user(), $event->organisation_unit_id)) {
-            abort(403);
-        }
+        $this->authoriseUnit($request, $event->organisation_unit_id);
 
         $title = $event->title;
         $unitId = $event->organisation_unit_id;
@@ -159,26 +155,34 @@ final class EventController extends Controller
         return back()->with('success', 'Event deleted.');
     }
 
+    private function authoriseUnit(Request $request, mixed $unitId): void
+    {
+        $normalised = $unitId === null || $unitId === '' ? null : (int) $unitId;
+        if (! $this->scope->canManage($request->user(), $normalised)) {
+            abort(403);
+        }
+    }
+
     private function validated(Request $request): array
     {
         return $request->validate([
             'organisation_unit_id' => 'nullable|exists:organisation_units,id',
-            'title' => 'required|max:200',
-            'category' => 'nullable|max:100',
-            'description' => 'nullable',
+            'title' => 'required|string|max:200',
+            'category' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
             'starts_at' => 'required|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
-            'venue' => 'nullable|max:200',
-            'theme' => 'nullable|max:200',
-            'speaker' => 'nullable|max:160',
-            'organizer' => 'nullable|max:160',
+            'venue' => 'nullable|string|max:200',
+            'theme' => 'nullable|string|max:200',
+            'speaker' => 'nullable|string|max:160',
+            'organizer' => 'nullable|string|max:160',
             'target_age_categories' => 'nullable|array',
             'target_age_categories.*' => 'in:teen,youth,young_adult',
             'registration_required' => 'boolean',
             'allow_external_registration' => 'boolean',
-            'external_registration_url' => 'nullable|url|max:500',
+            'external_registration_url' => 'nullable|url:http,https|max:500',
             'fee' => 'nullable|numeric|min:0',
-            'currency' => 'required|size:3',
+            'currency' => 'required|string|size:3',
             'capacity' => 'nullable|integer|min:1',
             'registration_deadline' => 'nullable|date',
             'status' => 'required|in:draft,published,cancelled,completed',

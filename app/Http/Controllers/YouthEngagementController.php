@@ -15,6 +15,7 @@ use App\Services\Certificates\CertificateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 final class YouthEngagementController extends Controller
@@ -88,13 +89,19 @@ final class YouthEngagementController extends Controller
 
     public function events(Request $request): View
     {
+        $userId = $request->user()->id;
+
         $registrations = EventRegistration::query()
             ->with('event')
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $userId)
             ->latest()
             ->paginate(12);
 
-        $registeredEventIds = $registrations->getCollection()->pluck('event_id')->all();
+        // Exclude every event already registered by this user, not only the
+        // registrations visible on the current paginator page.
+        $registeredEventIds = EventRegistration::query()
+            ->where('user_id', $userId)
+            ->pluck('event_id');
 
         $upcomingEvents = Event::query()
             ->where('status', 'published')
@@ -109,41 +116,54 @@ final class YouthEngagementController extends Controller
 
     public function registerEvent(Request $request, Event $event): RedirectResponse
     {
-        abort_unless($event->status === 'published', 404);
+        $userId = $request->user()->id;
 
-        if (! $event->registration_required) {
-            return back()->withErrors(['event' => 'Registration is not required for this event.']);
-        }
+        DB::transaction(function () use ($event, $userId): void {
+            $lockedEvent = Event::query()->whereKey($event->id)->lockForUpdate()->firstOrFail();
 
-        if ($event->registration_deadline && now()->gt($event->registration_deadline)) {
-            return back()->withErrors(['event' => 'Registration for this event has closed.']);
-        }
+            abort_unless($lockedEvent->status === 'published', 404);
 
-        $existing = EventRegistration::query()
-            ->where('event_id', $event->id)
-            ->where('user_id', $request->user()->id)
-            ->first();
-
-        if (! $existing && $event->capacity) {
-            $used = $event->registrations()
-                ->whereIn('status', ['registered', 'confirmed', 'attended'])
-                ->count();
-
-            if ($used >= $event->capacity) {
-                return back()->withErrors(['event' => 'This event has reached capacity.']);
+            if (! $lockedEvent->registration_required) {
+                throw ValidationException::withMessages([
+                    'event' => 'Registration is not required for this event.',
+                ]);
             }
-        }
 
-        EventRegistration::firstOrCreate(
-            [
-                'event_id' => $event->id,
-                'user_id' => $request->user()->id,
-            ],
-            [
+            if ($lockedEvent->registration_deadline && now()->gt($lockedEvent->registration_deadline)) {
+                throw ValidationException::withMessages([
+                    'event' => 'Registration for this event has closed.',
+                ]);
+            }
+
+            $existing = EventRegistration::query()
+                ->where('event_id', $lockedEvent->id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if ($existing) {
+                return;
+            }
+
+            if ($lockedEvent->capacity) {
+                $used = EventRegistration::query()
+                    ->where('event_id', $lockedEvent->id)
+                    ->whereIn('status', ['registered', 'confirmed', 'attended'])
+                    ->count();
+
+                if ($used >= $lockedEvent->capacity) {
+                    throw ValidationException::withMessages([
+                        'event' => 'This event has reached capacity.',
+                    ]);
+                }
+            }
+
+            EventRegistration::query()->create([
+                'event_id' => $lockedEvent->id,
+                'user_id' => $userId,
                 'status' => 'registered',
-                'payment_status' => (float) $event->fee > 0 ? 'pending' : 'not_required',
-            ],
-        );
+                'payment_status' => (float) $lockedEvent->fee > 0 ? 'pending' : 'not_required',
+            ]);
+        });
 
         return back()->with('success', 'Your event registration has been saved.');
     }

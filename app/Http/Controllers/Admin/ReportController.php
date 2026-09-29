@@ -1,8 +1,75 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
-use App\Http\Controllers\Controller; use App\Models\{Event,EventRegistration,LifeGroup,YouthProfile,Donation,Content,OrganisationUnit}; use Illuminate\Http\Request;
-class ReportController extends Controller { public function index(Request $r){
- $unit=$r->integer('organisation_unit_id') ?: null; $y=YouthProfile::query(); $e=Event::query(); $lg=LifeGroup::query(); $c=Content::query();
- if($unit){$y->where('organisation_unit_id',$unit);$e->where('organisation_unit_id',$unit);$lg->where('organisation_unit_id',$unit);$c->where('organisation_unit_id',$unit);} 
- return view('admin.reports.index',['units'=>OrganisationUnit::orderBy('name')->get(['id','name']),'summary'=>['youth'=>$y->count(),'teens'=>(clone $y)->where('age_category','teen')->count(),'events'=>$e->count(),'event_registrations'=>EventRegistration::count(),'life_groups'=>$lg->where('is_active',true)->count(),'published_content'=>$c->where('status','published')->count(),'successful_donations'=>Donation::where('status','successful')->sum('amount')]]);
- } }
+
+use App\Http\Controllers\Controller;
+use App\Models\Content;
+use App\Models\Donation;
+use App\Models\Event;
+use App\Models\EventRegistration;
+use App\Models\LifeGroup;
+use App\Models\OrganisationUnit;
+use App\Models\YouthProfile;
+use App\Services\Access\HierarchyScopeService;
+use Illuminate\Http\Request;
+
+final class ReportController extends Controller
+{
+    public function __construct(private readonly HierarchyScopeService $scope) {}
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $isSuper = $this->scope->isSuperAdmin($user);
+        $allowedUnitIds = $this->scope->allowedUnitIds($user);
+        $unit = $request->integer('organisation_unit_id') ?: null;
+
+        if ($unit !== null && ! $this->scope->canManage($user, $unit)) {
+            abort(403);
+        }
+
+        $effectiveUnits = $unit !== null ? collect([$unit]) : $allowedUnitIds;
+
+        $youth = YouthProfile::query();
+        $events = Event::query();
+        $groups = LifeGroup::query();
+        $content = Content::query();
+
+        if (! $isSuper || $unit !== null) {
+            $youth->whereIn('organisation_unit_id', $effectiveUnits);
+            $events->whereIn('organisation_unit_id', $effectiveUnits);
+            $groups->whereIn('organisation_unit_id', $effectiveUnits);
+            $content->whereIn('organisation_unit_id', $effectiveUnits);
+        }
+
+        $eventIds = (clone $events)->select('id');
+        $youthUserIds = (clone $youth)->select('user_id');
+
+        $donations = Donation::query();
+        if (! $isSuper || $unit !== null) {
+            $donations->whereIn('user_id', $youthUserIds);
+        }
+
+        $units = OrganisationUnit::query()
+            ->when(! $isSuper, fn ($builder) => $builder->whereIn('id', $allowedUnitIds))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('admin.reports.index', [
+            'units' => $units,
+            'summary' => [
+                'youth' => (clone $youth)->count(),
+                'teens' => (clone $youth)->where('age_category', 'teen')->count(),
+                'events' => (clone $events)->count(),
+                'event_registrations' => EventRegistration::query()->whereIn('event_id', $eventIds)->count(),
+                'life_groups' => (clone $groups)->where('is_active', true)->count(),
+                'published_content' => (clone $content)->where('status', 'published')->count(),
+                'successful_donations' => (float) $donations
+                    ->whereIn('status', ['successful', 'paid', 'completed'])
+                    ->sum('amount'),
+            ],
+        ]);
+    }
+}

@@ -90,7 +90,7 @@ final class YouthPortalTest extends TestCase
         ]);
     }
 
-    public function test_profile_rejects_invalid_age_category(): void
+    public function test_profile_ignores_submitted_age_category_and_derives_it_from_date_of_birth(): void
     {
         $user = User::factory()->create();
 
@@ -101,6 +101,13 @@ final class YouthPortalTest extends TestCase
                 'age_category' => 'adult',
             ])
             ->assertRedirect('/profile')
-            ->assertSessionHasErrors('age_category');
+            ->assertSessionHasNoErrors();
+
+        $profile = \App\Models\YouthProfile::query()
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $this->assertSame('2004-01-01', $profile->date_of_birth->toDateString());
+        $this->assertSame('youth', $profile->age_category);
     }
 }

@@ -11,7 +11,7 @@ use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class ContentController extends Controller
+final class ContentController extends Controller
 {
     public function __construct(
         private HierarchyScopeService $scope,
@@ -20,7 +20,10 @@ class ContentController extends Controller
 
     public function index(Request $request)
     {
-        $query = Content::query()->latest();
+        $base = Content::query();
+        $this->scope->scopeQuery($base, $request->user());
+
+        $query = (clone $base)->latest();
         $search = trim((string) $request->query('q', ''));
         $type = (string) $request->query('type', '');
         $status = (string) $request->query('status', '');
@@ -38,12 +41,12 @@ class ContentController extends Controller
         return view('admin.content.index', [
             'items' => $query->paginate(12)->withQueryString(),
             'stats' => [
-                'total' => Content::count(),
-                'published' => Content::where('status', 'published')->count(),
-                'draft' => Content::where('status', 'draft')->count(),
-                'pending' => Content::where('status', 'pending')->count(),
+                'total' => (clone $base)->count(),
+                'published' => (clone $base)->where('status', 'published')->count(),
+                'draft' => (clone $base)->where('status', 'draft')->count(),
+                'pending' => (clone $base)->where('status', 'pending')->count(),
             ],
-            'typeCounts' => Content::query()->selectRaw('type, COUNT(*) total')->groupBy('type')->pluck('total', 'type'),
+            'typeCounts' => (clone $base)->selectRaw('type, COUNT(*) total')->groupBy('type')->pluck('total', 'type'),
             'filters' => ['q' => $search, 'type' => $type, 'status' => $status],
         ]);
     }
@@ -51,7 +54,7 @@ class ContentController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
-        if (! empty($data['organisation_unit_id']) && ! $this->scope->canManage($request->user(), (int) $data['organisation_unit_id'])) abort(403);
+        $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
         $data['created_by'] = $request->user()->id;
         $data['slug'] = $this->uniqueSlug($data['title']);
         if (($data['status'] ?? 'draft') === 'published') $data['published_at'] = now();
@@ -74,10 +77,17 @@ class ContentController extends Controller
 
     public function update(Request $request, Content $content)
     {
-        if ($content->organisation_unit_id && ! $this->scope->canManage($request->user(), $content->organisation_unit_id)) abort(403);
+        $this->authoriseUnit($request, $content->organisation_unit_id);
         $data = $this->validated($request);
-        if (($data['title'] ?? null) !== $content->title) $data['slug'] = $this->uniqueSlug($data['title'], $content->id);
-        if (($data['status'] ?? null) === 'published' && ! $content->published_at) $data['published_at'] = now();
+        $this->authoriseUnit($request, $data['organisation_unit_id'] ?? null);
+
+        if (($data['title'] ?? null) !== $content->title) {
+            $data['slug'] = $this->uniqueSlug($data['title'], $content->id);
+        }
+        if (($data['status'] ?? null) === 'published' && ! $content->published_at) {
+            $data['published_at'] = now();
+        }
+
         $content->update($data);
 
         if ($content->status === 'published') {
@@ -96,9 +106,17 @@ class ContentController extends Controller
 
     public function destroy(Request $request, Content $content)
     {
-        if ($content->organisation_unit_id && ! $this->scope->canManage($request->user(), $content->organisation_unit_id)) abort(403);
+        $this->authoriseUnit($request, $content->organisation_unit_id);
         $content->delete();
         return back()->with('success', 'Content deleted.');
+    }
+
+    private function authoriseUnit(Request $request, mixed $unitId): void
+    {
+        $normalised = $unitId === null || $unitId === '' ? null : (int) $unitId;
+        if (! $this->scope->canManage($request->user(), $normalised)) {
+            abort(403);
+        }
     }
 
     private function uniqueSlug(string $title, ?int $ignoreId = null): string
@@ -116,9 +134,9 @@ class ContentController extends Controller
     {
         return $request->validate([
             'type' => 'required|in:news,announcement,devotion,bible_study,resource,opportunity,mission,talent,youth_business',
-            'title' => 'required|max:200',
-            'summary' => 'nullable|max:500',
-            'body' => 'required',
+            'title' => 'required|string|max:200',
+            'summary' => 'nullable|string|max:500',
+            'body' => 'required|string',
             'organisation_unit_id' => 'nullable|exists:organisation_units,id',
             'target_age_categories' => 'nullable|array',
             'target_age_categories.*' => 'in:teen,youth,young_adult',

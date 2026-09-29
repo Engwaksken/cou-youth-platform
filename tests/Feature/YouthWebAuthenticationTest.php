@@ -41,7 +41,7 @@ class YouthWebAuthenticationTest extends TestCase
             'password_confirmation' => 'StrongPass123',
         ]);
 
-        $response->assertRedirect(route('home'));
+        $response->assertRedirect(route('youth.dashboard'));
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', ['email' => 'youth@example.com']);
         $this->assertDatabaseHas('youth_profiles', ['age_category' => 'youth']);
@@ -57,15 +57,24 @@ class YouthWebAuthenticationTest extends TestCase
         $this->post('/login', [
             'email' => 'member@example.com',
             'password' => 'StrongPass123',
-        ])->assertRedirect(route('home'));
+        ])->assertRedirect(route('youth.dashboard'));
 
         $this->assertAuthenticatedAs($user);
     }
 
-    public function test_public_sections_are_separate_pages(): void
+    public function test_public_sections_are_separate_pages_for_guests(): void
     {
         foreach (['/news', '/events', '/courses', '/churches', '/donate', '/about'] as $path) {
             $this->get($path)->assertOk();
         }
+    }
+
+    public function test_authenticated_donate_route_enters_youth_portal(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/donate')
+            ->assertRedirect(route('youth.donations'));
     }
 }

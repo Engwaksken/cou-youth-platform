@@ -8,8 +8,10 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureCmsAccess
+final class EnsureCmsAccess
 {
+    public function __construct(private readonly EnsureCmsModuleAccess $modules) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
@@ -22,6 +24,6 @@ class EnsureCmsAccess
             abort(403, 'You do not have permission to access the CMS.');
         }
 
-        return $next($request);
+        return $this->modules->handle($request, $next);
     }
 }

@@ -9,6 +9,7 @@ use App\Models\MediaAsset;
 use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class MediaAssetController extends Controller
 {
@@ -135,12 +136,29 @@ class MediaAssetController extends Controller
 
     private function validated(Request $request, bool $fileRequired): array
     {
-        return $request->validate([
-            'title' => 'required|string|max:190',
-            'type' => 'required|in:image,audio,video,document',
-            'alt_text' => 'nullable|string|max:255',
-            'file' => ($fileRequired ? 'required' : 'nullable').'|file|max:51200',
-            'is_published' => 'sometimes|boolean',
+        $base = $request->validate([
+            'title' => ['required', 'string', 'max:190'],
+            'type' => ['required', Rule::in(['image', 'audio', 'video', 'document'])],
+            'alt_text' => ['nullable', 'string', 'max:255'],
+            'is_published' => ['sometimes', 'boolean'],
         ]);
+
+        $allowedExtensions = match ($base['type']) {
+            'image' => 'jpg,jpeg,png,webp',
+            'audio' => 'mp3,wav,m4a,ogg',
+            'video' => 'mp4,webm,mov',
+            'document' => 'pdf,doc,docx,ppt,pptx,xls,xlsx,txt,csv',
+        };
+
+        $fileData = $request->validate([
+            'file' => [
+                $fileRequired ? 'required' : 'nullable',
+                'file',
+                'mimes:'.$allowedExtensions,
+                'max:51200',
+            ],
+        ]);
+
+        return array_merge($base, $fileData);
     }
 }
