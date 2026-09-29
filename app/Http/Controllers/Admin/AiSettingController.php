@@ -167,18 +167,18 @@ class AiSettingController extends Controller
     public function test(Request $request, AiService $ai): RedirectResponse
     {
         try {
-            $response = $ai->ask(
-                'Reply with one short sentence confirming that the Church of Uganda Youth Platform AI connection is working.',
-                'admin_connection_test',
-                $request->user()?->id,
-            );
+            $response = $ai->testConnection($request->user()?->id);
 
             return back()->with('success', 'AI connection successful: '.$response);
         } catch (Throwable $exception) {
             report($exception);
 
+            $message = trim($exception->getMessage());
+
             return back()->withErrors([
-                'ai_test' => 'The active AI connection test failed. Check the active provider, model, endpoint, API key and account availability.',
+                'ai_test' => $message !== ''
+                    ? $message
+                    : 'The AI connection test could not be completed. Check the active provider configuration and application log.',
             ]);
         }
     }
@@ -210,7 +210,13 @@ class AiSettingController extends Controller
      */
     private function normaliseSettingData(Request $request, array $validated): array
     {
-        return [
+        $apiKey = trim((string) ($validated['api_key'] ?? ''));
+
+        if ($apiKey !== '' && preg_match('/^\*+$/', $apiKey)) {
+            $apiKey = '';
+        }
+
+        $data = [
             ...$validated,
             'provider' => strtolower(trim((string) $validated['provider'])),
             'model' => trim((string) $validated['model']),
@@ -222,5 +228,13 @@ class AiSettingController extends Controller
             'per_user_daily_limit' => (int) ($validated['per_user_daily_limit'] ?? 0),
             'is_enabled' => $request->boolean('is_enabled'),
         ];
+
+        if ($apiKey !== '') {
+            $data['api_key'] = $apiKey;
+        } elseif (! $creating = false) {
+            unset($data['api_key']);
+        }
+
+        return $data;
     }
 }
