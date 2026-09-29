@@ -100,7 +100,7 @@ class AiSettingController extends Controller
         $validated = $this->validateSetting($request, false);
         $data = $this->normaliseSettingData($request, $validated);
 
-        if (blank($validated['api_key'] ?? null)) {
+        if (blank($validated['api_key'] ?? null) || preg_match('/^\*+$/', trim((string) ($validated['api_key'] ?? '')))) {
             unset($data['api_key']);
         }
 
@@ -210,12 +210,6 @@ class AiSettingController extends Controller
      */
     private function normaliseSettingData(Request $request, array $validated): array
     {
-        $apiKey = trim((string) ($validated['api_key'] ?? ''));
-
-        if ($apiKey !== '' && preg_match('/^\*+$/', $apiKey)) {
-            $apiKey = '';
-        }
-
         $data = [
             ...$validated,
             'provider' => strtolower(trim((string) $validated['provider'])),
@@ -229,10 +223,8 @@ class AiSettingController extends Controller
             'is_enabled' => $request->boolean('is_enabled'),
         ];
 
-        if ($apiKey !== '') {
-            $data['api_key'] = $apiKey;
-        } elseif (! $creating = false) {
-            unset($data['api_key']);
+        if (isset($data['api_key'])) {
+            $data['api_key'] = trim((string) $data['api_key']);
         }
 
         return $data;
