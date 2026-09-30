@@ -15,7 +15,7 @@
 
     <section id="settings-branding" class="tab-panel active">
         <div class="card settings-card">
-            <div class="settings-section-head"><div><h2><i class="fas fa-palette"></i> Branding</h2><p>Control the name and visual identity shown across the public site, admin area, emails and notifications.</p></div></div>
+            <div class="settings-section-head"><div><h2><i class="fas fa-palette"></i> Branding & Identity</h2><p>Control the name, mission, vision and visual identity shown across the platform and mobile app.</p></div></div>
             <div class="form-grid">
                 <label>System name<input name="system_name" placeholder="COU Youth Platform" value="{{ old('system_name', $settings['system_name'] ?? '') }}"></label>
                 <label>Logo<input type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml"><small>Recommended: transparent PNG/WebP or SVG.</small></label>
@@ -27,6 +27,8 @@
                         @if(!empty($settings['favicon']))<div class="preview-box preview-favicon"><img src="{{ asset('storage/'.$settings['favicon']) }}" alt="Current favicon"></div>@else<div class="preview-box preview-favicon preview-empty"><i class="fas fa-star"></i></div>@endif
                     </div>
                 </div>
+                <label class="span-2">Mission<textarea name="mission" rows="4" placeholder="Enter the ministry mission statement">{{ old('mission', $settings['mission'] ?? '') }}</textarea><small>Displayed in the mobile Annual Theme screen.</small></label>
+                <label class="span-2">Vision<textarea name="vision" rows="4" placeholder="Enter the ministry vision statement">{{ old('vision', $settings['vision'] ?? '') }}</textarea><small>Displayed in the mobile Annual Theme screen.</small></label>
             </div>
         </div>
     </section>
