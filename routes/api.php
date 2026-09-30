@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\{
+    AnnualThemeController,
     AuthController,
     AuthRecoveryController,
     BrandingController,
@@ -34,6 +35,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/health', HealthController::class)->middleware('throttle:60,1');
     Route::get('/release', [ReleaseController::class, 'show'])->middleware('throttle:60,1');
     Route::get('/branding', BrandingController::class)->middleware('throttle:120,1');
+    Route::get('/annual-theme', AnnualThemeController::class)->middleware('throttle:120,1');
 
     Route::post('/register', [RegistrationController::class, 'store'])->middleware('throttle:registration');
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:youth-login');
