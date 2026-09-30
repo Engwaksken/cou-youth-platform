@@ -41,9 +41,14 @@ final class AnnualThemeController extends Controller
                 'scripture_reference' => $theme->scripture_reference ?? null,
                 'description' => $theme->description ?? null,
                 'image_url' => ! empty($theme->image_path)
-                    ? Storage::disk('public')->url((string) $theme->image_path)
+                    ? $this->absoluteUrl(Storage::disk('public')->url((string) $theme->image_path))
                     : null,
             ];
+        }
+
+        $brandingData = $branding->data();
+        if (! empty($brandingData['logo_url'])) {
+            $brandingData['logo_url'] = $this->absoluteUrl((string) $brandingData['logo_url']);
         }
 
         return response()->json([
@@ -52,8 +57,17 @@ final class AnnualThemeController extends Controller
                 'mission' => SiteSetting::get('mission'),
                 'vision' => SiteSetting::get('vision'),
                 'annual_theme' => $themeData,
-                'branding' => $branding->data(),
+                'branding' => $brandingData,
             ],
         ]);
+    }
+
+    private function absoluteUrl(string $value): string
+    {
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+
+        return url('/'.ltrim($value, '/'));
     }
 }
