@@ -19,6 +19,18 @@ final class InjectPwaMetadata
         /** @var Response $response */
         $response = $next($request);
 
+        /*
+         * Illuminate\Http\Response keeps the original controller result so
+         * Laravel can expose view data to tests and other framework features.
+         * Calling setContent() replaces that original value with the rendered
+         * HTML string. Preserve it before injecting the PWA markup, then put it
+         * back afterwards when the response supports Laravel's original
+         * response contract.
+         */
+        $original = method_exists($response, 'getOriginalContent')
+            ? $response->getOriginalContent()
+            : null;
+
         $contentType = (string) $response->headers->get('Content-Type', '');
         $content = $response->getContent();
 
@@ -66,6 +78,10 @@ HTML;
 
         $response->setContent($content);
         $response->headers->remove('Content-Length');
+
+        if ($original !== null && property_exists($response, 'original')) {
+            $response->original = $original;
+        }
 
         return $response;
     }
