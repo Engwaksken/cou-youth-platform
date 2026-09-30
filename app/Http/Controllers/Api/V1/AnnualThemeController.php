@@ -47,6 +47,11 @@ final class AnnualThemeController extends Controller
         }
 
         $brandingData = $branding->data();
+        $systemName = trim((string) SiteSetting::get('system_name', ''));
+        if ($systemName !== '') {
+            $brandingData['name'] = $systemName;
+            $brandingData['short_name'] = $systemName;
+        }
         if (! empty($brandingData['logo_url'])) {
             $brandingData['logo_url'] = $this->absoluteUrl((string) $brandingData['logo_url']);
         }
