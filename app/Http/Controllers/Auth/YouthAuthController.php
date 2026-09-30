@@ -40,6 +40,20 @@ final class YouthAuthController extends Controller
             ]);
         }
 
+        $user = $request->user();
+
+        if ($user && $user->hasCmsAccess()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'Administrator accounts cannot sign in through the youth portal. Please use the Admin Login page.',
+                ]);
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(route('youth.dashboard'));
