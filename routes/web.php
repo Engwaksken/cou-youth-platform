@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\LifeGroupController;
 use App\Http\Controllers\Admin\MediaAssetController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\OrganisationRoleController;
 use App\Http\Controllers\Admin\OrganisationUnitController;
 use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
@@ -24,6 +25,8 @@ use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\SystemHealthController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserOrganisationRoleController;
 use App\Http\Controllers\Api\V1\ChatbotController as YouthAssistantController;
 use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\YouthAuthController;
@@ -82,6 +85,28 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::middleware('can:viewAny,'.\App\Models\OrganisationRole::class)->group(function (): void {
+    Route::get('roles', [OrganisationRoleController::class, 'index'])->name('roles.index');
+    Route::post('roles', [OrganisationRoleController::class, 'store'])->name('roles.store');
+    Route::put('roles/{organisationRole}', [OrganisationRoleController::class, 'update'])->name('roles.update');
+    Route::delete('roles/{organisationRole}', [OrganisationRoleController::class, 'destroy'])->name('roles.destroy');
+    });
+
+    Route::middleware('can:viewAny,'.\App\Models\User::class)->group(function (): void {
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::post('users', [UserController::class, 'store'])->name('users.store');
+    });
+    Route::put('users/{user}', [UserController::class, 'update'])->middleware('can:update,user')->name('users.update');
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('can:delete,user')->name('users.destroy');
+
+    Route::middleware('can:viewAny,'.\App\Models\UserOrganisationRole::class)->group(function (): void {
+    Route::get('user-organisation-roles', [UserOrganisationRoleController::class, 'index'])->name('user-organisation-roles.index');
+    Route::post('user-organisation-roles', [UserOrganisationRoleController::class, 'store'])->name('user-organisation-roles.store');
+    Route::get('user-organisation-roles/{userOrganisationRole}', [UserOrganisationRoleController::class, 'show'])->name('user-organisation-roles.show');
+    Route::put('user-organisation-roles/{userOrganisationRole}', [UserOrganisationRoleController::class, 'update'])->name('user-organisation-roles.update');
+    Route::delete('user-organisation-roles/{userOrganisationRole}', [UserOrganisationRoleController::class, 'destroy'])->name('user-organisation-roles.destroy');
+    });
 
     Route::resource('organisation-units', OrganisationUnitController::class)->except(['show', 'create', 'edit']);
     Route::resource('content', ContentController::class)->except(['show', 'create', 'edit']);

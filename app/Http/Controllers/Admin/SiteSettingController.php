@@ -25,6 +25,8 @@ class SiteSettingController extends Controller
     {
         $data = $request->validate([
             'system_name' => 'nullable|string|max:180',
+            'mission' => 'nullable|string|max:5000',
+            'vision' => 'nullable|string|max:5000',
             'logo' => 'nullable|file|image|max:2048',
             'favicon' => 'nullable|file|max:1024',
             'sms_username' => 'nullable|string|max:120',
@@ -43,7 +45,7 @@ class SiteSettingController extends Controller
             $path = $request->file('favicon')->store('branding', 'public');
             SiteSetting::set('favicon', $path);
         }
-        foreach (['system_name', 'sms_username', 'sms_api_key', 'sms_sender', 'mail_host', 'mail_port', 'mail_username', 'mail_password'] as $k) {
+        foreach (['system_name', 'mission', 'vision', 'sms_username', 'sms_api_key', 'sms_sender', 'mail_host', 'mail_port', 'mail_username', 'mail_password'] as $k) {
             if (array_key_exists($k, $data)) SiteSetting::set($k, $data[$k]);
         }
         return back()->with('success', 'Settings saved.');

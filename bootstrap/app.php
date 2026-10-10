@@ -3,6 +3,8 @@
 use App\Http\Middleware\AuditCmsMutations;
 use App\Http\Middleware\EnsureCmsAccess;
 use App\Http\Middleware\EnsureCmsModuleAccess;
+use App\Http\Middleware\InjectPwaMetadata;
+use App\Http\Middleware\PreventCmsYouthAccess;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -14,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         web: [
             __DIR__.'/../routes/web.php',
             __DIR__.'/../routes/youth-engagement.php',
+            __DIR__.'/../routes/pwa.php',
         ],
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
@@ -21,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
+        $middleware->append(PreventCmsYouthAccess::class);
+        $middleware->append(InjectPwaMetadata::class);
         $middleware->append(AuditCmsMutations::class);
 
         $middleware->alias([
