@@ -14,6 +14,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\OrganisationRole;
@@ -52,10 +53,20 @@ final class UserOrganisationRoleController extends Controller
         $this->authorize('create', UserOrganisationRole::class);
         $data = $request->validated();
         unset($data['permissions']); // Catalog permissions are authoritative; legacy roles retain model behavior.
-        $assignment = DB::transaction(function () use ($data): UserOrganisationRole {
-            $this->lockSuperAdminMutationSet();
+        try {
+        $assignment = $this->withinSuperAdminMutationLock(function () use ($request, $data): UserOrganisationRole {
+            $roleId = $request->catalogRoleId();
+            if ($roleId !== null) {
+                OrganisationRole::query()->whereKey($roleId)->lockForUpdate()->firstOrFail();
+            }
+            $data['organisation_role_id'] = $roleId;
+
             return UserOrganisationRole::create($data);
         });
+        } catch (QueryException $exception) {
+            $this->abortAssignmentConflict($exception);
+            throw $exception;
+        }
         return $request->expectsJson() ? (new UserOrganisationRoleResource($assignment))->response()->setStatusCode(201) : back()->with('success', 'Role assignment created.');
     }
     public function update(UpdateUserOrganisationRoleRequest $request, UserOrganisationRole $userOrganisationRole): JsonResponse|UserOrganisationRoleResource|RedirectResponse
@@ -63,20 +74,41 @@ final class UserOrganisationRoleController extends Controller
         $this->authorize('update', $userOrganisationRole);
         $data = $request->validated();
         unset($data['permissions']);
-        $result = DB::transaction(function () use ($data, $userOrganisationRole): UserOrganisationRoleResource {
-            $this->lockSuperAdminMutationSet();
+        try {
+        $result = $this->withinSuperAdminMutationLock(function () use ($request, $data, $userOrganisationRole): UserOrganisationRoleResource {
+            if (array_key_exists('role', $data) || array_key_exists('organisation_unit_id', $data)) {
+                $roleId = $request->catalogRoleId();
+                if ($roleId !== null) {
+                    OrganisationRole::query()->whereKey($roleId)->lockForUpdate()->firstOrFail();
+                }
+                $data['organisation_role_id'] = $roleId;
+            }
             $userOrganisationRole->refresh();
             $this->guardLastSuperAdminAssignment($userOrganisationRole, $data);
             $userOrganisationRole->update($data);
             return new UserOrganisationRoleResource($userOrganisationRole->refresh());
         });
+        } catch (QueryException $exception) {
+            $this->abortAssignmentConflict($exception);
+            throw $exception;
+        }
         return $request->expectsJson() ? $result : back()->with('success', 'Role assignment updated.');
+    }
+
+    private function abortAssignmentConflict(QueryException $exception): void
+    {
+        $message = strtolower($exception->getMessage());
+        if (str_contains($message, 'unique constraint')
+            || str_contains($message, 'duplicate entry')
+            || str_contains($message, 'duplicate key')
+            || str_contains($message, 'organisation role name conflicts across scopes')) {
+            abort(409, 'This role assignment conflicts with an existing record.');
+        }
     }
     public function destroy(Request $request, UserOrganisationRole $userOrganisationRole): Response|RedirectResponse
     {
         $this->authorize('delete', $userOrganisationRole);
-        DB::transaction(function () use ($userOrganisationRole): void {
-            $this->lockSuperAdminMutationSet();
+        $this->withinSuperAdminMutationLock(function () use ($userOrganisationRole): void {
             $userOrganisationRole->refresh();
             $this->guardLastSuperAdminAssignment($userOrganisationRole, ['is_active' => false]);
             $userOrganisationRole->delete();

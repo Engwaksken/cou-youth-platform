@@ -28,7 +28,24 @@ final class UpdateUserOrganisationRoleRequest extends FormRequest
                 if (! OrganisationRole::query()->where('name', $value)->exists() && in_array($value, User::CMS_ROLES, true)) return;
                 $fail('The selected role is not available for this organisation.');
             }],
+            'organisation_role_id' => ['prohibited'],
             'is_active' => ['sometimes', 'boolean'],
         ];
+    }
+
+    public function catalogRoleId(): ?int
+    {
+        $assignment = $this->route('userOrganisationRole');
+        $unitId = $this->input('organisation_unit_id', $assignment?->organisation_unit_id);
+        $roleName = $this->input('role', $assignment?->role);
+        $role = OrganisationRole::query()->where('name', $roleName)
+            ->where(function ($query) use ($unitId): void {
+                $query->whereNull('organisation_unit_id');
+                if ($unitId !== null) $query->orWhere('organisation_unit_id', (int) $unitId);
+            })
+            ->orderByRaw('organisation_unit_id IS NULL')
+            ->first();
+
+        return $role?->id;
     }
 }

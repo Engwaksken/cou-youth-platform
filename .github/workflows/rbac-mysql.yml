@@ -1,0 +1,55 @@
+name: RBAC MySQL integration
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  rbac-mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-only
+          MYSQL_DATABASE: rbac_ci_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-root-only"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: rbac_ci_test
+      DB_USERNAME: root
+      DB_PASSWORD: ci-root-only
+      ROLE_MYSQL_TESTS: '1'
+      ROLE_MYSQL_TEST_DATABASE: rbac_ci_test
+      ROLE_MYSQL_TEST_ALLOW_DESTRUCTIVE: I_UNDERSTAND_THIS_IS_DISPOSABLE
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, bcmath, gd, zip
+          coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+      - run: composer install --no-interaction --prefer-dist
+      - name: Assert isolated database and migrate schema
+        run: |
+          php -r 'if (getenv("DB_DATABASE") !== "rbac_ci_test" || getenv("ROLE_MYSQL_TEST_DATABASE") !== "rbac_ci_test" || getenv("ROLE_MYSQL_TEST_ALLOW_DESTRUCTIVE") !== "I_UNDERSTAND_THIS_IS_DISPOSABLE") { fwrite(STDERR, "Unsafe MySQL test database configuration\n"); exit(1); }'
+          php artisan migrate:fresh --force
+      - name: Run RBAC MySQL integration suite
+        run: php artisan test --filter=MySqlOrganisationRoleConcurrencyTest
+      - name: Run full PHP suite
+        run: php artisan test

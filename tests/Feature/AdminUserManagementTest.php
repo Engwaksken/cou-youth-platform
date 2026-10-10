@@ -73,6 +73,29 @@ class AdminUserManagementTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
 
+    public function test_user_update_and_delete_routes_enforce_target_abilities(): void
+    {
+        $target = User::factory()->create();
+        $manager = User::factory()->create();
+        UserOrganisationRole::query()->create([
+            'user_id' => $manager->id,
+            'role' => 'content_manager',
+            'permissions' => ['admin.content.index'],
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($manager)->put("/admin/users/{$target->id}", ['name' => 'Unauthorized'])->assertForbidden();
+        $this->actingAs($manager)->delete("/admin/users/{$target->id}")->assertForbidden();
+    }
+
+    public function test_guest_is_denied_from_user_update_and_delete_routes(): void
+    {
+        $target = User::factory()->create();
+
+        $this->put("/admin/users/{$target->id}", ['name' => 'Guest edit'])->assertRedirect('/login');
+        $this->delete("/admin/users/{$target->id}")->assertRedirect('/login');
+    }
+
     public function test_user_creation_validates_required_and_unique_fields(): void
     {
         $admin = $this->superAdmin();
@@ -138,6 +161,20 @@ class AdminUserManagementTest extends TestCase
             'permissions' => ['admin.users.destroy'],
         ])->assertOk();
         $this->assertSame(['admin.events.index'], $member->fresh()->organisationRoles()->findOrFail($assignmentId)->permissions);
+    }
+
+    public function test_catalog_assignment_stores_direct_catalog_role_id(): void
+    {
+        $admin = $this->superAdmin();
+        $member = User::factory()->create();
+        $unit = OrganisationUnit::query()->create(['type' => 'parish', 'name' => 'Direct Role Parish', 'is_active' => true]);
+        $role = OrganisationRole::query()->create(['organisation_unit_id' => $unit->id, 'name' => 'Direct Role', 'permissions' => []]);
+
+        $response = $this->actingAs($admin)->postJson('/api/v1/admin/user-organisation-roles', [
+            'user_id' => $member->id, 'organisation_unit_id' => $unit->id, 'role' => $role->name,
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('user_organisation_roles', ['id' => $response->json('data.id'), 'organisation_role_id' => $role->id]);
     }
 
     public function test_catalog_assignment_rejects_role_scoped_to_another_organisation_on_create_and_update(): void

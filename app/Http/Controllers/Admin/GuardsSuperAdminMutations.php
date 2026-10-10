@@ -7,22 +7,72 @@ namespace App\Http\Controllers\Admin;
 use App\Models\User;
 use App\Models\UserOrganisationRole;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 trait GuardsSuperAdminMutations
 {
+    /** @var resource|null */
+    private $rbacMutationLock = null;
     /** Serialize super-admin mutations across both row-locking databases and SQLite. */
     private function lockSuperAdminMutationSet(): void
     {
         if (DB::connection()->getDriverName() === 'sqlite') {
-            // SQLite has no FOR UPDATE. Writing the database header obtains its
-            // writer lock even when users is empty, without requiring a sentinel row.
-            $version = (int) DB::selectOne('PRAGMA user_version')->user_version;
-            DB::statement("PRAGMA user_version = {$version}");
+            // SQLite's deferred transactions and row locks do not serialize readers
+            // that later become writers. Use an OS lock keyed to the DB file; this
+            // works even before the first user row exists. Hold it through the
+            // surrounding transaction (released by unlockSuperAdminMutationSet).
+            $database = DB::connection()->getDatabaseName();
+            // Laravel may be configured with a relative SQLite path, and
+            // aliases/symlinks to the same file must coordinate on one lock.
+            if ($database !== ':memory:' && $database !== '') {
+                $database = realpath($database) ?: (str_starts_with($database, DIRECTORY_SEPARATOR)
+                    ? $database
+                    : getcwd().DIRECTORY_SEPARATOR.$database);
+                $database = str_replace('\\', '/', $database);
+                if (DIRECTORY_SEPARATOR === '\\') {
+                    $database = strtolower($database);
+                }
+            }
+            $key = hash('sha256', $database);
+            $handle = fopen(sys_get_temp_dir().DIRECTORY_SEPARATOR.'rbac-'.$key.'.lock', 'c');
+            if ($handle === false || ! flock($handle, LOCK_EX)) {
+                throw new RuntimeException('Unable to acquire the RBAC mutation lock.');
+            }
+            $this->rbacMutationLock = $handle;
 
             return;
         }
 
         User::query()->orderBy('id')->lockForUpdate()->get(['id']);
+    }
+
+    private function unlockSuperAdminMutationSet(): void
+    {
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            return;
+        }
+
+        if (is_resource($this->rbacMutationLock)) {
+            flock($this->rbacMutationLock, LOCK_UN);
+            fclose($this->rbacMutationLock);
+            $this->rbacMutationLock = null;
+        }
+    }
+
+    private function withinSuperAdminMutationLock(callable $callback): mixed
+    {
+        try {
+            return DB::transaction(function () use ($callback): mixed {
+                $this->lockSuperAdminMutationSet();
+
+                return $callback();
+            });
+        } finally {
+            // Keep the SQLite file lock until the transaction has committed or
+            // rolled back. This is a single-host coordination mechanism only;
+            // it does not provide distributed or multi-host locking.
+            $this->unlockSuperAdminMutationSet();
+        }
     }
 
     private function guardLastSuperAdminAssignment(UserOrganisationRole $assignment, array $changes): void

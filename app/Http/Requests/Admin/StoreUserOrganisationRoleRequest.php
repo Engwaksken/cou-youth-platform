@@ -21,6 +21,7 @@ final class StoreUserOrganisationRoleRequest extends FormRequest
             'role' => ['required', 'string', function ($attribute, $value, $fail): void {
                 $this->validateCatalogRole($value, $fail);
             }],
+            'organisation_role_id' => ['prohibited'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
@@ -38,5 +39,19 @@ final class StoreUserOrganisationRoleRequest extends FormRequest
         // when no catalog entry with that name exists anywhere.
         if (! OrganisationRole::query()->where('name', $value)->exists() && in_array($value, User::CMS_ROLES, true)) return;
         $fail('The selected role is not available for this organisation.');
+    }
+
+    public function catalogRoleId(): ?int
+    {
+        $unitId = $this->input('organisation_unit_id');
+        $role = OrganisationRole::query()->where('name', $this->input('role'))
+            ->where(function ($query) use ($unitId): void {
+                $query->whereNull('organisation_unit_id');
+                if ($unitId !== null) $query->orWhere('organisation_unit_id', (int) $unitId);
+            })
+            ->orderByRaw('organisation_unit_id IS NULL')
+            ->first();
+
+        return $role?->id;
     }
 }

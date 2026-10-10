@@ -43,8 +43,7 @@ final class UserController extends Controller
     public function destroy(Request $request, User $user): Response|RedirectResponse
     {
         $this->authorize('delete', $user);
-        DB::transaction(function () use ($user): void {
-            $this->lockSuperAdminMutationSet();
+        $this->withinSuperAdminMutationLock(function () use ($user): void {
             $user->refresh();
             $this->guardLastSuperAdminUserDeletion($user);
             $user->delete();

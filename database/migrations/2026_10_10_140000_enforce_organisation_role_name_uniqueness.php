@@ -9,7 +9,7 @@ return new class extends Migration
     {
         $driver = DB::connection()->getDriverName();
 
-        if (! in_array($driver, ['sqlite', 'pgsql', 'mysql'], true)) {
+        if (! in_array($driver, ['sqlite', 'pgsql', 'mysql', 'mariadb'], true)) {
             throw new RuntimeException("Role-name uniqueness is not configured for database driver [{$driver}].");
         }
 
@@ -36,7 +36,7 @@ return new class extends Migration
     {
         $driver = DB::connection()->getDriverName();
 
-        if (! in_array($driver, ['sqlite', 'pgsql', 'mysql'], true)) {
+        if (! in_array($driver, ['sqlite', 'pgsql', 'mysql', 'mariadb'], true)) {
             throw new RuntimeException("Role-name uniqueness is not configured for database driver [{$driver}].");
         }
 

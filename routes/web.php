@@ -97,8 +97,8 @@ Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->grou
     Route::get('users', [UserController::class, 'index'])->name('users.index');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
     });
-    Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::put('users/{user}', [UserController::class, 'update'])->middleware('can:update,user')->name('users.update');
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('can:delete,user')->name('users.destroy');
 
     Route::middleware('can:viewAny,'.\App\Models\UserOrganisationRole::class)->group(function (): void {
     Route::get('user-organisation-roles', [UserOrganisationRoleController::class, 'index'])->name('user-organisation-roles.index');
