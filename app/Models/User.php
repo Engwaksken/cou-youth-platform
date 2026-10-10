@@ -67,4 +67,40 @@ class User extends Authenticatable
             ->whereIn('role', self::CMS_ROLES)
             ->exists();
     }
+
+    /**
+     * Check whether the user has an active CMS role in the requested scope.
+     * A null organisation scope checks for any active CMS assignment.
+     */
+    public function hasCmsAccessIn(?int $organisationUnitId = null): bool
+    {
+        return $this->organisationRoles()
+            ->where('is_active', true)
+            ->whereIn('role', self::CMS_ROLES)
+            ->when($organisationUnitId !== null, function ($query) use ($organisationUnitId): void {
+                $query->where(function ($scope) use ($organisationUnitId): void {
+                    $scope->whereNull('organisation_unit_id')
+                        ->orWhere('organisation_unit_id', $organisationUnitId);
+                });
+            })
+            ->exists();
+    }
+
+    /**
+     * Check a permission on an active assignment. Global assignments also
+     * apply when a specific organisation is supplied.
+     */
+    public function hasOrganisationPermission(string $permission, ?int $organisationUnitId = null): bool
+    {
+        return $this->organisationRoles()
+            ->where('is_active', true)
+            ->when($organisationUnitId !== null, function ($query) use ($organisationUnitId): void {
+                $query->where(function ($scope) use ($organisationUnitId): void {
+                    $scope->whereNull('organisation_unit_id')
+                        ->orWhere('organisation_unit_id', $organisationUnitId);
+                });
+            })
+            ->get()
+            ->contains(fn (UserOrganisationRole $assignment): bool => $assignment->hasPermission($permission));
+    }
 }

@@ -12,6 +12,16 @@ use Symfony\Component\HttpFoundation\Response;
 final class EnsureCmsModuleAccess
 {
     /** @var list<string> */
+    private const SUPER_ADMIN_ONLY_PATTERNS = [
+        'admin.users.*',
+        'admin.roles.*',
+        'admin.permissions.*',
+        'admin.user-roles.*',
+        'admin.role-assignments.*',
+        'admin.user-organisation-roles.*',
+    ];
+
+    /** @var list<string> */
     private const HIERARCHY_ADMIN_ROLES = [
         'provincial_admin',
         'diocesan_admin',
@@ -97,11 +107,21 @@ final class EnsureCmsModuleAccess
             ->where('is_active', true)
             ->get(['role', 'permissions']);
 
+        $routeName = (string) optional($request->route())->getName();
+        if ($this->matchesAny($routeName, self::SUPER_ADMIN_ONLY_PATTERNS)) {
+            abort_unless(
+                $roles->contains(fn ($assignment): bool => $assignment->role === 'super_admin'),
+                403,
+                'Only an active super administrator can manage users and roles.'
+            );
+
+            return $next($request);
+        }
+
         if ($roles->contains(fn ($assignment): bool => $assignment->role === 'super_admin')) {
             return $next($request);
         }
 
-        $routeName = (string) optional($request->route())->getName();
         if ($routeName === '') {
             abort(403, 'You do not have permission to access this CMS module.');
         }
@@ -117,7 +137,7 @@ final class EnsureCmsModuleAccess
             }
 
             $permissions = is_array($assignment->permissions) ? $assignment->permissions : [];
-            if ($this->matchesAny($routeName, $permissions)) {
+            if ($this->matchesAny($routeName, $this->literalPermissionPatterns($permissions))) {
                 return $next($request);
             }
         }
@@ -139,5 +159,20 @@ final class EnsureCmsModuleAccess
         }
 
         return false;
+    }
+
+    /** @param array<int, mixed> $permissions
+     *  @return list<string>
+     */
+    private function literalPermissionPatterns(array $permissions): array
+    {
+        return array_values(array_filter(
+            $permissions,
+            static fn ($permission): bool => is_string($permission)
+                && $permission !== ''
+                && ! str_contains($permission, '*')
+                && ! str_contains($permission, '?')
+                && ! str_contains($permission, '[')
+        ));
     }
 }

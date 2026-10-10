@@ -29,6 +29,9 @@ use App\Http\Controllers\Api\V1\{
     RegistrationController,
     ReleaseController,
 };
+use App\Http\Controllers\Admin\OrganisationRoleController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserOrganisationRoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -61,6 +64,26 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/church-locator', [ChurchLocatorController::class, 'index']);
 
     Route::middleware('auth:sanctum')->group(function (): void {
+        Route::middleware('cms.access')->prefix('admin')->name('api.v1.admin.')->group(function (): void {
+            Route::middleware('can:viewAny,'.App\Models\OrganisationRole::class)->group(function (): void {
+                Route::apiResource('roles', OrganisationRoleController::class)->except(['show'])->parameters(['roles' => 'organisationRole']);
+            });
+            Route::middleware('can:viewAny,'.App\Models\User::class)->group(function (): void {
+                Route::get('users', [UserController::class, 'index'])->name('users.index');
+                Route::post('users', [UserController::class, 'store'])->name('users.store');
+            });
+            Route::middleware('can:viewAny,'.App\Models\User::class)->group(function (): void {
+                Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+                Route::patch('users/{user}', [UserController::class, 'update'])->name('users.update.patch');
+                Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+            });
+            Route::middleware('can:viewAny,'.App\Models\UserOrganisationRole::class)->group(function (): void {
+                Route::apiResource('user-organisation-roles', UserOrganisationRoleController::class)
+                    ->except(['show'])
+                    ->parameters(['user-organisation-roles' => 'userOrganisationRole']);
+            });
+        });
+
         Route::get('/me', [AuthController::class, 'me']);
         Route::patch('/me', [AuthController::class, 'updateProfile']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
