@@ -5,54 +5,48 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use App\Http\Requests\DestroyDeviceRequest;
+use App\Http\Requests\StoreDeviceRequest;
+use App\Http\Resources\DeviceRegistrationResource;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
 class DeviceController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function store(StoreDeviceRequest $request): DeviceRegistrationResource
     {
-        $data = $request->validate([
-            'platform' => ['required', 'in:android,ios,web'],
-            'push_token' => ['required', 'string', 'max:4096'],
-            'device_name' => ['nullable', 'string', 'max:120'],
-        ]);
+        $data = $request->validated();
+        $tokenHash = hash('sha256', $data['push_token']);
 
         $now = now();
 
         DB::table('user_devices')->updateOrInsert(
             [
                 'user_id' => $request->user()->id,
-                'push_token' => $data['push_token'],
+                'push_token_hash' => $tokenHash,
             ],
             [
+                'push_token' => Crypt::encryptString($data['push_token']),
                 'platform' => $data['platform'],
                 'device_name' => $data['device_name'] ?? null,
                 'last_seen_at' => $now,
                 'updated_at' => $now,
-                'created_at' => $now,
             ],
         );
 
-        return response()->json([
-            'message' => 'Device registered for notifications.',
-        ]);
+        return new DeviceRegistrationResource('Device registered for notifications.');
     }
 
-    public function destroy(Request $request): JsonResponse
+    public function destroy(DestroyDeviceRequest $request): DeviceRegistrationResource
     {
-        $data = $request->validate([
-            'push_token' => ['required', 'string', 'max:4096'],
-        ]);
+        $data = $request->validated();
+        $tokenHash = hash('sha256', $data['push_token']);
 
         DB::table('user_devices')
             ->where('user_id', $request->user()->id)
-            ->where('push_token', $data['push_token'])
+            ->where('push_token_hash', $tokenHash)
             ->delete();
 
-        return response()->json([
-            'message' => 'Device notification registration removed.',
-        ]);
+        return new DeviceRegistrationResource('Device notification registration removed.');
     }
 }

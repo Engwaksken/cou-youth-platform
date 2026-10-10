@@ -6,6 +6,7 @@ namespace App\Services\Notifications;
 
 use App\Models\{NotificationPreference, PlatformNotification, PlatformNotificationReceipt, User};
 use App\Services\Branding\BrandingService;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -21,7 +22,10 @@ class NotificationDeliveryService
             return;
         }
 
-        $preferences = NotificationPreference::firstOrCreate(['user_id' => $user->id]);
+      $preferences = NotificationPreference::firstOrCreate(
+    ['user_id' => $user->id],
+    ['push' => true],
+);
         $channel = $notification->channel ?: 'in_app';
 
         if (in_array($channel, ['email', 'all'], true) && $preferences->email && $user->email) {
@@ -48,7 +52,14 @@ class NotificationDeliveryService
                 ->pluck('push_token');
 
             foreach ($tokens as $token) {
-                $this->sendPush((string) $token, $notification);
+                try {
+                    $plaintextToken = Crypt::decryptString((string) $token);
+                } catch (\Throwable) {
+                    // A corrupt device record must not prevent delivery to other devices.
+                    continue;
+                }
+
+                $this->sendPush($plaintextToken, $notification);
             }
         }
 
