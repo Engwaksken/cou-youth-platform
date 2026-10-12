@@ -11,6 +11,14 @@ final class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool { return $this->user()?->can('update', $this->route('user')) ?? false; }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('password') && ($this->input('password') === null || $this->input('password') === '')) {
+            $this->getInputSource()->remove('password');
+            $this->getInputSource()->remove('password_confirmation');
+        }
+    }
+
     public function rules(): array
     {
         $user = $this->route('user');
