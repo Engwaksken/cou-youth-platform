@@ -41,7 +41,7 @@
 <body>
 <div class="top">
     <div class="top-left">
-        <button class="icon-btn mobile-menu-btn" id="menuToggle" type="button" aria-label="Open portal navigation"><i class="fas fa-bars"></i></button>
+        <x-mobile-menu-button :title="$sysName" :logo="$sysLogoUrl" controls="portalSidebar" />
         <a class="brand" href="{{ route('youth.dashboard') }}">
             @if(!empty($sysLogoUrl))<span class="brand-logo-shell"><img class="brand-logo" src="{{ $sysLogoUrl }}" alt="{{ $sysName }} logo"></span>@else<span class="brand-logo-shell"><i class="fas fa-church" style="color:var(--primary)"></i></span>@endif
             <span class="brand-text">{{ $sysName }}</span>
@@ -49,7 +49,7 @@
     </div>
     <div class="top-actions">
         <span class="user-name">Welcome, {{ auth()->user()->name }}</span>
-        <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-light" type="submit"><i class="fas fa-right-from-bracket"></i> Logout</button></form>
+        <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-light" type="submit" aria-label="Logout"><i class="fas fa-right-from-bracket" aria-hidden="true"></i><span class="logout-label">Logout</span></button></form>
     </div>
 </div>
 <div class="wrap">
@@ -74,11 +74,9 @@
         <a href="{{ route('youth.media') }}" class="{{ request()->routeIs('youth.media') ? 'active' : '' }}"><i class="fas fa-photo-film"></i> Media & Services</a>
         <a href="{{ route('youth.donations') }}" class="{{ request()->routeIs('youth.donations*') ? 'active' : '' }}"><i class="fas fa-hand-holding-heart"></i> Donate & History</a>
     </aside>
-    <div class="side-backdrop" id="sideBackdrop"></div>
+    <div class="mobile-nav-backdrop" data-mobile-nav-backdrop aria-hidden="true"></div>
     <main class="main" id="main-content">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('youth_content')</main>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded',()=>{const btn=document.getElementById('menuToggle');const side=document.getElementById('portalSidebar');const backdrop=document.getElementById('sideBackdrop');if(!btn||!side||!backdrop)return;const close=()=>{side.classList.remove('open');backdrop.classList.remove('open')};btn.addEventListener('click',()=>{side.classList.toggle('open');backdrop.classList.toggle('open')});backdrop.addEventListener('click',close);side.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));window.addEventListener('resize',()=>{if(window.innerWidth>800)close()});});
-</script>
+@include('partials.mobile-navigation')
 </body>
 </html>
