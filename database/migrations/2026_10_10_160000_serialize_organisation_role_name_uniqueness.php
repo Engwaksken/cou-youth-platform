@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -17,7 +18,9 @@ return new class extends Migration
             DB::statement('CREATE TABLE organisation_role_name_locks (id TINYINT UNSIGNED NOT NULL PRIMARY KEY) ENGINE=InnoDB');
             DB::statement('INSERT INTO organisation_role_name_locks (id) VALUES (1)');
             DB::statement('ALTER TABLE organisation_roles DROP INDEX organisation_roles_scope_name_unique');
-            DB::statement('ALTER TABLE organisation_roles DROP COLUMN organisation_unit_scope');
+            if (Schema::hasColumn('organisation_roles', 'organisation_unit_scope')) {
+                DB::statement('ALTER TABLE organisation_roles DROP COLUMN organisation_unit_scope');
+            }
             DB::statement('CREATE UNIQUE INDEX organisation_roles_scope_name_unique ON organisation_roles (organisation_unit_id, name)');
             DB::unprepared('DROP TRIGGER IF EXISTS organisation_roles_name_scope_insert');
             DB::unprepared('DROP TRIGGER IF EXISTS organisation_roles_name_scope_update');
