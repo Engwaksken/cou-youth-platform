@@ -39,6 +39,7 @@
         @media(max-width:800px){.wrap{grid-template-columns:1fr}.side{display:none}.side.open{display:block}.mobile-menu-btn{display:inline-flex}.main{padding:16px}.grid,.campaign-grid{grid-template-columns:1fr}.page-head{align-items:flex-start;flex-direction:column}.filters,.form-grid,.detail-grid{grid-template-columns:1fr}.span-2{grid-column:span 1}.top{padding:0 14px}.top .user-name{display:none}.brand{max-width:52vw}.brand-text{max-width:145px}.modal{padding:10px}.modal-card{max-height:94vh;padding:16px}.toolbar{align-items:stretch}.toolbar .filters{width:100%}}
     </style>
     @include('partials.platform-layout-styles')
+    @include('partials.form-control-styles')
     @stack('styles')
 </head>
 <body>

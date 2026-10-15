@@ -48,6 +48,7 @@
         [data-auth-flash]{transition:opacity .5s ease}[data-auth-flash].is-fading{opacity:0}
         @media(max-width:520px){body{align-items:flex-start;padding:24px 14px}.login-card{padding:24px 18px}.brand-logo,.brand-fallback{width:62px;height:62px;max-width:62px;max-height:62px}}
     </style>
+    @include('partials.form-control-styles')
 </head>
 <body>
     <main class="login-shell">

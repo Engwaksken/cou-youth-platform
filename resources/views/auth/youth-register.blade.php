@@ -285,8 +285,8 @@
     .field {
         display: block;
         width: 100%;
-        min-height: 50px;
-        padding: 11px 13px;
+        min-height: var(--control-height);
+        padding: 8px 12px;
         border: 1px solid #d0d5dd;
         border-radius: 10px;
         background: #fff;
@@ -328,7 +328,7 @@
     .register-actions { display: flex; align-items: center; gap: 10px; margin-top: 22px; }
     .register-actions.end { justify-content: flex-end; }
     .register-actions.split { justify-content: space-between; }
-    .register-actions .btn { min-height: 48px; border-radius: 10px; justify-content: center; }
+    .register-actions .btn { min-height: var(--control-height); border-radius: 8px; justify-content: center; }
 
     .btn-outline { border: 1px solid var(--primary); background: #fff; color: var(--primary); }
     .btn-outline:hover,

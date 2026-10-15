@@ -51,6 +51,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 @media(max-width:640px){.grid{grid-template-columns:1fr}.auth-actions .muted{display:none}.container{padding:24px 16px}.hero{padding-top:26px}.floating-tools{right:12px;bottom:12px}.panel{right:12px;bottom:76px}.nav{padding-inline:14px}.brand-mark{width:40px;height:40px;min-width:40px}.brand-name{max-width:135px;font-size:.88rem}.mobile-menu-toggle{width:42px;height:42px;min-width:42px}.filters{padding:10px}.btn{min-height:46px}}
 </style>
 @include('partials.platform-layout-styles')
+@include('partials.form-control-styles')
 <style>
 body{display:flex;flex-direction:column;min-height:100dvh}
 body>.container{width:100%;max-width:none;flex:1}

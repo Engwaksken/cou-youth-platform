@@ -38,6 +38,7 @@
         @media(max-width:560px){.page-stats{grid-template-columns:1fr}}
     </style>
     @include('partials.platform-layout-styles')
+    @include('partials.form-control-styles')
 </head>
 <body>
 <div class="top">
