@@ -362,8 +362,9 @@
         padding: 26px;
     }
 
-    .giving-message p {
-        opacity: .88;
+    .donate-hero .giving-message p {
+        color: #fff;
+        opacity: 1;
     }
 
     .giving-icon,

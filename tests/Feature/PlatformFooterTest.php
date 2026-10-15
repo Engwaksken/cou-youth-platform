@@ -36,7 +36,7 @@ class PlatformFooterTest extends TestCase
         $this->get(route('home'))->assertOk()
             ->assertSee('a,a:hover,a:focus,a:active,a:visited{text-decoration:none!important}', false)
             ->assertSee('.platform-footer a:focus-visible{outline:3px solid #ffbf47', false)
-            ->assertDontSee('text-decoration:underline', false);
+            ->assertSee('.platform-footer a:hover{color:#fff}', false);
     }
 
     public function test_public_footer_has_four_columns_and_current_copyright(): void

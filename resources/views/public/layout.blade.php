@@ -82,9 +82,51 @@ body>.container{width:100%;max-width:none;flex:1}
 <main id="main-content" class="container" tabindex="-1">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('content')</main>
 <x-platform-footer :brand="$platformBrand" />
 <div class="floating-tools" aria-label="Accessibility and support tools"><button class="float-btn" type="button" id="accessToggle" aria-label="Open accessibility settings" title="Accessibility"><i class="fas fa-universal-access" aria-hidden="true"></i></button><button class="float-btn chat" type="button" id="chatToggle" aria-label="Open Youth Assistant" title="Youth Assistant"><i class="fas fa-comments" aria-hidden="true"></i></button></div>
-<section class="panel" id="accessPanel" aria-label="Accessibility settings" aria-hidden="true"><div class="panel-head"><i class="fas fa-universal-access" aria-hidden="true"></i><strong>Accessibility</strong><button class="btn btn-icon" type="button" data-close="accessPanel" aria-label="Close accessibility settings"><i class="fas fa-xmark"></i></button></div><div class="panel-body"><div class="access-row"><span>Text size</span><div class="switch"><button class="btn btn-icon" id="textDown" aria-label="Decrease text size">A−</button><button class="btn btn-icon" id="textUp" aria-label="Increase text size">A+</button></div></div><div class="access-row"><label for="contrast">High contrast</label><input id="contrast" type="checkbox"></div><div class="access-row"><label for="grayscale">Grayscale</label><input id="grayscale" type="checkbox"></div><div class="access-row"><label for="dyslexia">Dyslexia-friendly reading</label><input id="dyslexia" type="checkbox"></div><div class="access-row"><label for="motion">Reduce motion</label><input id="motion" type="checkbox"></div><button class="btn" type="button" id="resetAccessibility" style="margin-top:14px;width:100%">Reset accessibility settings</button></div></section>
+@include('partials.accessibility-panel')
 <section class="panel" id="chatPanel" aria-label="Youth Assistant" aria-hidden="true"><div class="panel-head"><i class="fas fa-robot" aria-hidden="true"></i><strong>Youth Assistant</strong><button class="btn btn-icon" type="button" data-close="chatPanel" aria-label="Close Youth Assistant"><i class="fas fa-xmark"></i></button></div><div class="panel-body"><div class="chat-messages" id="chatMessages" aria-live="polite"><div class="msg">Hello! I can help you find events, courses, churches, donations and platform support.</div></div><div class="chat-quick" aria-label="Quick questions"><button type="button" data-chat="Find an event">Find an event</button><button type="button" data-chat="Find a church">Find a church</button><button type="button" data-chat="Show available courses">Courses</button><button type="button" data-chat="How do I donate?">Donate</button><button type="button" data-chat="I need prayer or pastoral support">Prayer support</button></div>@guest<div class="msg">Sign in to chat securely with the Youth Assistant.</div><a class="btn btn-primary" href="{{ route('login') }}" style="width:100%;margin-top:10px">Youth Login</a>@endguest</div>@auth<form class="chat-form" id="chatForm"><label class="sr-only" for="chatInput">Message Youth Assistant</label><input id="chatInput" maxlength="3000" autocomplete="off" placeholder="Ask the Youth Assistant…"><button class="btn btn-primary btn-icon" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button></form>@endauth</section>
 <script>
-(()=>{const body=document.body;const root=document.documentElement;const state=JSON.parse(localStorage.getItem('cou-accessibility')||'{}');const nav=document.getElementById('mainNav');const menuToggle=document.getElementById('mobileMenuToggle');const closeMobileMenu=()=>{if(!nav||!menuToggle)return;nav.classList.remove('mobile-open');menuToggle.setAttribute('aria-expanded','false');menuToggle.setAttribute('aria-label','Open navigation menu');const icon=menuToggle.querySelector('i');if(icon){icon.classList.remove('fa-xmark');icon.classList.add('fa-bars')}};if(nav&&menuToggle){menuToggle.addEventListener('click',()=>{const open=nav.classList.toggle('mobile-open');menuToggle.setAttribute('aria-expanded',open?'true':'false');menuToggle.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu');const icon=menuToggle.querySelector('i');if(icon){icon.classList.toggle('fa-bars',!open);icon.classList.toggle('fa-xmark',open)}});nav.querySelectorAll('.nav-links a').forEach(link=>link.addEventListener('click',closeMobileMenu));window.addEventListener('resize',()=>{if(window.innerWidth>900)closeMobileMenu()});}const apply=()=>{root.style.setProperty('--text-scale',state.scale||1);body.classList.toggle('high-contrast',!!state.contrast);body.classList.toggle('grayscale',!!state.grayscale);body.classList.toggle('dyslexia',!!state.dyslexia);body.classList.toggle('reduce-motion',!!state.motion);['contrast','grayscale','dyslexia','motion'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=!!state[id]});localStorage.setItem('cou-accessibility',JSON.stringify(state))};apply();const openPanel=id=>{['accessPanel','chatPanel'].forEach(p=>{const el=document.getElementById(p);const open=p===id&&!el.classList.contains('open');el.classList.toggle('open',open);el.setAttribute('aria-hidden',open?'false':'true')})};document.getElementById('accessToggle').onclick=()=>openPanel('accessPanel');document.getElementById('chatToggle').onclick=()=>openPanel('chatPanel');document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const p=document.getElementById(b.dataset.close);p.classList.remove('open');p.setAttribute('aria-hidden','true')});document.getElementById('textUp').onclick=()=>{state.scale=Math.min(1.4,(state.scale||1)+.1);apply()};document.getElementById('textDown').onclick=()=>{state.scale=Math.max(.9,(state.scale||1)-.1);apply()};['contrast','grayscale','dyslexia','motion'].forEach(id=>{document.getElementById(id).onchange=e=>{state[id]=e.target.checked;apply()}});document.getElementById('resetAccessibility').onclick=()=>{Object.keys(state).forEach(k=>delete state[k]);apply()};document.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>{openPanel('chatPanel');const input=document.getElementById('chatInput');if(input){input.value=b.dataset.chat;input.focus()}});const form=document.getElementById('chatForm');if(form){const messages=document.getElementById('chatMessages');const input=document.getElementById('chatInput');const add=(text,user=false)=>{const div=document.createElement('div');div.className='msg'+(user?' user':'');div.textContent=text;messages.appendChild(div);messages.scrollTop=messages.scrollHeight};form.addEventListener('submit',async e=>{e.preventDefault();const message=input.value.trim();if(!message)return;add(message,true);input.value='';input.disabled=true;try{const r=await fetch('{{ route('youth-assistant.reply') }}',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({message})});const data=await r.json();add(data?.data?.reply||data?.message||'The Youth Assistant is unavailable right now.')}catch(_){add('The Youth Assistant is unavailable right now. Please try again later.')}finally{input.disabled=false;input.focus()}})}})();
+(() => {
+    const nav = document.getElementById('mainNav');
+    const toggle = document.getElementById('mobileMenuToggle');
+    const setMenu = open => {
+        nav.classList.toggle('mobile-open', open);
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+        const icon = toggle.querySelector('i');
+        icon.classList.toggle('fa-bars', !open);
+        icon.classList.toggle('fa-xmark', open);
+    };
+    toggle.addEventListener('click', () => setMenu(!nav.classList.contains('mobile-open')));
+    nav.querySelectorAll('.nav-links a').forEach(link => link.addEventListener('click', () => setMenu(false)));
+    window.addEventListener('resize', () => { if (window.innerWidth > 900) setMenu(false); });
+    const form = document.getElementById('chatForm');
+    if (!form) return;
+    const messages = document.getElementById('chatMessages');
+    const input = document.getElementById('chatInput');
+    const add = (text, user = false) => {
+        const div = document.createElement('div');
+        div.className = 'msg' + (user ? ' user' : '');
+        div.textContent = text;
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    };
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const message = input.value.trim();
+        if (!message || input.disabled) return;
+        add(message, true); input.value = ''; input.disabled = true;
+        try {
+            const response = await fetch('{{ route('youth-assistant.reply') }}', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},
+                body: JSON.stringify({message})
+            });
+            const data = await response.json();
+            add(data?.data?.reply || data?.message || 'The Youth Assistant is unavailable right now.');
+        } catch (_) { add('The Youth Assistant is unavailable right now. Please try again later.'); }
+        finally { input.disabled = false; input.focus(); }
+    });
+})();
 </script>
+@include('partials.accessibility-enhancements')
 </body></html>
