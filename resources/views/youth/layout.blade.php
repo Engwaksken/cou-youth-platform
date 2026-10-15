@@ -37,6 +37,7 @@
         @media(max-width:800px){.wrap{grid-template-columns:1fr}.side{display:none}.side.open{display:block;position:fixed;top:68px;left:0;bottom:0;width:270px;height:calc(100vh - 68px);z-index:90;box-shadow:18px 0 45px rgba(0,0,0,.25)}.mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center}.main{padding:16px}.top{padding:0 14px}.top .user-name{display:none}.brand{max-width:52vw}.brand-text{max-width:145px}.side-backdrop.open{display:block;position:fixed;inset:68px 0 0;background:rgba(15,23,42,.5);z-index:80}}
         @media(max-width:560px){.page-stats{grid-template-columns:1fr}}
     </style>
+    @include('partials.platform-layout-styles')
 </head>
 <body>
 <div class="top">
@@ -75,7 +76,10 @@
         <a href="{{ route('youth.donations') }}" class="{{ request()->routeIs('youth.donations*') ? 'active' : '' }}"><i class="fas fa-hand-holding-heart"></i> Donate & History</a>
     </aside>
     <div class="mobile-nav-backdrop" data-mobile-nav-backdrop aria-hidden="true"></div>
-    <main class="main" id="main-content">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('youth_content')</main>
+    <div class="portal-content">
+        <main class="main" id="main-content">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('youth_content')</main>
+        <x-platform-footer :brand="$brand" />
+    </div>
 </div>
 @include('partials.mobile-navigation')
 </body>
