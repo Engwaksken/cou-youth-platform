@@ -53,7 +53,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 @include('partials.platform-layout-styles')
 <style>
 body{display:flex;flex-direction:column;min-height:100dvh}
-body>.container{width:100%;flex:1}
+body>.container{width:100%;max-width:none;flex:1}
+.site-header>.nav{width:100%;max-width:none}
+@media(min-width:1440px){body>.container,.site-header>.nav{padding-inline:clamp(24px,2vw,64px)}}
 .platform-footer-grid,.platform-footer-bottom-inner{padding-right:84px}
 @media(min-width:901px) and (max-width:1200px){.nav{flex-wrap:wrap}.nav-links{order:3;width:100%;justify-content:center}.auth-actions{margin-left:auto}}
 @media(max-width:640px){.platform-footer-grid{padding-right:16px}.platform-footer-bottom-inner{padding-bottom:148px}}

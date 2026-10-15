@@ -11,6 +11,16 @@ class PlatformFooterTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_public_layout_uses_full_available_width_on_large_screens(): void
+    {
+        $this->get(route('home'))->assertOk()
+            ->assertSee('body>.container{width:100%;max-width:none;flex:1}', false)
+            ->assertSee('.site-header>.nav{width:100%;max-width:none}', false)
+            ->assertSee('@media(min-width:1440px)', false)
+            ->assertDontSee('max-width:1180px;margin:0 auto;padding:44px', false)
+            ->assertDontSee('max-width:1180px;margin:auto;padding:18px', false);
+    }
+
     public function test_public_footer_has_four_columns_and_current_copyright(): void
     {
         $response = $this->get(route('home'))->assertOk();
