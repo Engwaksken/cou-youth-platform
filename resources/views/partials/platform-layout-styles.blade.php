@@ -1,5 +1,9 @@
 <style>
+    :root{--page-gutter:24px}
+    @media(min-width:1200px){:root{--page-gutter:32px}}
+    @media(max-width:640px){:root{--page-gutter:16px}}
     img,video,svg{max-width:100%}
+    a,a:hover,a:focus,a:active,a:visited{text-decoration:none!important}
     main{overflow-wrap:anywhere}
     main input,main select,main textarea{max-width:100%;min-width:0}
     .portal-content{display:flex;flex-direction:column;min-width:0}
@@ -15,12 +19,11 @@
     .platform-footer-column ul{list-style:none;margin:0;padding:0}
     .platform-footer-column li{margin:0;padding:0}
     .platform-footer-column li a{display:inline-flex;align-items:center;min-height:44px;padding:8px 0;color:#ddd4ef;text-decoration:none;font-size:.94rem}
-    .platform-footer a:hover{color:#fff;text-decoration:underline;text-underline-offset:4px}
+    .platform-footer a:hover{color:#fff}
     .platform-footer a:focus-visible{outline:3px solid #ffbf47;outline-offset:4px;border-radius:3px}
     .platform-footer-bottom{border-top:1px solid #514366;background:rgba(0,0,0,.14)}
     .platform-footer-bottom-inner{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;width:100%;margin:auto;padding:18px 24px}
     .platform-footer-bottom p{margin:0;font-size:.85rem;color:#ddd4ef}
-    @media(min-width:1440px){.platform-footer-grid,.platform-footer-bottom-inner{padding-inline:clamp(24px,2vw,64px)}.portal-content>.main{padding-inline:clamp(25px,2vw,64px)}}
     @media(max-width:1100px){.platform-footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:640px){
         .platform-footer-grid{grid-template-columns:minmax(0,1fr);gap:26px;padding:32px 16px}
@@ -29,5 +32,6 @@
         .chat-form input{min-width:0}
         main input,main select,main textarea{font-size:1rem}
     }
+    body>.container,.site-header>.nav,.portal-content>.main,.platform-footer-grid,.platform-footer-bottom-inner,.top{padding-inline:var(--page-gutter)}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>

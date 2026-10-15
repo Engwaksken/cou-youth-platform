@@ -16,9 +16,27 @@ class PlatformFooterTest extends TestCase
         $this->get(route('home'))->assertOk()
             ->assertSee('body>.container{width:100%;max-width:none;flex:1}', false)
             ->assertSee('.site-header>.nav{width:100%;max-width:none}', false)
-            ->assertSee('@media(min-width:1440px)', false)
+            ->assertSee('padding-inline:var(--page-gutter)', false)
             ->assertDontSee('max-width:1180px;margin:0 auto;padding:44px', false)
             ->assertDontSee('max-width:1180px;margin:auto;padding:18px', false);
+    }
+
+    public function test_layout_uses_consistent_responsive_page_gutters(): void
+    {
+        $this->get(route('home'))->assertOk()
+            ->assertSee(':root{--page-gutter:24px}', false)
+            ->assertSee('@media(min-width:1200px){:root{--page-gutter:32px}}', false)
+            ->assertSee('@media(max-width:640px){:root{--page-gutter:16px}}', false)
+            ->assertDontSee('padding-right:84px', false)
+            ->assertDontSee('padding-inline:clamp(', false);
+    }
+
+    public function test_links_remain_without_underlines_on_hover_and_focus(): void
+    {
+        $this->get(route('home'))->assertOk()
+            ->assertSee('a,a:hover,a:focus,a:active,a:visited{text-decoration:none!important}', false)
+            ->assertSee('.platform-footer a:focus-visible{outline:3px solid #ffbf47', false)
+            ->assertDontSee('text-decoration:underline', false);
     }
 
     public function test_public_footer_has_four_columns_and_current_copyright(): void
