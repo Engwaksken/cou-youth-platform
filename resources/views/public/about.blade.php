@@ -51,12 +51,10 @@
             Church of Uganda Youth Ministry
         </span>
 
-        <h1>About the COU Youth Platform</h1>
+        <h1>About COU Youth</h1>
 
         <p>
-            A connected digital platform supporting discipleship, community,
-            participation, opportunities, safeguarding and service for young
-            people across the Church of Uganda.
+            COU Youth is the Church of Uganda's online home for young people: a place to grow in faith, make friends, find support and discover where you can serve.
         </p>
 
         <div class="about-actions">
@@ -91,10 +89,9 @@
 <section class="about-section">
     <div class="section-head">
         <div>
-            <h2>What the platform provides</h2>
+            <h2>What you'll find here</h2>
             <p class="muted">
-                A digital ecosystem designed around faith, participation,
-                inclusion and youth development.
+                Everything here is built to help you grow, belong and make a difference.
             </p>
         </div>
     </div>
@@ -108,8 +105,7 @@
             <h3>Discipleship</h3>
 
             <p class="muted">
-                Access courses, Bible study materials, devotionals and
-                faith-building resources.
+                Courses, Bible studies and devotionals to help you know God better, one step at a time.
             </p>
         </article>
 
@@ -121,8 +117,7 @@
             <h3>Community</h3>
 
             <p class="muted">
-                Connect with events, life groups, ministries and youth
-                fellowships across the Church of Uganda.
+                Events, life groups and fellowships where you can meet people who will walk the journey with you.
             </p>
         </article>
 
@@ -134,8 +129,7 @@
             <h3>Safeguarding</h3>
 
             <p class="muted">
-                Age-aware consent, moderation and support workflows help
-                provide safer participation for young people.
+                Your safety matters. We ask for a parent or guardian's consent where it's needed, and our team keeps an eye on what's shared so everyone can take part safely.
             </p>
         </article>
 
@@ -147,8 +141,7 @@
             <h3>Church Locator</h3>
 
             <p class="muted">
-                Discover Church of Uganda congregations and youth activities
-                in different locations.
+                Moving to a new town or just visiting? Find a church nearby and see when the youth meet.
             </p>
         </article>
 
@@ -160,8 +153,7 @@
             <h3>Giving</h3>
 
             <p class="muted">
-                Support approved youth ministry campaigns through secure
-                giving and payment channels.
+                Give safely and securely to youth ministry campaigns you care about.
             </p>
         </article>
 
@@ -173,8 +165,7 @@
             <h3>Mobile Access</h3>
 
             <p class="muted">
-                Access personalised youth services through the Flutter mobile
-                application and responsive website.
+                Use the mobile app or the website on any phone, tablet or computer, wherever you are.
             </p>
         </article>
     </div>
@@ -187,7 +178,7 @@
             <div>
                 <h2>Highlights</h2>
                 <p class="muted">
-                    Learn more about the Church of Uganda youth ministry.
+                    More about youth ministry in the Church of Uganda.
                 </p>
             </div>
         </div>
@@ -238,8 +229,7 @@
             <h2>Be part of the COU Youth community</h2>
 
             <p class="muted">
-                Create an account to access personalised opportunities,
-                discipleship, events and ministry participation.
+                Create a free account to save your progress, sign up for events and find your place in the church family.
             </p>
         </div>
 
