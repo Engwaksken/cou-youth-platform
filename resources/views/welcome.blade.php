@@ -30,8 +30,8 @@
 <section class="hero home-hero">
     <div class="hero-copy">
         <span class="badge"><i class="fas fa-cross"></i> Church of Uganda Youth Ministry</span>
-        <h1>Faith. Community. Opportunity.</h1>
-        <p>A welcoming digital home for young people to grow in faith, join events, discover opportunities, find churches and connect with youth ministry.</p>
+        <h1>Grow in faith. Find your people.</h1>
+        <p>Whether you're new to church or have been coming all your life, this is your space to learn, make friends, find a church near you and get involved in what God is doing among young people in Uganda.</p>
         <div class="hero-actions">
             @guest
                 <a class="btn btn-primary" href="{{ route('register') }}"><i class="fas fa-user-plus"></i> Create Youth Account</a>
@@ -44,8 +44,8 @@
 
     <aside class="card explore-card" aria-label="Explore the platform">
         <span class="section-kicker">START HERE</span>
-        <h2>Explore COU Youth</h2>
-        <p>Choose what matters to you today.</p>
+        <h2>Where would you like to start?</h2>
+        <p>Pick whatever catches your eye. There's no wrong place to begin.</p>
         <div class="explore-links">
             <a href="{{ route('public.news') }}"><span><i class="fas fa-newspaper"></i> News & Resources</span><i class="fas fa-arrow-right"></i></a>
             <a href="{{ route('public.events') }}"><span><i class="fas fa-calendar-days"></i> Events</span><i class="fas fa-arrow-right"></i></a>
@@ -80,22 +80,22 @@
     <div class="section-head">
         <div>
             <span class="section-kicker">DISCOVER</span>
-            <h2>COU Youth at a glance</h2>
-            <p class="muted">See what is happening across the Church of Uganda youth ministry.</p>
+            <h2>What's happening right now</h2>
+            <p class="muted">A quick look at what young people across the Church of Uganda are up to.</p>
         </div>
     </div>
     <div class="grid">
         <a class="card glance-card" href="{{ route('public.events') }}">
             <span class="glance-icon"><i class="fas fa-calendar-days"></i></span>
-            <div><h3>{{ number_format($stats['events'] ?? 0) }} Events</h3><p class="muted">Worship, fellowship, missions and youth programmes.</p></div>
+            <div><h3>{{ number_format($stats['events'] ?? 0) }} Events</h3><p class="muted">Worship nights, fellowships, missions and get-togethers you can join.</p></div>
         </a>
         <a class="card glance-card" href="{{ route('public.courses') }}">
             <span class="glance-icon"><i class="fas fa-book-bible"></i></span>
-            <div><h3>{{ number_format($stats['courses'] ?? 0) }} Courses</h3><p class="muted">Bible study and discipleship resources for young people.</p></div>
+            <div><h3>{{ number_format($stats['courses'] ?? 0) }} Courses</h3><p class="muted">Bible studies you can take at your own pace, on your own or with friends.</p></div>
         </a>
         <a class="card glance-card" href="{{ route('public.churches') }}">
             <span class="glance-icon"><i class="fas fa-church"></i></span>
-            <div><h3>{{ number_format($stats['church_locations'] ?? 0) }} Church Locations</h3><p class="muted">Find congregations and youth fellowship information.</p></div>
+            <div><h3>{{ number_format($stats['church_locations'] ?? 0) }} Church Locations</h3><p class="muted">Find a church near you and see when its youth fellowship meets.</p></div>
         </a>
     </div>
 </section>
@@ -103,7 +103,7 @@
 @if($latestNews->isNotEmpty())
 <section class="home-section">
     <div class="section-head">
-        <div><span class="section-kicker">LATEST</span><h2>News & opportunities</h2><p class="muted">Recent updates, opportunities and devotionals.</p></div>
+        <div><span class="section-kicker">LATEST</span><h2>Stories &amp; opportunities</h2><p class="muted">Devotionals, stories and opportunities from around the church.</p></div>
         <a class="btn" href="{{ route('public.news') }}">View all</a>
     </div>
     <div class="grid">
@@ -121,7 +121,7 @@
 @if($upcomingEvents->isNotEmpty())
 <section class="home-section">
     <div class="section-head">
-        <div><span class="section-kicker">COMING UP</span><h2>Upcoming Events</h2><p class="muted">Join the next youth programmes and gatherings.</p></div>
+        <div><span class="section-kicker">COMING UP</span><h2>Upcoming Events</h2><p class="muted">Come along, and bring a friend.</p></div>
         <a class="btn" href="{{ route('public.events') }}">View all</a>
     </div>
     <div class="grid">
@@ -140,7 +140,7 @@
 
 @if($cards->isNotEmpty())
 <section class="home-section page-cards-grid" aria-label="Highlights">
-    <div class="section-head"><div><span class="section-kicker">FEATURED</span><h2>Highlights</h2><p class="muted">Featured ministry content and opportunities.</p></div></div>
+    <div class="section-head"><div><span class="section-kicker">FEATURED</span><h2>Highlights</h2><p class="muted">A few things we'd love you to see.</p></div></div>
     <div class="grid">
         @foreach($cards as $card)
             <article class="card highlight-card">
@@ -160,11 +160,11 @@
 
 <section class="home-section">
     <div class="card connect-card">
-        <div><h2>Ready to connect?</h2><p class="muted">Create a youth account to access personalised ministry and participation features.</p></div>
+        <div><h2>Ready to join us?</h2><p class="muted">Create a free youth account to save your courses, sign up for events and stay connected with your church family.</p></div>
         @guest
             <a class="btn btn-primary" href="{{ route('register') }}">Sign Up</a>
         @else
-            <a class="btn btn-primary" href="{{ route('public.courses') }}">Continue Exploring</a>
+            <a class="btn btn-primary" href="{{ route('public.courses') }}">Keep exploring</a>
         @endguest
     </div>
 </section>

@@ -18,7 +18,7 @@
 </section>
 @endif
 
-<section class="hero page-hero"><span class="section-kicker">YOUTH COMMUNITY</span><h1>Youth Events</h1><p>Worship, fellowship, discipleship, mission and youth activities across the Church of Uganda.</p></section>
+<section class="hero page-hero"><span class="section-kicker">YOUTH COMMUNITY</span><h1>Youth Events</h1><p>Worship nights, conferences, missions and fellowships happening across Uganda. Come along, and bring a friend.</p></section>
 
 <form class="filters" method="GET"><input name="q" value="{{ request('q') }}" placeholder="Search events or venue"><button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Search</button></form>
 
@@ -36,7 +36,7 @@
     </div>
 </a>
 @empty
-<div class="card empty-card"><i class="fas fa-calendar-xmark"></i><h3>No upcoming events found</h3><p class="muted">New youth activities will appear here when published.</p></div>
+<div class="card empty-card"><i class="fas fa-calendar-xmark"></i><h3>No upcoming events just now</h3><p class="muted">New events are added all the time, so check back soon.</p></div>
 @endforelse
 </div>
 <div class="pagination">{{ $items->links() }}</div>

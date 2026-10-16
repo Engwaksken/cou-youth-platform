@@ -18,7 +18,7 @@
 </section>
 @endif
 
-<section class="hero"><span class="section-kicker">GROW IN FAITH</span><h1>Discipleship Courses</h1><p>Structured Bible study and youth discipleship designed to help young people grow in faith and service.</p></section>
+<section class="hero"><span class="section-kicker">GROW IN FAITH</span><h1>Discipleship Courses</h1><p>Bible studies and discipleship courses you can work through at your own pace, on your own, with friends or with your life group.</p></section>
 <form class="filters" method="GET"><input name="q" value="{{ request('q') }}" placeholder="Search courses"><button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Search</button></form>
 
 <div class="grid">
@@ -31,7 +31,7 @@
 <div class="course-meta"><span><i class="fas fa-list"></i> {{ number_format($course->lessons_count ?? 0) }} {{ ($course->lessons_count ?? 0) === 1 ? 'lesson' : 'lessons' }}</span><span class="detail-link">View course <i class="fas fa-arrow-right"></i></span></div>
 </a>
 @empty
-<div class="card empty-card"><i class="fas fa-book-open"></i><h3>No published courses found</h3><p class="muted">New discipleship resources will appear here when available.</p></div>
+<div class="card empty-card"><i class="fas fa-book-open"></i><h3>No courses yet</h3><p class="muted">New courses are on the way, so check back soon.</p></div>
 @endforelse
 </div>
 <div class="pagination">{{ $items->links() }}</div>

@@ -38,7 +38,7 @@
 </div>
 @endforeach
 </div>
-@else<p class="muted">Lessons for this course will be published soon.</p>@endif
+@else<p class="muted">Lessons for this course are coming soon.</p>@endif
 </section>
 </article>
 <aside class="course-sidebar"><div class="card course-action"><span class="action-icon"><i class="fas fa-book-bible"></i></span><h2>{{ $enrolment ? 'Your progress' : 'Start learning' }}</h2>
@@ -46,10 +46,10 @@
 @if($enrolment)
 <div class="progress-value">{{ (int)$enrolment->progress_percent }}%</div><div class="progress-track"><span style="width:{{ min(100,(int)$enrolment->progress_percent) }}%"></span></div><p class="muted">{{ $enrolment->completed_at ? 'Course completed. Your certificate is available in My Certificates.' : 'Complete the lessons above to update your course progress.' }}</p><a class="btn btn-wide" href="{{ route('youth.learning') }}">My learning</a>@if($enrolment->completed_at)<a class="btn btn-primary btn-wide" href="{{ route('youth.certificates') }}">View certificate</a>@endif
 @else
-<p class="muted">Enrol to track lesson completion and course progress.</p><form method="POST" action="{{ route('youth.courses.enrol',$course) }}">@csrf<button class="btn btn-primary btn-wide" type="submit">Enrol in course</button></form>
+<p class="muted">Enrol to keep track of the lessons you've finished.</p><form method="POST" action="{{ route('youth.courses.enrol',$course) }}">@csrf<button class="btn btn-primary btn-wide" type="submit">Enrol in course</button></form>
 @endif
 @else
-<p class="muted">Sign in to access personalised course progress and participation.</p><a class="btn btn-primary btn-wide" href="{{ route('login') }}">Youth Login</a><a class="btn btn-wide" href="{{ route('register') }}">Create Account</a>
+<p class="muted">Sign in to save your progress as you go.</p><a class="btn btn-primary btn-wide" href="{{ route('login') }}">Youth Login</a><a class="btn btn-wide" href="{{ route('register') }}">Create Account</a>
 @endauth
 </div></aside>
 </section>

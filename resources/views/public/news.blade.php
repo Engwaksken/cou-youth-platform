@@ -50,7 +50,7 @@
 <section class="hero">
     <h1>News & Resources</h1>
     <p>
-        Latest announcements, devotions, opportunities and youth ministry updates.
+        Devotionals, stories and opportunities from youth ministry across the Church of Uganda.
     </p>
 </section>
 
@@ -100,7 +100,7 @@
         </article>
     @empty
         <div class="card">
-            No published content found.
+            Nothing here yet. Check back soon for new stories and devotionals.
         </div>
     @endforelse
 </div>

@@ -56,8 +56,7 @@
         <h1>Support Youth Ministry</h1>
 
         <p>
-            Give towards discipleship, mission, outreach, ministry programmes
-            and youth development initiatives across the Church of Uganda.
+            Your gift helps young people across Uganda grow in faith, reach out to their communities and discover their calling.
         </p>
     </div>
 
@@ -81,7 +80,7 @@
         <div>
             <h2>Active Campaigns</h2>
             <p class="muted">
-                Choose a ministry campaign you would like to support.
+                Choose something that's close to your heart.
             </p>
         </div>
     </div>
@@ -210,7 +209,7 @@
                 <h3>No active donation campaigns</h3>
 
                 <p class="muted">
-                    There are currently no active donation campaigns available.
+                    There's nothing to give to right now. Please check back soon.
                 </p>
             </div>
         @endforelse
@@ -228,7 +227,7 @@
             <div>
                 <h2>Featured</h2>
                 <p class="muted">
-                    Learn more about giving and youth ministry initiatives.
+                    See how your giving makes a difference.
                 </p>
             </div>
         </div>
@@ -283,8 +282,7 @@
             <h2>Give securely</h2>
 
             <p class="muted">
-                Sign in to your youth account to continue with available
-                secure payment options and receive transaction confirmation.
+                Sign in to give through a secure payment option. We'll send you a confirmation once your gift goes through.
             </p>
         </div>
 

@@ -46,7 +46,7 @@
 </div>
 </article>
 @empty
-<div class="card empty-card"><i class="fas fa-people-group" aria-hidden="true"></i><h3>No active Life Groups found</h3><p class="muted">Try a different search or check again when new groups are published.</p></div>
+<div class="card empty-card"><i class="fas fa-people-group" aria-hidden="true"></i><h3>No life groups found</h3><p class="muted">Try a different search, or check back as new groups start.</p></div>
 @endforelse
 </div>
 

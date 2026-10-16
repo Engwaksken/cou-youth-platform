@@ -58,8 +58,7 @@
         <h1>Church Locator</h1>
 
         <p>
-            Find Church of Uganda congregations, contact information,
-            service locations and youth fellowship details.
+            Looking for a church? Find one near you, see how to get in touch and when the youth fellowship meets.
         </p>
     </div>
 </section>
@@ -213,7 +212,7 @@
             <h3>No church locations found</h3>
 
             <p class="muted">
-                Try another church name or location.
+                Try a different church name, town or area.
             </p>
         </div>
     @endforelse
@@ -231,7 +230,7 @@
             <div>
                 <h2>Featured</h2>
                 <p class="muted">
-                    Helpful church and youth ministry information.
+                    Helpful things to know before you visit.
                 </p>
             </div>
         </div>

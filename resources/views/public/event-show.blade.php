@@ -46,7 +46,7 @@
                 @if($event->registration_deadline)<p class="muted">Register by {{ optional($event->registration_deadline)->format('d M Y') }}.</p>@endif
                 <a class="btn btn-primary btn-wide" href="{{ $event->registrationUrl() }}"><i class="fas fa-user-check"></i> Register now</a>
             @else
-                <p class="muted">Registration is not required. You are welcome to attend.</p>
+                <p class="muted">No need to register. Just come along, you're very welcome.</p>
             @endif
         </div>
     </aside>
