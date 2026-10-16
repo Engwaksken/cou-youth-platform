@@ -152,7 +152,7 @@
         background: #fff;
         color: var(--primary);
         border: 1px solid color-mix(in srgb, var(--primary) 15%, #e5e7eb);
-        font-size: 28px;
+        font-size: 1.75rem;
     }
 
     .auth-brand-panel strong {

@@ -164,9 +164,9 @@
 
 <style>
     .gateway-form-section { border-top:1px solid var(--border); padding-top:14px; margin-top:4px; }
-    .gateway-form-section h3 { margin:0; font-size:15px; color:var(--text); }
+    .gateway-form-section h3 { margin:0; font-size:0.9375rem; color:var(--text); }
     .gateway-form-section h3 i { color:var(--primary); margin-right:6px; }
-    .gateway-form-section p { margin:5px 0 0; color:var(--muted); font-size:12px; font-weight:400; }
+    .gateway-form-section p { margin:5px 0 0; color:var(--muted); font-size:0.75rem; font-weight:400; }
     .gateway-toggle-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     .gateway-toggle { display:flex; align-items:flex-start; gap:10px; border:1px solid var(--border); border-radius:10px; padding:12px; background:#fafafa; cursor:pointer; }
     .gateway-toggle input { width:auto !important; margin:3px 0 0 !important; }

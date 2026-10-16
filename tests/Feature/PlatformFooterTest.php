@@ -11,24 +11,36 @@ class PlatformFooterTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_public_layout_uses_full_available_width_on_large_screens(): void
+    public function test_public_layout_caps_and_centres_content_on_large_screens(): void
     {
         $this->get(route('home'))->assertOk()
-            ->assertSee('body>.container{width:100%;max-width:none;flex:1}', false)
-            ->assertSee('.site-header>.nav{width:100%;max-width:none}', false)
+            ->assertSee('body>.container,.site-header>.nav,.platform-footer-grid,.platform-footer-bottom-inner{width:100%;max-width:var(--content-max);margin-inline:auto}', false)
             ->assertSee('padding-inline:var(--page-gutter)', false)
-            ->assertDontSee('max-width:1180px;margin:0 auto;padding:44px', false)
-            ->assertDontSee('max-width:1180px;margin:auto;padding:18px', false);
+            ->assertDontSee('max-width:1180px', false)
+            ->assertDontSee('max-width:none', false);
     }
 
-    public function test_layout_uses_consistent_responsive_page_gutters(): void
+    public function test_layout_scales_for_phones_wide_monitors_and_tvs(): void
     {
         $this->get(route('home'))->assertOk()
-            ->assertSee(':root{--page-gutter:24px}', false)
-            ->assertSee('@media(min-width:1200px){:root{--page-gutter:32px}}', false)
+            ->assertSee(':root{--base-font:16px;--page-gutter:24px;--content-max:80rem;', false)
             ->assertSee('@media(max-width:640px){:root{--page-gutter:16px}}', false)
-            ->assertDontSee('padding-right:84px', false)
-            ->assertDontSee('padding-inline:clamp(', false);
+            ->assertSee('@media(min-width:1200px){:root{--page-gutter:32px}}', false)
+            ->assertSee('@media(min-width:1920px){:root{--base-font:17px;', false)
+            ->assertSee('@media(min-width:2400px){:root{--base-font:20px;', false)
+            ->assertSee('@media(min-width:3200px){:root{--base-font:26px}}', false)
+            ->assertSee('html{font-size:calc(var(--base-font) * var(--text-scale,1))', false)
+            ->assertDontSee('padding-right:84px', false);
+    }
+
+    public function test_portal_chrome_uses_shared_scale_tokens(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get(route('youth.dashboard'))
+            ->assertOk()
+            ->assertSee('.top{height:var(--top-h);', false)
+            ->assertSee('@media(min-width:801px){.wrap{grid-template-columns:var(--side-w) minmax(0,1fr)}', false)
+            ->assertDontSee('calc(100vh - 68px)', false);
     }
 
     public function test_links_remain_without_underlines_on_hover_and_focus(): void

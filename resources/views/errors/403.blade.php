@@ -37,16 +37,16 @@
         }
         *{box-sizing:border-box}
         body{margin:0;min-height:100vh;background:linear-gradient(180deg,#f8f9fd 0,#f4f6fb 100%);font-family:'DM Sans',Arial,sans-serif;color:var(--text);display:grid;place-items:center;padding:24px}
-        .error-shell{width:min(680px,100%)}
+        .error-shell{width:min(42.5rem,100%)}
         .brand-row{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:18px;color:var(--primary);font-weight:800}
         .brand-logo{width:48px;height:48px;border-radius:13px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;overflow:hidden;box-shadow:0 6px 20px rgba(16,24,40,.07)}
         .brand-logo img{width:100%;height:100%;object-fit:contain;padding:4px}
-        .brand-logo i{font-size:21px}
+        .brand-logo i{font-size:1.3125rem}
         .error-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:38px;box-shadow:0 20px 60px rgba(15,23,42,.08);text-align:center}
-        .error-icon{width:72px;height:72px;border-radius:18px;margin:0 auto 18px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);font-size:28px}
-        .eyebrow{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin-bottom:8px}
+        .error-icon{width:72px;height:72px;border-radius:18px;margin:0 auto 18px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);font-size:1.75rem}
+        .eyebrow{display:inline-block;font-size:0.75rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin-bottom:8px}
         h1{margin:0;font-size:clamp(1.8rem,5vw,2.45rem);letter-spacing:-.025em}
-        p{max-width:530px;margin:12px auto 0;color:var(--muted);line-height:1.7}
+        p{max-width:33.125rem;margin:12px auto 0;color:var(--muted);line-height:1.7}
         .help{margin-top:18px;padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:#fafbfc;color:#475467;font-size:.92rem}
         .actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:24px}
         .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700;border:1px solid var(--border);background:#fff;color:#344054;transition:.18s ease}
@@ -55,6 +55,7 @@
         .btn-primary:hover{background:var(--secondary);border-color:var(--secondary)}
         @media(max-width:520px){body{padding:16px}.error-card{padding:28px 18px}.actions{flex-direction:column}.btn{width:100%}}
     </style>
+@include('partials.responsive-scale')
 </head>
 <body>
 <main class="error-shell">

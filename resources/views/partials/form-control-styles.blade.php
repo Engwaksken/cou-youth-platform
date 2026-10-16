@@ -1,5 +1,5 @@
 <style>
-    :root{--control-height:40px;--control-font-size:.875rem}
+    :root{--control-height:2.5rem;--control-font-size:.875rem}
     /* Only single-line text controls: preserve native checkboxes, files and sliders. */
     body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]),
     body select:not([multiple]):not([size]){
@@ -16,5 +16,5 @@
         background:var(--secondary,var(--primary-2,#204f78));
         border-color:var(--secondary,var(--primary-2,#204f78));color:#fff;
     }
-    @media(max-width:640px),(pointer:coarse){:root{--control-height:44px;--control-font-size:1rem}}
+    @media(max-width:640px),(pointer:coarse){:root{--control-height:2.75rem;--control-font-size:1rem}}
 </style>

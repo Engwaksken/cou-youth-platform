@@ -205,7 +205,7 @@
         color: var(--primary);
         border: 1px solid #e4e7ec;
         border-radius: 10px;
-        font-size: 28px;
+        font-size: 1.75rem;
     }
 
     .register-brand strong { color: #182230; font-size: 1.25rem; }

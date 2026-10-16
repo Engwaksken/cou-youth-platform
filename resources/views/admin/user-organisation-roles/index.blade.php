@@ -77,7 +77,7 @@
 
 @push('styles')
 <style>
-    .assignments-table{min-width:760px}.assignment-status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}.assignment-status.is-active{background:#ecfdf5;color:#166534}.assignment-status.is-inactive{background:#f2f4f7;color:#475467}.assignment-active{display:flex;align-items:center;gap:8px;margin-top:16px}.assignment-active input{width:18px;height:18px;accent-color:var(--primary)}
+    .assignments-table{min-width:760px}.assignment-status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:0.75rem;font-weight:800}.assignment-status.is-active{background:#ecfdf5;color:#166534}.assignment-status.is-inactive{background:#f2f4f7;color:#475467}.assignment-active{display:flex;align-items:center;gap:8px;margin-top:16px}.assignment-active input{width:18px;height:18px;accent-color:var(--primary)}
 </style>
 @endpush
 

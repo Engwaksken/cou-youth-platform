@@ -13,8 +13,8 @@ class FormControlStylesTest extends TestCase
     {
         foreach (['home', 'login', 'register', 'password.request'] as $route) {
             $this->get(route($route))->assertOk()
-                ->assertSee('--control-height:40px', false)
-                ->assertSee('--control-height:44px', false)
+                ->assertSee('--control-height:2.5rem', false)
+                ->assertSee('--control-height:2.75rem', false)
                 ->assertSee('body textarea{box-sizing:border-box;min-height:104px', false)
                 ->assertSee(':not([type="checkbox"]):not([type="radio"])', false);
         }
