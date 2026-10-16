@@ -319,8 +319,9 @@
         padding: 28px;
     }
 
+    .about-intro-card h2,
     .about-intro-card p {
-        opacity: .88;
+        color: #fff;
     }
 
     .about-intro-icon,

@@ -26,7 +26,7 @@
     body.access-focus-mode :focus-visible{outline:4px solid #111!important;outline-offset:4px!important;box-shadow:0 0 0 8px #ffdf00!important}
     body.high-contrast{--bg:#fff;--surface:#fff;--surface-soft:#fff;--text:#000;--muted:#111;--border:#000;--primary:#24105c;--primary-2:#123451}
     body.high-contrast main :is(p,h1,h2,h3,h4,h5,h6,label,li){color:#000!important}
-    body.high-contrast main :is(.card,.giving-message,.explore-card){background:#fff!important;color:#000!important;border:2px solid #000}
+    body.high-contrast main :is(.card,.giving-message,.explore-card,.about-intro-card){background:#fff!important;color:#000!important;border:2px solid #000}
     @media(max-width:640px),(max-height:500px){.accessibility-panel{right:8px;bottom:8px;width:calc(100vw - 16px);max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px)}.accessibility-panel .panel-body{padding:12px}.accessibility-panel fieldset{padding:8px}.accessibility-panel .panel-head strong{min-width:0;overflow-wrap:anywhere}}
 </style>
 <script>
