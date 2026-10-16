@@ -152,7 +152,7 @@
         background: #fff;
         color: var(--primary);
         border: 1px solid color-mix(in srgb, var(--primary) 15%, #e5e7eb);
-        font-size: 28px;
+        font-size: 1.75rem;
     }
 
     .auth-brand-panel strong {
@@ -223,8 +223,8 @@
 
     .auth-input-wrap input {
         width: 100%;
-        min-height: 52px;
-        padding: 12px 48px 12px 44px;
+        min-height: var(--control-height);
+        padding: 8px 48px 8px 44px;
         border: 1px solid #d0d5dd;
         border-radius: 10px;
         background: #fff;
@@ -277,7 +277,7 @@
 
     .auth-submit {
         width: 100%;
-        min-height: 50px;
+        min-height: var(--control-height);
         justify-content: center;
         border-radius: 10px;
         font-weight: 800;
@@ -302,7 +302,7 @@
 
     .auth-card a.auth-secondary-action,
     .auth-card a.auth-secondary-action:visited {
-        min-height: 50px;
+        min-height: var(--control-height);
         display: flex;
         align-items: center;
         justify-content: center;

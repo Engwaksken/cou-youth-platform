@@ -95,10 +95,44 @@ class MySqlOrganisationRoleConcurrencyTest extends TestCase
     public function test_mysql_distinguishes_global_scope_from_organisation_id_zero(): void
     {
         $this->requireMigratedRoleSchema();
+        $unit = OrganisationUnit::factory()->create();
+        DB::table('organisation_units')->where('id', $unit->id)->update(['id' => 0]);
         $zero = OrganisationRole::query()->create(['organisation_unit_id' => 0, 'name' => 'Scope zero role', 'permissions' => []]);
-        $global = OrganisationRole::query()->create(['organisation_unit_id' => null, 'name' => 'Scope zero role', 'permissions' => []]);
+        // Cross-scope name collisions are intentionally forbidden by the later
+        // migration's triggers, even when the scoped organisation ID is zero.
+        $global = OrganisationRole::query()->create(['organisation_unit_id' => null, 'name' => 'Global scope role', 'permissions' => []]);
 
         $this->assertNotSame($zero->id, $global->id);
+        $this->assertNull(DB::table('organisation_roles')->where('id', $zero->id)->value('global_name_key'));
+        $this->assertSame($global->name, DB::table('organisation_roles')->where('id', $global->id)->value('global_name_key'));
+    }
+
+    public function test_mysql_role_schema_uses_nullable_virtual_global_key_and_both_unique_indexes(): void
+    {
+        $this->requireMigratedRoleSchema();
+
+        $column = DB::selectOne("SHOW COLUMNS FROM organisation_roles LIKE 'global_name_key'");
+        $this->assertNotNull($column);
+        $this->assertStringContainsString('varchar', strtolower((string) $column->Type));
+        $this->assertStringContainsString('generated', strtolower((string) $column->Extra));
+        $this->assertStringContainsString('virtual', strtolower((string) $column->Extra));
+        $this->assertSame('YES', $column->Null);
+
+        $indexes = collect(Schema::getIndexes('organisation_roles'))->keyBy('name');
+        $this->assertSame(['organisation_unit_id', 'name'], $indexes['organisation_roles_scope_name_unique']['columns'] ?? null);
+        $this->assertTrue($indexes['organisation_roles_scope_name_unique']['unique'] ?? false);
+        $this->assertSame(['global_name_key'], $indexes['organisation_roles_global_name_unique']['columns'] ?? null);
+        $this->assertTrue($indexes['organisation_roles_global_name_unique']['unique'] ?? false);
+    }
+
+    public function test_mysql_initial_role_migration_can_resume_completed_schema(): void
+    {
+        $this->requireMigratedRoleSchema();
+        $migration = require database_path('migrations/2026_10_10_120000_create_organisation_roles_table.php');
+        $migration->up();
+
+        $this->assertTrue(Schema::hasTable('organisation_role_name_locks'));
+        $this->assertTrue(Schema::hasColumn('organisation_roles', 'global_name_key'));
     }
 
     public function test_duplicate_global_name_and_global_scoped_collision_are_rejected(): void
