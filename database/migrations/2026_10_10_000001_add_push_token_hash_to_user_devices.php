@@ -55,6 +55,7 @@ return new class extends Migration
 
         foreach (Schema::getIndexes('user_devices') as $index) {
             if (($index['unique'] ?? false) && ($index['columns'] ?? []) === ['user_id', 'push_token']) {
+                $this->keepUserIdIndexed($index['name']);
                 Schema::table('user_devices', function (Blueprint $table) use ($index): void {
                     $table->dropUnique($index['name']);
                 });
@@ -98,6 +99,7 @@ return new class extends Migration
 
         foreach (Schema::getIndexes('user_devices') as $index) {
             if (($index['unique'] ?? false) && ($index['columns'] ?? []) === ['user_id', 'push_token_hash']) {
+                $this->keepUserIdIndexed($index['name']);
                 Schema::table('user_devices', function (Blueprint $table) use ($index): void {
                     $table->dropUnique($index['name']);
                 });
@@ -106,6 +108,23 @@ return new class extends Migration
 
         // The hash column is also part of the original fresh-install schema. Keep it
         // so rollback never removes a column this migration did not create.
+    }
+
+    /**
+     * MySQL backs the user_id foreign key with the first index that starts with user_id,
+     * and refuses to drop that index. Add a plain one first when no other index covers it.
+     */
+    private function keepUserIdIndexed(string $droppingIndex): void
+    {
+        foreach (Schema::getIndexes('user_devices') as $index) {
+            if ($index['name'] !== $droppingIndex && ($index['columns'][0] ?? null) === 'user_id') {
+                return;
+            }
+        }
+
+        Schema::table('user_devices', function (Blueprint $table): void {
+            $table->index('user_id');
+        });
     }
 
     private function plaintextToken(?string $value): ?string

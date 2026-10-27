@@ -427,10 +427,15 @@ class OrganisationRoleCatalogTest extends TestCase
         // competing-process race cannot be simulated by this RefreshDatabase test.
         $guard = new class {
             use \App\Http\Controllers\Admin\GuardsSuperAdminMutations;
-            public function acquire(): void { $this->lockSuperAdminMutationSet(); }
+            public function run(callable $callback): mixed { return $this->withinSuperAdminMutationLock($callback); }
         };
-        $guard->acquire();
-        $this->assertSame('sqlite', \Illuminate\Support\Facades\DB::connection()->getDriverName());
+        $guard->run(fn () => UserOrganisationRole::query()->create([
+            'user_id' => $firstAdmin->id, 'role' => 'super_admin', 'is_active' => true,
+        ]));
+
+        $this->assertDatabaseHas('user_organisation_roles', [
+            'user_id' => $firstAdmin->id, 'role' => 'super_admin', 'is_active' => true,
+        ]);
     }
 
     public function test_catalog_role_bulk_update_cannot_change_permissions(): void
