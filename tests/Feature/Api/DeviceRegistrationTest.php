@@ -89,8 +89,14 @@ class DeviceRegistrationTest extends TestCase
             $table->text('push_token')->nullable();
             $table->timestamp('last_seen_at')->nullable();
             $table->timestamps();
-            $table->unique(['user_id', 'push_token']);
+            // MySQL can only uniquely index a TEXT column by prefix, so legacy MySQL schemas used one.
+            if (DB::getDriverName() !== 'mysql') {
+                $table->unique(['user_id', 'push_token']);
+            }
         });
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('CREATE UNIQUE INDEX user_devices_user_id_push_token_unique ON user_devices (user_id, push_token(191))');
+        }
         $id = DB::table('user_devices')->insertGetId([
             'user_id' => $user->id, 'platform' => 'ios', 'push_token' => $token,
             'created_at' => now(), 'updated_at' => now(),

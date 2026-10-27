@@ -65,6 +65,31 @@ class MySqlOrganisationRoleConcurrencyTest extends TestCase
             || (string) $identity->port !== (string) getenv('ROLE_MYSQL_TEST_SERVER_PORT')) {
             $this->fail('Connected MySQL server identity does not match the explicitly configured disposable database/server.');
         }
+
+        $this->resetRoleTables();
+    }
+
+    /** Rows are committed so other connections can see them; clear them so tests stay independent. */
+    private function resetRoleTables(): void
+    {
+        DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+        try {
+            foreach (['user_organisation_roles', 'organisation_roles', 'organisation_units', 'users'] as $table) {
+                if (Schema::hasTable($table)) {
+                    DB::table($table)->delete();
+                }
+            }
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS = 1');
+        }
+    }
+
+    private function superAdmin(): User
+    {
+        $user = User::factory()->create();
+        UserOrganisationRole::query()->create(['user_id' => $user->id, 'role' => 'super_admin', 'is_active' => true]);
+
+        return $user;
     }
 
     protected function tearDown(): void
@@ -217,32 +242,34 @@ class MySqlOrganisationRoleConcurrencyTest extends TestCase
     public function test_mysql_role_and_assignment_mutations_preserve_catalog_sync_and_block_deletion(): void
     {
         $this->requireMigratedRoleSchema();
-        $admin = User::factory()->create();
-        $admin->assignRole('super_admin');
+        $admin = $this->superAdmin();
         $unit = OrganisationUnit::factory()->create();
-        $role = OrganisationRole::query()->create(['organisation_unit_id' => $unit->id, 'name' => 'Before Mysql rename', 'permissions' => ['read']]);
+        $role = OrganisationRole::query()->create(['organisation_unit_id' => $unit->id, 'name' => 'Before Mysql rename', 'permissions' => ['admin.content.index']]);
         $user = User::factory()->create();
-        $assignment = UserOrganisationRole::query()->create(['user_id' => $user->id, 'organisation_unit_id' => $unit->id, 'organisation_role_id' => $role->id, 'role' => $role->name, 'permissions' => ['read'], 'is_active' => true]);
-        $role->name = 'After Mysql rename';
-        $role->permissions = ['read', 'write'];
-        $role->save();
+        $assignment = UserOrganisationRole::query()->create(['user_id' => $user->id, 'organisation_unit_id' => $unit->id, 'organisation_role_id' => $role->id, 'role' => $role->name, 'permissions' => ['admin.content.index'], 'is_active' => true]);
+
+        // Catalog edits go through the controller, which keeps assignments in sync.
+        $this->actingAs($admin)->putJson('/api/v1/admin/roles/'.$role->id, [
+            'name' => 'After Mysql rename', 'organisation_unit_id' => $unit->id, 'permissions' => ['admin.content.index', 'admin.events.index'],
+        ])->assertOk();
+
         $assignment->refresh();
         $this->assertSame('After Mysql rename', $assignment->role);
-        $this->assertSame(['read', 'write'], $assignment->permissions);
+        $this->assertSame(['admin.content.index', 'admin.events.index'], $assignment->permissions);
         $this->expectException(\RuntimeException::class);
-        $role->delete();
+        $role->fresh()->delete();
     }
 
-    public function test_mysql_rename_collision_returns_controlled_conflict(): void
+    public function test_mysql_rename_collision_is_rejected_without_a_server_error(): void
     {
         $this->requireMigratedRoleSchema();
-        $admin = User::factory()->create();
-        $admin->assignRole('super_admin');
+        $admin = $this->superAdmin();
         $unit = OrganisationUnit::factory()->create();
         $first = OrganisationRole::query()->create(['organisation_unit_id' => $unit->id, 'name' => 'Collision source', 'permissions' => []]);
         OrganisationRole::query()->create(['organisation_unit_id' => $unit->id, 'name' => 'Collision target', 'permissions' => []]);
-        $response = $this->actingAs($admin)->putJson('/api/admin/roles/'.$first->id, ['name' => 'Collision target', 'organisation_unit_id' => $unit->id, 'permissions' => []]);
-        $this->assertSame(409, $response->status());
+        $this->actingAs($admin)->putJson('/api/v1/admin/roles/'.$first->id, ['name' => 'Collision target', 'organisation_unit_id' => $unit->id, 'permissions' => []])
+            ->assertUnprocessable()->assertJsonValidationErrors('name');
+        $this->assertSame('Collision source', $first->fresh()->name);
     }
 
     public function test_mysql_concurrent_global_and_scoped_inserts_keep_scope_invariant(): void
@@ -411,19 +438,36 @@ class MySqlOrganisationRoleConcurrencyTest extends TestCase
         $this->requireMigratedRoleSchema();
         $unit = OrganisationUnit::factory()->create();
         $name = 'Migration rollback guard '.bin2hex(random_bytes(4));
-        OrganisationRole::query()->create(['organisation_unit_id' => $unit->id, 'name' => $name, 'permissions' => []]);
-        OrganisationRole::query()->create(['organisation_unit_id' => null, 'name' => $name, 'permissions' => []]);
         $migration = require database_path('migrations/2026_10_10_160000_serialize_organisation_role_name_uniqueness.php');
 
-        try {
-            $migration->down();
-            $this->fail('Rollback must refuse global/scoped duplicate names before changing schema.');
-        } catch (\RuntimeException $exception) {
-            $this->assertSame('Cannot roll back role-name uniqueness: global/scoped conflicts exist.', $exception->getMessage());
+        // The name triggers make this conflict impossible to create today; it can only exist in
+        // legacy data. Recreate it with the triggers removed, then put them back exactly as they were.
+        $triggers = [];
+        foreach (['organisation_roles_name_scope_insert', 'organisation_roles_name_scope_update'] as $trigger) {
+            $triggers[$trigger] = (array) DB::selectOne("SHOW CREATE TRIGGER {$trigger}");
+            DB::unprepared("DROP TRIGGER {$trigger}");
         }
 
-        $this->assertTrue(Schema::hasTable('organisation_role_name_locks'));
-        $this->assertSame(2, OrganisationRole::query()->where('name', $name)->count());
+        try {
+            OrganisationRole::query()->create(['organisation_unit_id' => $unit->id, 'name' => $name, 'permissions' => []]);
+            OrganisationRole::query()->create(['organisation_unit_id' => null, 'name' => $name, 'permissions' => []]);
+
+            try {
+                $migration->down();
+                $this->fail('Rollback must refuse global/scoped duplicate names before changing schema.');
+            } catch (\RuntimeException $exception) {
+                $this->assertSame('Cannot roll back role-name uniqueness: global/scoped conflicts exist.', $exception->getMessage());
+            }
+
+            $this->assertTrue(Schema::hasTable('organisation_role_name_locks'));
+            $this->assertSame(2, OrganisationRole::query()->where('name', $name)->count());
+        } finally {
+            OrganisationRole::query()->where('name', $name)->delete();
+            foreach ($triggers as $trigger => $definition) {
+                DB::unprepared("DROP TRIGGER IF EXISTS {$trigger}");
+                DB::unprepared($definition['SQL Original Statement']);
+            }
+        }
     }
 
     public function test_assignment_reference_migration_refuses_rollback_without_losing_assignment(): void

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -15,14 +16,17 @@ return new class extends Migration
         }
 
         if (! Schema::hasTable('organisation_roles')) {
-            Schema::create('organisation_roles', function (Blueprint $table) {
+            Schema::create('organisation_roles', function (Blueprint $table) use ($driver) {
                 $table->id();
                 $table->foreignId('organisation_unit_id')
                     ->nullable()
                     ->constrained('organisation_units')
                     ->nullOnDelete();
                 $table->string('name');
-                $table->json('permissions')->default('[]');
+                // MySQL 8 rejects literal defaults on JSON columns; it needs an expression default.
+                $table->json('permissions')->default(in_array($driver, ['mysql', 'mariadb'], true)
+                    ? new Expression('(JSON_ARRAY())')
+                    : '[]');
                 $table->timestamps();
                 $table->index('organisation_unit_id');
             });
