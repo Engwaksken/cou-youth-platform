@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -16,14 +17,19 @@ final class ActivityLogController extends Controller
 {
     private const ARCHIVE_PATTERN = '/^audit-logs-\d{4}-\d{2}\.jsonl\.gz$/';
 
-    public function index(Request $request): View
+    private const PER_PAGE_OPTIONS = [25, 50, 100];
+
+    public function index(Request $request): View|RedirectResponse
     {
         $filters = $request->validate([
             'q' => 'nullable|string|max:120',
             'action' => 'nullable|string|max:40',
             'from' => 'nullable|date',
             'to' => 'nullable|date|after_or_equal:from',
+            'per_page' => 'nullable|integer|in:'.implode(',', self::PER_PAGE_OPTIONS),
         ]);
+        $perPage = (int) ($filters['per_page'] ?? self::PER_PAGE_OPTIONS[0]);
+        unset($filters['per_page']);
 
         $logs = AuditLog::query()
             ->with('user:id,name,email')
@@ -38,12 +44,19 @@ final class ActivityLogController extends Controller
             ->when($filters['from'] ?? null, fn ($query, string $from) => $query->where('created_at', '>=', Carbon::parse($from)->startOfDay()))
             ->when($filters['to'] ?? null, fn ($query, string $to) => $query->where('created_at', '<=', Carbon::parse($to)->endOfDay()))
             ->latest('id')
-            ->paginate(25)
+            ->paginate($perPage)
             ->withQueryString();
+
+        // A page beyond the end (e.g. after narrowing filters) falls back to the last page.
+        if ($logs->isEmpty() && $logs->currentPage() > 1) {
+            return redirect($logs->url($logs->lastPage()));
+        }
 
         return view('admin.activity-logs.index', [
             'logs' => $logs,
             'filters' => $filters,
+            'perPage' => $perPage,
+            'perPageOptions' => self::PER_PAGE_OPTIONS,
             'actions' => AuditLog::query()->distinct()->orderBy('action')->pluck('action'),
             'archives' => $this->archives(),
             'retentionMonths' => (int) config('audit.retention_months', 3),

@@ -36,6 +36,7 @@
         </select>
         <input type="date" name="from" value="{{ $filters['from'] ?? '' }}" aria-label="From date">
         <input type="date" name="to" value="{{ $filters['to'] ?? '' }}" aria-label="To date">
+        <input type="hidden" name="per_page" value="{{ $perPage }}">
         <div class="actions">
             <button class="btn btn-primary" type="submit"><i class="fas fa-filter" aria-hidden="true"></i> Filter</button>
             @if($hasFilters)<a class="btn btn-light" href="{{ route('admin.activity-logs.index') }}">Clear</a>@endif
@@ -72,7 +73,23 @@
                 </tbody>
             </table>
         </div>
-        @if($logs->hasPages())<div class="pagination">{{ $logs->links() }}</div>@endif
+        <div class="pagination activity-pagination">
+            <form class="activity-page-size" method="GET" action="{{ route('admin.activity-logs.index') }}">
+                @foreach($filters as $name => $value)
+                    @if(filled($value))<input type="hidden" name="{{ $name }}" value="{{ $value }}">@endif
+                @endforeach
+                <span>{{ $logs->total() === 0 ? 'No entries' : 'Showing '.number_format($logs->firstItem()).'–'.number_format($logs->lastItem()).' of '.number_format($logs->total()) }}</span>
+                <label>Per page
+                    <select name="per_page" onchange="this.form.submit()">
+                        @foreach($perPageOptions as $option)
+                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <noscript><button class="btn btn-light" type="submit">Apply</button></noscript>
+            </form>
+            @if($logs->hasPages()){{ $logs->onEachSide(1)->links() }}@endif
+        </div>
     </div>
 </section>
 
@@ -100,4 +117,4 @@
 </div>
 @endsection
 
-@push('styles')<style>.filters{margin-bottom:12px}.muted{color:var(--muted)}td code{font-size:.8125rem;word-break:break-all}</style>@endpush
+@push('styles')<style>.filters{margin-bottom:12px}.muted{color:var(--muted)}td code{font-size:.8125rem;word-break:break-all}.activity-pagination{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--border)}.activity-page-size{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;color:var(--muted);font-size:.875rem}.activity-page-size label{display:flex;align-items:center;gap:8px;font-weight:600}.activity-page-size select{border:1px solid #d0d5dd;border-radius:8px;padding:6px 8px;background:#fff}</style>@endpush

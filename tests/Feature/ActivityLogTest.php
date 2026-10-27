@@ -73,6 +73,34 @@ class ActivityLogTest extends TestCase
             ->assertDontSee('Events › Destroy');
     }
 
+    public function test_activity_is_paginated_with_selectable_page_size(): void
+    {
+        $admin = $this->admin();
+        $this->actingAs($admin)->get(route('admin.activity-logs.index'))->assertOk()->assertSee('No entries');
+
+        for ($i = 0; $i < 59; $i++) {
+            $this->logAt(now()->toDateTimeString(), ['module' => 'admin.events.update']);
+        }
+
+        $this->actingAs($admin)->get(route('admin.activity-logs.index'))
+            ->assertOk()
+            ->assertSee('Showing 1–25 of 59')
+            ->assertSee('page=2', false);
+
+        $this->actingAs($admin)->get(route('admin.activity-logs.index', ['per_page' => 50, 'action' => 'put', 'page' => 2]))
+            ->assertOk()
+            ->assertSee('Showing 51–59 of 59')
+            ->assertSee('<option value="50" selected>', false)
+            ->assertSee('per_page=50', false)
+            ->assertSee('action=put', false);
+
+        $this->actingAs($admin)->get(route('admin.activity-logs.index', ['page' => 9]))
+            ->assertRedirect(route('admin.activity-logs.index', ['page' => 3]));
+
+        $this->actingAs($admin)->get(route('admin.activity-logs.index', ['per_page' => 5000]))
+            ->assertSessionHasErrors('per_page');
+    }
+
     public function test_activity_logs_are_limited_to_super_admins(): void
     {
         $this->actingAs($this->admin('diocesan_admin'))
