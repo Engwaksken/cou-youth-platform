@@ -59,7 +59,6 @@
 <div class="mobile-nav-backdrop" data-mobile-nav-backdrop aria-hidden="true"></div>
 <div class="portal-content">
 <main class="main">@if(session('success'))<div class="alert" data-auto-dismiss><i class="fas fa-circle-check"></i> {{ session('success') }}</div>@endif @if($errors->any())<div class="alert alert-error" data-auto-dismiss><strong><i class="fas fa-triangle-exclamation"></i> Please correct the following:</strong><ul class="errors">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif @yield('content')</main>
-<x-platform-footer :brand="$brand" />
 </div>
 </div>
 <script>

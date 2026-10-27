@@ -75,11 +75,13 @@
         <a href="{{ route('youth.annual-theme') }}" class="{{ request()->routeIs('youth.annual-theme') ? 'active' : '' }}"><i class="fas fa-book-bible"></i> Annual Theme</a>
         <a href="{{ route('youth.media') }}" class="{{ request()->routeIs('youth.media') ? 'active' : '' }}"><i class="fas fa-photo-film"></i> Media & Services</a>
         <a href="{{ route('youth.donations') }}" class="{{ request()->routeIs('youth.donations*') ? 'active' : '' }}"><i class="fas fa-hand-holding-heart"></i> Donate & History</a>
+        @if(!empty($brand['support_email']))
+            <a href="mailto:{{ $brand['support_email'] }}"><i class="fas fa-envelope"></i> Contact Support</a>
+        @endif
     </aside>
     <div class="mobile-nav-backdrop" data-mobile-nav-backdrop aria-hidden="true"></div>
     <div class="portal-content">
         <main class="main" id="main-content">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('youth_content')</main>
-        <x-platform-footer :brand="$brand" />
     </div>
 </div>
 @include('partials.mobile-navigation')

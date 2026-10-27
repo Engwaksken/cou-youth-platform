@@ -12,7 +12,7 @@
 
     /* Page shell: full-bleed backgrounds, centred content capped per breakpoint. */
     body>.container,.site-header>.nav,.platform-footer-grid,.platform-footer-bottom-inner{width:100%;max-width:var(--content-max);margin-inline:auto}
-    .portal-content>.main,.portal-content .platform-footer-grid,.portal-content .platform-footer-bottom-inner{width:100%;max-width:var(--portal-max);margin-inline:auto}
+    .portal-content>.main{width:100%;max-width:var(--portal-max);margin-inline:auto}
     body>.container,.site-header>.nav,.portal-content>.main,.platform-footer-grid,.platform-footer-bottom-inner,.top{padding-inline:var(--page-gutter)}
 
     /* Portal chrome (admin + youth): header height and sidebar width follow the scale. */

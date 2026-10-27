@@ -64,18 +64,18 @@ class PlatformFooterTest extends TestCase
             ->assertSee('grid-template-columns:minmax(0,1fr)', false);
     }
 
-    public function test_youth_portal_includes_shared_footer_and_account_links(): void
+    public function test_youth_portal_does_not_render_public_footer(): void
     {
         $this->actingAs(User::factory()->create())
             ->get(route('youth.dashboard'))
             ->assertOk()
             ->assertSee('class="portal-content"', false)
-            ->assertSee('class="platform-footer"', false)
-            ->assertSee('My Profile')
-            ->assertSee('All rights reserved.');
+            ->assertSee(route('youth.profile'), false)
+            ->assertDontSee('<footer class="platform-footer">', false)
+            ->assertDontSee('All rights reserved.');
     }
 
-    public function test_admin_portal_includes_shared_footer(): void
+    public function test_admin_portal_does_not_render_public_footer(): void
     {
         $admin = User::factory()->create();
         UserOrganisationRole::query()->create([
@@ -84,8 +84,8 @@ class PlatformFooterTest extends TestCase
 
         $this->actingAs($admin)->get('/admin/users')
             ->assertOk()
-            ->assertSee('class="platform-footer"', false)
-            ->assertSee('All rights reserved.');
+            ->assertDontSee('<footer class="platform-footer">', false)
+            ->assertDontSee('All rights reserved.');
     }
 
     public function test_footer_escapes_branding_and_shows_configured_support_email(): void
