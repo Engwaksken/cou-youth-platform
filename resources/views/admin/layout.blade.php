@@ -54,7 +54,7 @@
 <div class="nav-label">AI & Communication</div><a href="{{ route('admin.ai.index') }}"><i class="fas fa-robot"></i> AI Settings</a><a href="{{ route('admin.notifications.index') }}"><i class="fas fa-bell"></i> Notifications</a><a href="{{ route('admin.bulk.index') }}"><i class="fas fa-paper-plane"></i> Bulk SMS/Email</a>
 <div class="nav-label">Site</div><a href="{{ route('admin.page-content.index') }}"><i class="fas fa-pager"></i> Page Content</a><a href="{{ route('admin.settings.index') }}"><i class="fas fa-gear"></i> Settings</a>
 <div class="nav-label">Safety</div><a href="{{ route('admin.guardian-consents.index') }}"><i class="fas fa-shield-heart"></i> Safeguarding</a><a href="{{ route('admin.moderation.index') }}"><i class="fas fa-shield-halved"></i> Moderation</a>
-<div class="nav-label">Insights</div><a href="{{ route('admin.reports.index') }}"><i class="fas fa-chart-column"></i> Reports</a><a href="{{ route('admin.system.health') }}"><i class="fas fa-heart-pulse"></i> System Health</a>
+<div class="nav-label">Insights</div><a href="{{ route('admin.reports.index') }}"><i class="fas fa-chart-column"></i> Reports</a><a href="{{ route('admin.system.health') }}"><i class="fas fa-heart-pulse"></i> System Health</a>@if(auth()->user()?->organisationRoles()->where('role', 'super_admin')->where('is_active', true)->exists())<a href="{{ route('admin.activity-logs.index') }}"><i class="fas fa-clock-rotate-left"></i> Activity Logs</a>@endif
 </aside>
 <div class="mobile-nav-backdrop" data-mobile-nav-backdrop aria-hidden="true"></div>
 <div class="portal-content">

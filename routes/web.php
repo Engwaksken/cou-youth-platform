@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\SystemHealthController;
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserOrganisationRoleController;
 use App\Http\Controllers\Api\V1\ChatbotController as YouthAssistantController;
@@ -175,6 +176,10 @@ Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->grou
     Route::delete('comments/{comment}', [ModerationController::class, 'destroyComment'])->name('comments.destroy');
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('system/health', [SystemHealthController::class, 'index'])->name('system.health');
+    Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+    Route::get('activity-logs/archives/{file}', [ActivityLogController::class, 'downloadArchive'])
+        ->where('file', 'audit-logs-\d{4}-\d{2}\.jsonl\.gz')
+        ->name('activity-logs.archives.download');
     Route::get('guardian-consents', [GuardianConsentController::class, 'index'])->name('guardian-consents.index');
     Route::post('guardian-consents/{guardianConsent}/approve', [GuardianConsentController::class, 'approve'])->name('guardian-consents.approve');
     Route::post('guardian-consents/{guardianConsent}/reject', [GuardianConsentController::class, 'reject'])->name('guardian-consents.reject');

@@ -19,6 +19,8 @@ final class EnsureCmsModuleAccess
         'admin.user-roles.*',
         'admin.role-assignments.*',
         'admin.user-organisation-roles.*',
+        // Activity logs expose every user's sign-ins and IP addresses.
+        'admin.activity-logs.*',
     ];
 
     /** @var list<string> */
@@ -112,7 +114,7 @@ final class EnsureCmsModuleAccess
             abort_unless(
                 $roles->contains(fn ($assignment): bool => $assignment->role === 'super_admin'),
                 403,
-                'Only an active super administrator can manage users and roles.'
+                'Only an active super administrator can manage users, roles and activity logs.'
             );
 
             return $next($request);
