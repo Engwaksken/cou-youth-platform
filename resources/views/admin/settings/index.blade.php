@@ -24,7 +24,7 @@
                     <span>Current branding preview</span>
                     <div class="preview-row">
                         @if(!empty($settings['logo']))<div class="preview-box preview-logo"><img src="{{ asset('storage/'.$settings['logo']) }}" alt="Current logo"></div>@else<div class="preview-box preview-logo preview-empty"><i class="fas fa-image"></i><small>No logo</small></div>@endif
-                        @if(!empty($settings['favicon']))<div class="preview-box preview-favicon"><img src="{{ asset('storage/'.$settings['favicon']) }}" alt="Current favicon"></div>@else<div class="preview-box preview-favicon preview-empty"><i class="fas fa-star"></i></div>@endif
+                        @if(!empty($settings['favicon']))<div class="preview-box preview-favicon"><img src="{{ route('pwa.favicon', ['v' => substr(sha1($settings['favicon']), 0, 10)]) }}" alt="Current favicon"></div>@else<div class="preview-box preview-favicon preview-empty"><i class="fas fa-star"></i></div>@endif
                     </div>
                 </div>
                 <label class="span-2">Mission<textarea name="mission" rows="4" placeholder="Enter the ministry mission statement">{{ old('mission', $settings['mission'] ?? '') }}</textarea><small>Displayed in the mobile Annual Theme screen.</small></label>

@@ -28,7 +28,7 @@ class SiteSettingController extends Controller
             'mission' => 'nullable|string|max:5000',
             'vision' => 'nullable|string|max:5000',
             'logo' => 'nullable|file|image|max:2048',
-            'favicon' => 'nullable|file|max:1024',
+            'favicon' => 'nullable|file|mimes:ico,png,svg,webp|max:1024',
             'sms_username' => 'nullable|string|max:120',
             'sms_api_key' => 'nullable|string|max:255',
             'sms_sender' => 'nullable|string|max:50',

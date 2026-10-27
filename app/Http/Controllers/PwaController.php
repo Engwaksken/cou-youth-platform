@@ -7,6 +7,8 @@ namespace App\Http\Controllers;
 use App\Models\SiteSetting;
 use App\Services\Branding\BrandingService;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class PwaController extends Controller
 {
@@ -87,6 +89,25 @@ final class PwaController extends Controller
         return response($svg, 200, [
             'Content-Type' => 'image/svg+xml; charset=UTF-8',
             'Cache-Control' => 'public, max-age=300',
+        ]);
+    }
+
+    /**
+     * Serve the uploaded favicon through the app so it loads even when the
+     * public/storage link is missing or APP_URL points at another host.
+     */
+    public function favicon(): StreamedResponse
+    {
+        $path = SiteSetting::get('favicon');
+        $disk = Storage::disk('public');
+
+        abort_unless(is_string($path) && $path !== '' && $disk->exists($path), 404);
+
+        return $disk->response($path, null, [
+            'Cache-Control' => 'public, max-age=86400',
+            'X-Content-Type-Options' => 'nosniff',
+            // An uploaded SVG must never run script when opened directly.
+            'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; sandbox",
         ]);
     }
 }

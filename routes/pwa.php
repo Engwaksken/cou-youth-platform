@@ -9,3 +9,4 @@ Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('p
 Route::get('/pwa/icon/{size}', [PwaController::class, 'icon'])
     ->whereIn('size', ['192', '512'])
     ->name('pwa.icon');
+Route::get('/favicon', [PwaController::class, 'favicon'])->name('pwa.favicon');

@@ -7,15 +7,10 @@
     @php
         try {
             $adminLogo = \App\Models\SiteSetting::get('logo');
-            $adminFavicon = \App\Models\SiteSetting::get('favicon');
         } catch (\Throwable $e) {
             $adminLogo = null;
-            $adminFavicon = null;
         }
     @endphp
-    @if(!empty($adminFavicon))
-        <link rel="icon" href="{{ asset('storage/'.$adminFavicon) }}">
-    @endif
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
         *{box-sizing:border-box}

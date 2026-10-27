@@ -8,6 +8,7 @@ use App\Models\SiteSetting;
 use App\Services\Branding\BrandingService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 final class InjectPwaMetadata
@@ -56,6 +57,7 @@ final class InjectPwaMetadata
             '<meta name="apple-mobile-web-app-status-bar-style" content="default">',
             '<meta name="apple-mobile-web-app-title" content="'.e($systemName).'">',
             '<link rel="apple-touch-icon" href="'.e(route('pwa.icon', ['size' => 192])).'">',
+            $this->faviconLink(),
         ]);
 
         $registration = <<<'HTML'
@@ -84,5 +86,19 @@ HTML;
         }
 
         return $response;
+    }
+
+    private function faviconLink(): string
+    {
+        $path = SiteSetting::get('favicon');
+
+        if (! is_string($path) || $path === '' || ! Storage::disk('public')->exists($path)) {
+            return '';
+        }
+
+        // Each upload gets a new stored filename, so versioning by path busts browser caches.
+        $href = route('pwa.favicon', ['v' => substr(sha1($path), 0, 10)]);
+
+        return '<link rel="icon" href="'.e($href).'">';
     }
 }
