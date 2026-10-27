@@ -22,7 +22,9 @@ final class AuditCmsMutations
         if (! $request->user()
             || ! $request->is('admin', 'admin/*')
             || ! in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)
-            || $response->getStatusCode() >= 400) {
+            || $response->getStatusCode() >= 400
+            // Sign-ins are recorded by RecordAuthenticationActivity.
+            || $request->routeIs('admin.login.attempt')) {
             return $response;
         }
 

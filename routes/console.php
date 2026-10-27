@@ -17,3 +17,8 @@ Schedule::command('cou:send-notifications')
     ->everyMinute()
     ->withoutOverlapping(2)
     ->onOneServer();
+
+Schedule::command('audit:archive')
+    ->monthlyOn(1, '02:00')
+    ->withoutOverlapping(120)
+    ->onOneServer();
