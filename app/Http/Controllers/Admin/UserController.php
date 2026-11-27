@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Resources\Admin\UserResource;
 use App\Models\User;
+use App\Support\ChurchOfUgandaDioceses;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -24,8 +25,16 @@ final class UserController extends Controller
     public function index(Request $request): View|AnonymousResourceCollection
     {
         $this->authorize('viewAny', User::class);
-        $users = User::query()->orderBy('id')->paginate(20);
-        return $request->expectsJson() ? UserResource::collection($users) : view('admin.users.index', compact('users'));
+        $dioceseId = $request->integer('diocese_id');
+        $users = User::query()
+            ->with('youthProfile.diocese')
+            ->when($dioceseId > 0, fn ($query) => $query->whereHas('youthProfile', fn ($profile) => $profile->where('diocese_id', $dioceseId)))
+            ->orderBy('id')
+            ->paginate(20)
+            ->withQueryString();
+        $dioceses = ChurchOfUgandaDioceses::options();
+
+        return $request->expectsJson() ? UserResource::collection($users) : view('admin.users.index', compact('users', 'dioceses', 'dioceseId'));
     }
     public function store(StoreUserRequest $request): UserResource|JsonResponse|RedirectResponse
     {

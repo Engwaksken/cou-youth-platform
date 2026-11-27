@@ -98,6 +98,7 @@ final class ProductionHardeningTest extends TestCase
 
         $this->actingAs($user)
             ->put('/profile', [
+                'diocese_id' => $this->dioceseId(),
                 'date_of_birth' => now()->subYears(25)->toDateString(),
                 'age_category' => 'teen',
                 'profile_public' => false,
@@ -125,6 +126,7 @@ final class ProductionHardeningTest extends TestCase
 
         $this->actingAs($user)
             ->put('/profile', [
+                'diocese_id' => $this->dioceseId(),
                 'date_of_birth' => now()->subYears(16)->toDateString(),
                 'profile_public' => false,
             ])

@@ -36,6 +36,7 @@ class YouthWebAuthenticationTest extends TestCase
             'name' => 'Youth Member',
             'email' => 'youth@example.com',
             'date_of_birth' => now()->subYears(20)->toDateString(),
+            'diocese_id' => $this->dioceseId(),
             'school_institution' => 'Youth Institute',
             'password' => 'StrongPass123',
             'password_confirmation' => 'StrongPass123',

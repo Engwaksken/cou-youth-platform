@@ -89,6 +89,17 @@
                         </div>
 
                         <div class="form-field">
+                            <label for="diocese_id">Church of Uganda diocese</label>
+                            <select id="diocese_id" class="field" name="diocese_id" required>
+                                <option value="">Select your diocese</option>
+                                @foreach($dioceses as $diocese)
+                                    <option value="{{ $diocese->id }}" @selected((string) old('diocese_id') === (string) $diocese->id)>{{ $diocese->name }}</option>
+                                @endforeach
+                            </select>
+                            <small>The diocese your church belongs to.</small>
+                        </div>
+
+                        <div class="form-field">
                             <label for="school_institution">School / institution</label>
                             <input id="school_institution" class="field" name="school_institution" value="{{ old('school_institution') }}" placeholder="School, college, university or work">
                         </div>
@@ -429,7 +440,7 @@
 
         @if($errors->has('guardian_name') || $errors->has('guardian_relationship') || $errors->has('guardian_phone') || $errors->has('guardian_email') || $errors->has('guardian_confirmed'))
             activatePanel('guardian-panel');
-        @elseif($errors->has('date_of_birth') || $errors->has('school_institution'))
+        @elseif($errors->has('date_of_birth') || $errors->has('diocese_id') || $errors->has('school_institution'))
             activatePanel('profile-panel');
         @endif
     });

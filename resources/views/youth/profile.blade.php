@@ -7,7 +7,7 @@
         ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
     // Open the tab that has a problem after a failed save.
     $tabErrors = [
-        'basics' => $errors->hasAny(['date_of_birth', 'organisation_unit_id', 'school_institution']),
+        'basics' => $errors->hasAny(['date_of_birth', 'diocese_id', 'organisation_unit_id', 'school_institution']),
         'interests' => $errors->hasAny(['interests', 'talents', 'skills', 'ministry_interests']),
         'privacy' => $errors->has('profile_public'),
     ];
@@ -17,7 +17,7 @@
     <span class="big-avatar" aria-hidden="true">@if($initials){{ $initials }}@else<i class="fas fa-user"></i>@endif</span>
     <div>
         <h1>All about <span class="scribble">you</span></h1>
-        <p>{{ auth()->user()->name }}@if($profile?->age_category), {{ $ageLabels[$profile->age_category] ?? ucfirst(str_replace('_', ' ', $profile->age_category)) }}@endif @if($profile?->organisationUnit), {{ $profile->organisationUnit->name }}@endif</p>
+        <p>{{ auth()->user()->name }}@if($profile?->age_category), {{ $ageLabels[$profile->age_category] ?? ucfirst(str_replace('_', ' ', $profile->age_category)) }}@endif @if($profile?->organisationUnit), {{ $profile->organisationUnit->name }}@endif @if($profile?->diocese), {{ $profile->diocese->name }}@endif</p>
     </div>
 </section>
 
@@ -44,6 +44,12 @@
             <label>Birthday
                 <input type="date" name="date_of_birth" value="{{ old('date_of_birth', optional($profile?->date_of_birth)->format('Y-m-d')) }}" required>
                 <small>We use this to show you the right age group. It's never shown publicly.</small>
+            </label>
+            <label>Your diocese
+                <select name="diocese_id" required>
+                    <option value="">Choose your Church of Uganda diocese</option>
+                    @foreach($dioceses as $diocese)<option value="{{ $diocese->id }}" @selected((string) old('diocese_id', $profile?->diocese_id) === (string) $diocese->id)>{{ $diocese->name }}</option>@endforeach
+                </select>
             </label>
             <label>Your church
                 <select name="organisation_unit_id">

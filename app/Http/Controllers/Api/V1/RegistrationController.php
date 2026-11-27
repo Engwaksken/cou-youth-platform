@@ -9,6 +9,7 @@ use App\Models\GuardianConsent;
 use App\Models\User;
 use App\Models\YouthProfile;
 use App\Services\Safeguarding\AgeCategoryService;
+use App\Support\ChurchOfUgandaDioceses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -28,6 +29,8 @@ class RegistrationController extends Controller
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'organisation_unit_id' => ['nullable', 'exists:organisation_units,id'],
+            // Optional here so older mobile app builds keep working.
+            'diocese_id' => ['nullable', 'integer', ChurchOfUgandaDioceses::existsRule()],
             'school_institution' => ['nullable', 'string', 'max:255'],
             'interests' => ['nullable', 'array'],
             'guardian_name' => ['nullable', 'string', 'max:150'],
@@ -64,6 +67,7 @@ class RegistrationController extends Controller
                 'date_of_birth' => $data['date_of_birth'],
                 'age_category' => $category,
                 'organisation_unit_id' => $data['organisation_unit_id'] ?? null,
+                'diocese_id' => $data['diocese_id'] ?? null,
                 'school_institution' => $data['school_institution'] ?? null,
                 'interests' => $data['interests'] ?? [],
                 'safeguarding_verified' => false,

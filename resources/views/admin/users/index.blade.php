@@ -12,17 +12,20 @@
     <button class="btn btn-primary" type="button" data-user-dialog="create-user"><i class="fas fa-plus" aria-hidden="true"></i> Add user</button>
 </div>
 
+<div class="card"><form method="GET" class="filters" style="grid-template-columns:2fr auto auto"><select name="diocese_id" aria-label="Filter by diocese"><option value="">All dioceses</option>@foreach($dioceses as $diocese)<option value="{{ $diocese->id }}" @selected($dioceseId === $diocese->id)>{{ $diocese->name }}</option>@endforeach</select><button class="btn btn-primary"><i class="fas fa-filter" aria-hidden="true"></i> Filter</button><a class="btn btn-light" href="{{ route('admin.users.index') }}">Reset</a></form></div>
+
 <div class="card table-card users-card">
     <div class="users-table-heading"><h2>Platform users</h2><span class="badge">{{ number_format($users->total()) }} total</span></div>
     <div class="table-wrap">
         <table class="users-table">
             <caption class="users-sr-only">Platform accounts and available actions</caption>
-            <thead><tr><th scope="col">User</th><th scope="col">Email</th><th scope="col">Joined</th><th scope="col">Actions</th></tr></thead>
+            <thead><tr><th scope="col">User</th><th scope="col">Email</th><th scope="col">Diocese</th><th scope="col">Joined</th><th scope="col">Actions</th></tr></thead>
             <tbody>
             @forelse($users as $user)
                 <tr>
                     <td><div class="user-identity"><span class="user-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span><div><strong>{{ $user->name }}</strong><small>Account #{{ $user->id }}@if($user->id === auth()->id()) · You @endif</small></div></div></td>
                     <td class="user-email">{{ $user->email }}</td>
+                    <td>{{ $user->youthProfile?->diocese?->name ?? '—' }}</td>
                     <td>{{ $user->created_at?->format('d M Y') ?? '—' }}</td>
                     <td><div class="actions">
                         <button class="btn btn-light" type="button" data-user-dialog="edit-user-{{ $user->id }}" aria-label="Edit {{ $user->name }}"><i class="fas fa-pen" aria-hidden="true"></i> Edit</button>
@@ -30,7 +33,7 @@
                     </div></td>
                 </tr>
             @empty
-                <tr><td colspan="4" class="empty"><i class="fas fa-users" aria-hidden="true"></i><p>No users found. Add a user to get started.</p></td></tr>
+                <tr><td colspan="5" class="empty"><i class="fas fa-users" aria-hidden="true"></i><p>No users found. Add a user to get started.</p></td></tr>
             @endforelse
             </tbody>
         </table>

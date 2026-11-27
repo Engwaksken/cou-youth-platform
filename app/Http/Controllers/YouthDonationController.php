@@ -156,6 +156,7 @@ final class YouthDonationController extends Controller
             'campaign_id' => $validated['campaign_id'] ?? null,
             'user_id' => $user->id,
             'payment_gateway_id' => $gateway->id,
+            'diocese_id' => $user->youthProfile?->diocese_id,
             'amount' => $validated['amount'],
             'currency' => $validated['currency'],
             'status' => 'pending',

@@ -180,6 +180,7 @@ class DonationController extends Controller
             ...$validated,
             'reference' => (string) Str::uuid(),
             'user_id' => $request->user()->id,
+            'diocese_id' => $request->user()->youthProfile?->diocese_id,
             'status' => 'pending',
         ]);
 

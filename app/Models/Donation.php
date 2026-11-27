@@ -14,6 +14,7 @@ class Donation extends Model
         'campaign_id',
         'user_id',
         'payment_gateway_id',
+        'diocese_id',
         'amount',
         'currency',
         'status',
@@ -42,6 +43,11 @@ class Donation extends Model
     public function gateway(): BelongsTo
     {
         return $this->belongsTo(PaymentGateway::class, 'payment_gateway_id');
+    }
+
+    public function diocese(): BelongsTo
+    {
+        return $this->belongsTo(OrganisationUnit::class, 'diocese_id');
     }
 
     public function user(): BelongsTo

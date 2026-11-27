@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\YouthProfile;
 use App\Services\Auth\VerificationService;
 use App\Services\Safeguarding\AgeCategoryService;
+use App\Support\ChurchOfUgandaDioceses;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -61,7 +62,7 @@ final class YouthAuthController extends Controller
 
     public function showRegister(): View
     {
-        return view('auth.youth-register');
+        return view('auth.youth-register', ['dioceses' => ChurchOfUgandaDioceses::options()]);
     }
 
     public function register(Request $request): RedirectResponse
@@ -71,13 +72,14 @@ final class YouthAuthController extends Controller
             'email' => ['required', 'email', 'max:190', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
             'date_of_birth' => ['required', 'date', 'before:today'],
+            'diocese_id' => ['required', 'integer', ChurchOfUgandaDioceses::existsRule()],
             'school_institution' => ['nullable', 'string', 'max:255'],
             'guardian_name' => ['nullable', 'string', 'max:150'],
             'guardian_relationship' => ['nullable', 'string', 'max:100'],
             'guardian_phone' => ['nullable', 'string', 'max:40'],
             'guardian_email' => ['nullable', 'email', 'max:190'],
             'guardian_confirmed' => ['nullable', 'boolean'],
-        ]);
+        ], [], ['diocese_id' => 'diocese']);
 
         try {
             $category = $this->ages->resolve($data['date_of_birth']);
@@ -105,6 +107,7 @@ final class YouthAuthController extends Controller
                 'user_id' => $user->id,
                 'date_of_birth' => $data['date_of_birth'],
                 'age_category' => $category,
+                'diocese_id' => (int) $data['diocese_id'],
                 'school_institution' => $data['school_institution'] ?? null,
                 'interests' => [],
                 'safeguarding_verified' => false,

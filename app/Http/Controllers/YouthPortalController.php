@@ -14,6 +14,7 @@ use App\Models\LifeGroupMember;
 use App\Models\MediaAsset;
 use App\Models\PlatformNotificationReceipt;
 use App\Models\YouthProfile;
+use App\Support\ChurchOfUgandaDioceses;
 use App\Services\Engagement\DailyEngagementService;
 use App\Services\Safeguarding\AgeCategoryService;
 use Illuminate\Http\RedirectResponse;
@@ -94,7 +95,7 @@ final class YouthPortalController extends Controller
                 ->first()
             : null;
 
-        $profileFields = ['date_of_birth', 'organisation_unit_id', 'school_institution', 'interests', 'talents', 'skills', 'ministry_interests'];
+        $profileFields = ['date_of_birth', 'diocese_id', 'organisation_unit_id', 'school_institution', 'interests', 'talents', 'skills', 'ministry_interests'];
         $filledFields = $profile
             ? collect($profileFields)->filter(fn (string $field): bool => ! empty($profile->{$field}))->count()
             : 0;
@@ -141,12 +142,13 @@ final class YouthPortalController extends Controller
 
     public function profile(Request $request): View
     {
-        $profile = YouthProfile::with('organisationUnit')->where('user_id', $request->user()->id)->first();
+        $profile = YouthProfile::with(['organisationUnit', 'diocese'])->where('user_id', $request->user()->id)->first();
         $units = Schema::hasTable('organisation_units')
             ? DB::table('organisation_units')->where('is_active', true)->orderBy('name')->get(['id', 'name'])
             : collect();
+        $dioceses = ChurchOfUgandaDioceses::options();
 
-        return view('youth.profile', compact('profile', 'units'));
+        return view('youth.profile', compact('profile', 'units', 'dioceses'));
     }
 
     public function updateProfile(Request $request): RedirectResponse
@@ -154,13 +156,14 @@ final class YouthPortalController extends Controller
         $data = $request->validate([
             'date_of_birth' => ['required', 'date', 'before:today'],
             'organisation_unit_id' => ['nullable', 'exists:organisation_units,id'],
+            'diocese_id' => ['required', 'integer', ChurchOfUgandaDioceses::existsRule()],
             'school_institution' => ['nullable', 'string', 'max:190'],
             'interests' => ['nullable', 'string', 'max:2000'],
             'talents' => ['nullable', 'string', 'max:2000'],
             'skills' => ['nullable', 'string', 'max:2000'],
             'ministry_interests' => ['nullable', 'string', 'max:2000'],
             'profile_public' => ['sometimes', 'boolean'],
-        ]);
+        ], [], ['diocese_id' => 'diocese']);
 
         try {
             $data['age_category'] = $this->ages->resolve($data['date_of_birth']);

@@ -7,6 +7,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Donation;
 use App\Models\DonationCampaign;
+use App\Models\OrganisationUnit;
+use App\Support\ChurchOfUgandaDioceses;
+use Illuminate\Database\Eloquent\Builder;
 use App\Services\Notifications\PlatformUpdateNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,9 +26,15 @@ class DonationController extends Controller
         $search = trim((string) $request->string('search'));
         $status = trim((string) $request->string('status'));
         $campaignId = $request->integer('campaign_id');
+        $dioceseId = $request->integer('diocese_id');
+        $successful = ['successful', 'completed', 'paid'];
 
-        $donations = Donation::query()
-            ->with(['campaign', 'gateway'])
+        // Every total on the page honours the diocese filter.
+        $base = fn (): Builder => Donation::query()
+            ->when($dioceseId > 0, fn ($query) => $query->where('diocese_id', $dioceseId));
+
+        $donations = $base()
+            ->with(['campaign', 'gateway', 'diocese'])
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($q) use ($search): void {
                     $q->where('reference', 'like', "%{$search}%")
@@ -44,18 +53,35 @@ class DonationController extends Controller
 
         $campaigns = DonationCampaign::query()
             ->withSum([
-                'donations as amount_raised' => fn ($query) => $query->whereIn('status', ['successful', 'completed', 'paid']),
+                'donations as amount_raised' => fn ($query) => $query
+                    ->whereIn('status', $successful)
+                    ->when($dioceseId > 0, fn ($q) => $q->where('diocese_id', $dioceseId)),
             ], 'amount')
             ->latest()
             ->get();
 
         $summary = [
-            'total' => Donation::count(),
-            'successful' => Donation::whereIn('status', ['successful', 'completed', 'paid'])->count(),
-            'pending' => Donation::where('status', 'pending')->count(),
-            'failed' => Donation::where('status', 'failed')->count(),
-            'amount_raised' => (float) Donation::whereIn('status', ['successful', 'completed', 'paid'])->sum('amount'),
+            'total' => $base()->count(),
+            'successful' => $base()->whereIn('status', $successful)->count(),
+            'pending' => $base()->where('status', 'pending')->count(),
+            'failed' => $base()->where('status', 'failed')->count(),
+            'amount_raised' => (float) $base()->whereIn('status', $successful)->sum('amount'),
         ];
+
+        $dioceses = ChurchOfUgandaDioceses::options();
+        $dioceseNames = OrganisationUnit::query()->where('type', 'diocese')->pluck('name', 'id');
+        $byDiocese = Donation::query()
+            ->whereIn('status', $successful)
+            ->selectRaw('diocese_id, COUNT(*) as donation_count, SUM(amount) as amount_raised')
+            ->groupBy('diocese_id')
+            ->orderByDesc('amount_raised')
+            ->get()
+            ->map(fn ($row) => (object) [
+                'diocese_id' => $row->diocese_id,
+                'name' => $row->diocese_id ? ($dioceseNames[$row->diocese_id] ?? 'Removed diocese') : 'No diocese recorded',
+                'donation_count' => (int) $row->donation_count,
+                'amount_raised' => (float) $row->amount_raised,
+            ]);
 
         return view('admin.donations.index', compact(
             'donations',
@@ -64,6 +90,9 @@ class DonationController extends Controller
             'search',
             'status',
             'campaignId',
+            'dioceseId',
+            'dioceses',
+            'byDiocese',
         ));
     }
 

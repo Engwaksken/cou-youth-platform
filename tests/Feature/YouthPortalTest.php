@@ -42,6 +42,7 @@ final class YouthPortalTest extends TestCase
 
         $this->actingAs($user)
             ->put('/profile', [
+                'diocese_id' => $this->dioceseId(),
                 'date_of_birth' => '2003-04-15',
                 'age_category' => 'youth',
                 'school_institution' => 'Uganda Christian University',
@@ -99,6 +100,7 @@ final class YouthPortalTest extends TestCase
         $this->actingAs($user)
             ->from('/profile')
             ->put('/profile', [
+                'diocese_id' => $this->dioceseId(),
                 'date_of_birth' => '2004-01-01',
                 'age_category' => 'adult',
             ])

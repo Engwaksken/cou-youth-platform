@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\ChurchOfUgandaDioceses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -195,13 +196,15 @@ class PlanningFinanceController extends Controller
         $fees = $query->paginate(12)->withQueryString();
         $organisations = DB::table('organisation_units')->where('is_active',true)->orderBy('name')->get(['id','name']);
         $recentPayments = DB::table('membership_fee_payments as p')->join('membership_fees as f','f.id','=','p.membership_fee_id')
-            ->select('p.*','f.name as fee_name')->orderByDesc('p.paid_at')->limit(20)->get();
+            ->leftJoin('organisation_units as d','d.id','=','p.diocese_id')
+            ->select('p.*','f.name as fee_name','d.name as diocese_name')->orderByDesc('p.paid_at')->limit(20)->get();
+        $dioceses = ChurchOfUgandaDioceses::options();
         $stats = [
             'configured' => DB::table('membership_fees')->count(),
             'collected' => (float) DB::table('membership_fee_payments')->where('status','paid')->sum('amount'),
             'payments' => DB::table('membership_fee_payments')->where('status','paid')->count(),
         ];
-        return view('admin.finance.membership-fees', compact('fees','organisations','recentPayments','stats'));
+        return view('admin.finance.membership-fees', compact('fees','organisations','recentPayments','stats','dioceses'));
     }
 
     public function storeMembershipFee(Request $request)
@@ -236,7 +239,8 @@ class PlanningFinanceController extends Controller
     {
         $data = $request->validate([
             'membership_fee_id'=>'required|exists:membership_fees,id','member_name'=>'required|string|max:180','member_reference'=>'nullable|string|max:120',
-            'amount'=>'required|numeric|min:0.01','currency'=>'required|string|size:3','payment_method'=>'nullable|string|max:50','reference'=>'nullable|string|max:180','paid_at'=>'required|date'
+            'amount'=>'required|numeric|min:0.01','currency'=>'required|string|size:3','payment_method'=>'nullable|string|max:50','reference'=>'nullable|string|max:180','paid_at'=>'required|date',
+            'diocese_id'=>['nullable','integer',ChurchOfUgandaDioceses::existsRule()],
         ]);
         $data['status']='paid';$data['recorded_by']=auth()->id();$data['created_at']=$data['updated_at']=now();
         DB::table('membership_fee_payments')->insert($data);
@@ -262,19 +266,42 @@ class PlanningFinanceController extends Controller
     {
         $from = $request->date('from') ?? now()->startOfMonth();
         $to = $request->date('to') ?? now()->endOfMonth();
-        $membershipCollected = (float) DB::table('membership_fee_payments')->where('status','paid')->whereBetween('paid_at',[$from->startOfDay(),$to->endOfDay()])->sum('amount');
-        $membershipCount = DB::table('membership_fee_payments')->where('status','paid')->whereBetween('paid_at',[$from->startOfDay(),$to->endOfDay()])->count();
+        $dioceses = ChurchOfUgandaDioceses::options();
+        $dioceseId = $request->integer('diocese_id') ?: null;
+        $byDioceseFilter = fn ($query) => $query->when($dioceseId !== null, fn ($q) => $q->where('diocese_id', $dioceseId));
+        $membershipCollected = (float) $byDioceseFilter(DB::table('membership_fee_payments'))->where('status','paid')->whereBetween('paid_at',[$from->startOfDay(),$to->endOfDay()])->sum('amount');
+        $membershipCount = $byDioceseFilter(DB::table('membership_fee_payments'))->where('status','paid')->whereBetween('paid_at',[$from->startOfDay(),$to->endOfDay()])->count();
         $donations = 0.0; $donationCount = 0;
         if (Schema::hasTable('donations') && Schema::hasColumn('donations','amount')) {
             $dateColumn = Schema::hasColumn('donations','paid_at') ? 'paid_at' : (Schema::hasColumn('donations','created_at') ? 'created_at' : null);
             if ($dateColumn) {
-                $dq = DB::table('donations')->whereBetween($dateColumn,[$from->startOfDay(),$to->endOfDay()]);
+                $dq = $byDioceseFilter(DB::table('donations'))->whereBetween($dateColumn,[$from->startOfDay(),$to->endOfDay()]);
                 if (Schema::hasColumn('donations','status')) $dq->whereIn('status',['paid','completed','successful','success']);
                 $donations = (float)(clone $dq)->sum('amount'); $donationCount=(clone $dq)->count();
             }
         }
-        $byMethod = DB::table('membership_fee_payments')->selectRaw("COALESCE(payment_method, 'Unspecified') method, SUM(amount) total, COUNT(*) count")
+        $byMethod = $byDioceseFilter(DB::table('membership_fee_payments'))->selectRaw("COALESCE(payment_method, 'Unspecified') method, SUM(amount) total, COUNT(*) count")
             ->where('status','paid')->whereBetween('paid_at',[$from->startOfDay(),$to->endOfDay()])->groupBy('payment_method')->orderByDesc('total')->get();
-        return view('admin.finance.financial-reports', compact('from','to','membershipCollected','membershipCount','donations','donationCount','byMethod'));
+
+        // Income per diocese for the period: membership fees + successful donations.
+        $range = [$from->copy()->startOfDay(), $to->copy()->endOfDay()];
+        $membershipByDiocese = $byDioceseFilter(DB::table('membership_fee_payments'))->where('status','paid')->whereBetween('paid_at',$range)
+            ->selectRaw('diocese_id, SUM(amount) total, COUNT(*) count')->groupBy('diocese_id')->get()->keyBy('diocese_id');
+        $donationsByDiocese = $byDioceseFilter(DB::table('donations'))->whereIn('status',['paid','completed','successful','success'])
+            ->whereBetween('paid_at',$range)
+            ->selectRaw('diocese_id, SUM(amount) total, COUNT(*) count')->groupBy('diocese_id')->get()->keyBy('diocese_id');
+        $dioceseNames = DB::table('organisation_units')->where('type','diocese')->pluck('name','id');
+        $dioceseIncome = $membershipByDiocese->keys()->merge($donationsByDiocese->keys())->unique()
+            ->map(fn ($id) => (object) [
+                'name' => $id === null || $id === '' ? 'No diocese recorded' : ($dioceseNames[$id] ?? 'Removed diocese'),
+                'membership' => (float) ($membershipByDiocese[$id]->total ?? 0),
+                'membership_count' => (int) ($membershipByDiocese[$id]->count ?? 0),
+                'donations' => (float) ($donationsByDiocese[$id]->total ?? 0),
+                'donation_count' => (int) ($donationsByDiocese[$id]->count ?? 0),
+            ])
+            ->sortByDesc(fn ($row) => $row->membership + $row->donations)
+            ->values();
+
+        return view('admin.finance.financial-reports', compact('from','to','membershipCollected','membershipCount','donations','donationCount','byMethod','dioceses','dioceseId','dioceseIncome'));
     }
 }
