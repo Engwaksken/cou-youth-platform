@@ -44,10 +44,14 @@ jobs:
           cp .env.example .env
           touch database/database.sqlite
           php artisan key:generate
-          php artisan optimize:clear
 
+      # Migrate before clearing caches: .env.example uses the database cache
+      # store, so cache:clear needs the cache table to exist.
       - name: Run database migrations
         run: php artisan migrate --force
+
+      - name: Clear cached configuration
+        run: php artisan optimize:clear
 
       - name: Run Laravel tests
         run: php artisan test

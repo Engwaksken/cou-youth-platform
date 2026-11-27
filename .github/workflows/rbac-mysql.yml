@@ -31,6 +31,8 @@ jobs:
       DB_PASSWORD: ci-root-only
       ROLE_MYSQL_TESTS: '1'
       ROLE_MYSQL_TEST_DATABASE: rbac_ci_test
+      ROLE_MYSQL_TEST_HOST: 127.0.0.1
+      ROLE_MYSQL_TEST_SERVER_PORT: '3306'
       ROLE_MYSQL_TEST_ALLOW_DESTRUCTIVE: I_UNDERSTAND_THIS_IS_DISPOSABLE
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +47,13 @@ jobs:
           key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
           restore-keys: composer-${{ runner.os }}-
       - run: composer install --no-interaction --prefer-dist
+      # The tests pin the server they talk to by @@hostname. In a service
+      # container that is the container ID, so read it from the live server.
+      - name: Pin MySQL server identity
+        run: |
+          host=$(mysql -h 127.0.0.1 -P 3306 -u root -pci-root-only -N -s -e 'SELECT @@hostname' 2>/dev/null)
+          if [ -z "$host" ]; then echo "Could not read @@hostname from MySQL" >&2; exit 1; fi
+          echo "ROLE_MYSQL_TEST_SERVER_HOST=$host" >> "$GITHUB_ENV"
       - name: Assert isolated database and migrate schema
         run: |
           php -r 'if (getenv("DB_DATABASE") !== "rbac_ci_test" || getenv("ROLE_MYSQL_TEST_DATABASE") !== "rbac_ci_test" || getenv("ROLE_MYSQL_TEST_ALLOW_DESTRUCTIVE") !== "I_UNDERSTAND_THIS_IS_DISPOSABLE") { fwrite(STDERR, "Unsafe MySQL test database configuration\n"); exit(1); }'
