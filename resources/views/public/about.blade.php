@@ -48,24 +48,24 @@
     <div>
         <span class="badge">
             <i class="fas fa-cross"></i>
-            Church of Uganda Youth Ministry
+            @pageText('about.hero_kicker')
         </span>
 
-        <h1>About COU Youth</h1>
+        <h1>@pageText('about.hero_title')</h1>
 
         <p>
-            COU Youth is the Church of Uganda's online home for young people: a place to grow in faith, make friends, find support and discover where you can serve.
+            @pageText('about.hero_intro')
         </p>
 
         <div class="about-actions">
             <a class="btn btn-primary" href="{{ route('public.courses') }}">
                 <i class="fas fa-book-bible"></i>
-                Explore Courses
+                @pageText('about.hero_primary')
             </a>
 
             <a class="btn" href="{{ route('public.events') }}">
                 <i class="fas fa-calendar-days"></i>
-                View Events
+                @pageText('about.hero_secondary')
             </a>
         </div>
     </div>
@@ -75,12 +75,10 @@
             <i class="fas fa-people-group"></i>
         </span>
 
-        <h2>Connecting young people</h2>
+        <h2>@pageText('about.intro_title')</h2>
 
         <p>
-            The platform helps young people discover church programmes,
-            discipleship resources, events, opportunities, pastoral support
-            and safe ways to participate in ministry.
+            @pageText('about.intro_body')
         </p>
     </div>
 </section>
@@ -89,9 +87,9 @@
 <section class="about-section">
     <div class="section-head">
         <div>
-            <h2>What you'll find here</h2>
+            <h2>@pageText('about.features_title')</h2>
             <p class="muted">
-                Everything here is built to help you grow, belong and make a difference.
+                @pageText('about.features_intro')
             </p>
         </div>
     </div>
@@ -102,10 +100,10 @@
                 <i class="fas fa-book-bible"></i>
             </span>
 
-            <h3>Discipleship</h3>
+            <h3>@pageText('about.feature_1_title')</h3>
 
             <p class="muted">
-                Courses, Bible studies and devotionals to help you know God better, one step at a time.
+                @pageText('about.feature_1_body')
             </p>
         </article>
 
@@ -114,10 +112,10 @@
                 <i class="fas fa-people-group"></i>
             </span>
 
-            <h3>Community</h3>
+            <h3>@pageText('about.feature_2_title')</h3>
 
             <p class="muted">
-                Events, life groups and fellowships where you can meet people who will walk the journey with you.
+                @pageText('about.feature_2_body')
             </p>
         </article>
 
@@ -126,10 +124,10 @@
                 <i class="fas fa-shield-heart"></i>
             </span>
 
-            <h3>Safeguarding</h3>
+            <h3>@pageText('about.feature_3_title')</h3>
 
             <p class="muted">
-                Your safety matters. We ask for a parent or guardian's consent where it's needed, and our team keeps an eye on what's shared so everyone can take part safely.
+                @pageText('about.feature_3_body')
             </p>
         </article>
 
@@ -138,10 +136,10 @@
                 <i class="fas fa-location-dot"></i>
             </span>
 
-            <h3>Church Locator</h3>
+            <h3>@pageText('about.feature_4_title')</h3>
 
             <p class="muted">
-                Moving to a new town or just visiting? Find a church nearby and see when the youth meet.
+                @pageText('about.feature_4_body')
             </p>
         </article>
 
@@ -150,10 +148,10 @@
                 <i class="fas fa-hand-holding-heart"></i>
             </span>
 
-            <h3>Giving</h3>
+            <h3>@pageText('about.feature_5_title')</h3>
 
             <p class="muted">
-                Give safely and securely to youth ministry campaigns you care about.
+                @pageText('about.feature_5_body')
             </p>
         </article>
 
@@ -162,10 +160,10 @@
                 <i class="fas fa-mobile-screen-button"></i>
             </span>
 
-            <h3>Mobile Access</h3>
+            <h3>@pageText('about.feature_6_title')</h3>
 
             <p class="muted">
-                Use the mobile app or the website on any phone, tablet or computer, wherever you are.
+                @pageText('about.feature_6_body')
             </p>
         </article>
     </div>
@@ -176,9 +174,9 @@
     <section class="about-section" aria-label="About page highlights">
         <div class="section-head">
             <div>
-                <h2>Highlights</h2>
+                <h2>@pageText('about.cards_title')</h2>
                 <p class="muted">
-                    More about youth ministry in the Church of Uganda.
+                    @pageText('about.cards_intro')
                 </p>
             </div>
         </div>
@@ -226,10 +224,10 @@
 <section class="about-section">
     <div class="card about-cta">
         <div>
-            <h2>Be part of the COU Youth community</h2>
+            <h2>@pageText('about.cta_title')</h2>
 
             <p class="muted">
-                Create a free account to save your progress, sign up for events and find your place in the church family.
+                @pageText('about.cta_body')
             </p>
         </div>
 

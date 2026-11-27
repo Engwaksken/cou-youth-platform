@@ -190,6 +190,7 @@ Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->grou
     Route::put('notifications/{notification}', [NotificationController::class, 'update'])->name('notifications.update');
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('page-content', [PageContentController::class, 'index'])->name('page-content.index');
+    Route::put('page-content/texts/{page}', [PageContentController::class, 'updateTexts'])->name('page-content.texts.update');
     Route::post('page-content/slides', [PageContentController::class, 'storeSlide'])->name('page-content.slides.store');
     Route::put('page-content/slides/{slide}', [PageContentController::class, 'updateSlide'])->name('page-content.slides.update');
     Route::delete('page-content/slides/{slide}', [PageContentController::class, 'destroySlide'])->name('page-content.slides.destroy');

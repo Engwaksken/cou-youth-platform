@@ -52,13 +52,13 @@
     <div>
         <span class="badge">
             <i class="fas fa-church"></i>
-            Church of Uganda
+            @pageText('churches.hero_kicker')
         </span>
 
-        <h1>Find a church <span class="scribble">near you</span></h1>
+        <h1>@pageText('churches.hero_title') <span class="scribble">@pageText('churches.hero_title_highlight')</span></h1>
 
         <p>
-            Looking for a church? Find one near you, see how to get in touch and when the youth fellowship meets.
+            @pageText('churches.hero_intro')
         </p>
     </div>
 </section>
@@ -189,10 +189,10 @@
                 <i class="fas fa-location-dot"></i>
             </span>
 
-            <h3>No church locations found</h3>
+            <h3>@pageText('churches.empty_title')</h3>
 
             <p class="muted">
-                Try a different church name, town or area.
+                @pageText('churches.empty_body')
             </p>
         </div>
     @endforelse
@@ -208,9 +208,9 @@
     <section class="page-cards-grid" aria-label="Featured">
         <div class="section-head">
             <div>
-                <h2>Featured</h2>
+                <h2>@pageText('churches.cards_title')</h2>
                 <p class="muted">
-                    Helpful things to know before you visit.
+                    @pageText('churches.cards_intro')
                 </p>
             </div>
         </div>

@@ -19,9 +19,9 @@
 @endif
 
 <section class="hero">
-<span class="section-kicker">BELONG & GROW</span>
-<h1>Life Groups: find your <span class="scribble">people</span></h1>
-<p>Find a youth fellowship or small group where you can build friendships, study Scripture, pray together and serve your community.</p>
+<span class="section-kicker">@pageText('life-groups.hero_kicker')</span>
+<h1>@pageText('life-groups.hero_title') <span class="scribble">@pageText('life-groups.hero_title_highlight')</span></h1>
+<p>@pageText('life-groups.hero_intro')</p>
 </section>
 
 @include('partials.active-search', ['route' => 'public.life-groups'])
@@ -43,7 +43,7 @@
 </div>
 </article>
 @empty
-<div class="card empty-card"><i class="fas fa-people-group" aria-hidden="true"></i><h3>No life groups found</h3><p class="muted">Try a different search, or check back as new groups start.</p></div>
+<div class="card empty-card"><i class="fas fa-people-group" aria-hidden="true"></i><h3>@pageText('life-groups.empty_title')</h3><p class="muted">@pageText('life-groups.empty_body')</p></div>
 @endforelse
 </div>
 

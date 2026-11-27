@@ -12,16 +12,16 @@
 
 <section class="home-hero">
     <div class="hero-copy">
-        <span class="hello">Church of Uganda Youth</span>
-        <h1>Faith that fits <span class="scribble">your life.</span></h1>
-        <p>Daily Scripture on your phone. Courses you can finish between classes. Events worth showing up for, and a life group where people actually know your name.</p>
+        <span class="hello">@pageText('home.hero_kicker')</span>
+        <h1>@pageText('home.hero_title') <span class="scribble">@pageText('home.hero_title_highlight')</span></h1>
+        <p>@pageText('home.hero_intro')</p>
         <div class="hero-actions">
             @guest
-                <a class="btn btn-sun btn-lg" href="{{ route('register') }}">Create Youth Account <i class="fas fa-arrow-right"></i></a>
-                <a class="btn btn-ghost btn-lg" href="{{ route('login') }}">I already have one</a>
+                <a class="btn btn-sun btn-lg" href="{{ route('register') }}">@pageText('home.hero_guest_primary') <i class="fas fa-arrow-right"></i></a>
+                <a class="btn btn-ghost btn-lg" href="{{ route('login') }}">@pageText('home.hero_guest_secondary')</a>
             @else
-                <a class="btn btn-sun btn-lg" href="{{ route('youth.dashboard') }}">Go to my space <i class="fas fa-arrow-right"></i></a>
-                <a class="btn btn-ghost btn-lg" href="{{ route('public.courses') }}">Browse courses</a>
+                <a class="btn btn-sun btn-lg" href="{{ route('youth.dashboard') }}">@pageText('home.hero_member_primary') <i class="fas fa-arrow-right"></i></a>
+                <a class="btn btn-ghost btn-lg" href="{{ route('public.courses') }}">@pageText('home.hero_member_secondary')</a>
             @endguest
         </div>
         <p class="proof">
@@ -75,25 +75,25 @@
 @endif
 
 <section class="home-section">
-    <div class="section-head"><h2>Start wherever you are</h2></div>
+    <div class="section-head"><h2>@pageText('home.paths_title')</h2></div>
     <div class="paths">
         <a class="path p-sun" href="{{ route('public.events') }}">
             <span class="path-icon"><i class="fas fa-ticket"></i></span>
-            <h3>Show up</h3>
-            <p>Worship nights, camps, conferences and missions. Come along, and bring a friend.</p>
-            <span class="path-go">See events <i class="fas fa-arrow-right"></i></span>
+            <h3>@pageText('home.path_events_title')</h3>
+            <p>@pageText('home.path_events_body')</p>
+            <span class="path-go">@pageText('home.path_events_link') <i class="fas fa-arrow-right"></i></span>
         </a>
         <a class="path p-leaf" href="{{ route('public.courses') }}">
             <span class="path-icon"><i class="fas fa-book-open"></i></span>
-            <h3>Go deeper</h3>
-            <p>Short Bible studies and life-skills courses. Do a lesson on the taxi home.</p>
-            <span class="path-go">Browse courses <i class="fas fa-arrow-right"></i></span>
+            <h3>@pageText('home.path_courses_title')</h3>
+            <p>@pageText('home.path_courses_body')</p>
+            <span class="path-go">@pageText('home.path_courses_link') <i class="fas fa-arrow-right"></i></span>
         </a>
         <a class="path p-coral" href="{{ route('public.churches') }}">
             <span class="path-icon"><i class="fas fa-location-dot"></i></span>
-            <h3>Find your church</h3>
-            <p>See which churches near you have a youth fellowship, and when they meet.</p>
-            <span class="path-go">Search the map <i class="fas fa-arrow-right"></i></span>
+            <h3>@pageText('home.path_churches_title')</h3>
+            <p>@pageText('home.path_churches_body')</p>
+            <span class="path-go">@pageText('home.path_churches_link') <i class="fas fa-arrow-right"></i></span>
         </a>
     </div>
 </section>
@@ -114,7 +114,7 @@
 
 @if($upcomingEvents->isNotEmpty())
 <section class="home-section">
-    <div class="section-head"><div><h2>Coming up</h2><p class="muted">Save the date.</p></div><a class="btn" href="{{ route('public.events') }}">All events</a></div>
+    <div class="section-head"><div><h2>@pageText('home.events_title')</h2><p class="muted">@pageText('home.events_intro')</p></div><a class="btn" href="{{ route('public.events') }}">All events</a></div>
     <div class="event-list">
         @foreach($upcomingEvents->take(4) as $event)
             <a class="card event-row" href="{{ route('public.events.show', $event) }}">
@@ -132,7 +132,7 @@
 
 @if($latestNews->isNotEmpty())
 <section class="home-section">
-    <div class="section-head"><div><h2>Stories &amp; devotionals</h2><p class="muted">From young people and leaders around the church.</p></div><a class="btn" href="{{ route('public.news') }}">Read more</a></div>
+    <div class="section-head"><div><h2>@pageText('home.news_title')</h2><p class="muted">@pageText('home.news_intro')</p></div><a class="btn" href="{{ route('public.news') }}">Read more</a></div>
     <div class="grid">
         @foreach($latestNews->take(3) as $item)
             <article class="card story-card">
@@ -147,7 +147,7 @@
 
 @if($cards->isNotEmpty())
 <section class="home-section page-cards-grid" aria-label="Highlights">
-    <div class="section-head"><h2>Don't miss</h2></div>
+    <div class="section-head"><h2>@pageText('home.cards_title')</h2></div>
     <div class="grid">
         @foreach($cards as $card)
             <article class="card highlight-card">
@@ -168,13 +168,13 @@
 <section class="home-section">
     <div class="join-band">
         <div>
-            <h2>There's a seat saved for you.</h2>
-            <p>It's free. Make an account to keep your courses, sign up for events and get a fresh verse every morning.</p>
+            <h2>@pageText('home.join_title')</h2>
+            <p>@pageText('home.join_body')</p>
         </div>
         @guest
-            <a class="btn btn-lg join-btn" href="{{ route('register') }}">Join free <i class="fas fa-arrow-right"></i></a>
+            <a class="btn btn-lg join-btn" href="{{ route('register') }}">@pageText('home.join_guest_button') <i class="fas fa-arrow-right"></i></a>
         @else
-            <a class="btn btn-lg join-btn" href="{{ route('youth.dashboard') }}">Open my space <i class="fas fa-arrow-right"></i></a>
+            <a class="btn btn-lg join-btn" href="{{ route('youth.dashboard') }}">@pageText('home.join_member_button') <i class="fas fa-arrow-right"></i></a>
         @endguest
     </div>
 </section>

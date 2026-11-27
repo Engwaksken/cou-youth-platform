@@ -18,7 +18,7 @@
 </section>
 @endif
 
-<section class="hero page-hero"><span class="section-kicker">YOUTH COMMUNITY</span><h1>What's <span class="scribble">on</span></h1><p>Worship nights, conferences, missions and fellowships happening across Uganda. Come along, and bring a friend.</p></section>
+<section class="hero page-hero"><span class="section-kicker">@pageText('events.hero_kicker')</span><h1>@pageText('events.hero_title') <span class="scribble">@pageText('events.hero_title_highlight')</span></h1><p>@pageText('events.hero_intro')</p></section>
 
 @include('partials.active-search', ['route' => 'public.events'])
 
@@ -36,7 +36,7 @@
     </div>
 </a>
 @empty
-<div class="card empty-card"><i class="fas fa-calendar-xmark"></i><h3>No upcoming events just now</h3><p class="muted">New events are added all the time, so check back soon.</p></div>
+<div class="card empty-card"><i class="fas fa-calendar-xmark"></i><h3>@pageText('events.empty_title')</h3><p class="muted">@pageText('events.empty_body')</p></div>
 @endforelse
 </div>
 <div class="pagination">{{ $items->links() }}</div>

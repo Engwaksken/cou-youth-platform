@@ -48,9 +48,9 @@
 
 
 <section class="hero">
-    <h1>Stories &amp; <span class="scribble">resources</span></h1>
+    <h1>@pageText('news.hero_title') <span class="scribble">@pageText('news.hero_title_highlight')</span></h1>
     <p>
-        Devotionals, stories and opportunities from youth ministry across the Church of Uganda.
+        @pageText('news.hero_intro')
     </p>
 </section>
 
@@ -89,7 +89,7 @@
         </article>
     @empty
         <div class="card">
-            Nothing here yet. Check back soon for new stories and devotionals.
+            @pageText('news.empty')
         </div>
     @endforelse
 </div>

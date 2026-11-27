@@ -50,13 +50,13 @@
     <div>
         <span class="badge">
             <i class="fas fa-hand-holding-heart"></i>
-            Giving
+            @pageText('donate.hero_kicker')
         </span>
 
-        <h1>Support Youth Ministry</h1>
+        <h1>@pageText('donate.hero_title')</h1>
 
         <p>
-            Your gift helps young people across Uganda grow in faith, reach out to their communities and discover their calling.
+            @pageText('donate.hero_intro')
         </p>
     </div>
 
@@ -65,11 +65,10 @@
             <i class="fas fa-heart"></i>
         </span>
 
-        <h2>Your support makes a difference</h2>
+        <h2>@pageText('donate.message_title')</h2>
 
         <p>
-            Every contribution helps strengthen youth discipleship,
-            participation, outreach and ministry opportunities.
+            @pageText('donate.message_body')
         </p>
     </div>
 </section>
@@ -78,9 +77,9 @@
 <section class="donation-section">
     <div class="section-head">
         <div>
-            <h2>Active Campaigns</h2>
+            <h2>@pageText('donate.campaigns_title')</h2>
             <p class="muted">
-                Choose something that's close to your heart.
+                @pageText('donate.campaigns_intro')
             </p>
         </div>
     </div>
@@ -206,10 +205,10 @@
                     <i class="fas fa-hand-holding-heart"></i>
                 </span>
 
-                <h3>No active donation campaigns</h3>
+                <h3>@pageText('donate.empty_title')</h3>
 
                 <p class="muted">
-                    There's nothing to give to right now. Please check back soon.
+                    @pageText('donate.empty_body')
                 </p>
             </div>
         @endforelse
@@ -225,9 +224,9 @@
     <section class="page-cards-grid" aria-label="Featured giving information">
         <div class="section-head">
             <div>
-                <h2>Featured</h2>
+                <h2>@pageText('donate.cards_title')</h2>
                 <p class="muted">
-                    See how your giving makes a difference.
+                    @pageText('donate.cards_intro')
                 </p>
             </div>
         </div>
@@ -279,10 +278,10 @@
 <section class="donation-section">
     <div class="card giving-note">
         <div>
-            <h2>Give securely</h2>
+            <h2>@pageText('donate.secure_title')</h2>
 
             <p class="muted">
-                Sign in to give through a secure payment option. We'll send you a confirmation once your gift goes through.
+                @pageText('donate.secure_body')
             </p>
         </div>
 

@@ -18,7 +18,7 @@
 </section>
 @endif
 
-<section class="hero"><span class="section-kicker">GROW IN FAITH</span><h1>Courses to help you <span class="scribble">grow</span></h1><p>Bible studies and discipleship courses you can work through at your own pace, on your own, with friends or with your life group.</p></section>
+<section class="hero"><span class="section-kicker">@pageText('courses.hero_kicker')</span><h1>@pageText('courses.hero_title') <span class="scribble">@pageText('courses.hero_title_highlight')</span></h1><p>@pageText('courses.hero_intro')</p></section>
 @include('partials.active-search', ['route' => 'public.courses'])
 
 <div class="grid">
@@ -31,7 +31,7 @@
 <div class="course-meta"><span><i class="fas fa-list"></i> {{ number_format($course->lessons_count ?? 0) }} {{ ($course->lessons_count ?? 0) === 1 ? 'lesson' : 'lessons' }}</span><span class="detail-link">View course <i class="fas fa-arrow-right"></i></span></div>
 </a>
 @empty
-<div class="card empty-card"><i class="fas fa-book-open"></i><h3>No courses yet</h3><p class="muted">New courses are on the way, so check back soon.</p></div>
+<div class="card empty-card"><i class="fas fa-book-open"></i><h3>@pageText('courses.empty_title')</h3><p class="muted">@pageText('courses.empty_body')</p></div>
 @endforelse
 </div>
 <div class="pagination">{{ $items->links() }}</div>

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Support\PageText;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->scoped(PageText::class);
     }
 
     /**
@@ -27,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiters();
+
+        // @pageText('home.hero_title') prints editable public-page wording (escaped).
+        Blade::directive('pageText', fn (string $expression): string => "<?php echo \\App\\Support\\PageText::render({$expression}); ?>");
 
         View::composer('*', function ($view): void {
             try {
