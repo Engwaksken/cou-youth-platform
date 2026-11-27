@@ -112,10 +112,7 @@
         align-items: center;
         justify-content: center;
         padding: 42px 20px;
-        background:
-            radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--primary) 8%, transparent) 0 96px, transparent 97px),
-            radial-gradient(circle at 92% 82%, color-mix(in srgb, var(--secondary) 7%, transparent) 0 120px, transparent 121px),
-            #f8f7fc;
+        background: #f8f7fc;
     }
 
     .auth-shell { width: min(100%, 460px); }

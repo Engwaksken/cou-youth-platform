@@ -15,7 +15,7 @@
     <style>
         *{box-sizing:border-box}
         :root{--primary:#4b2e83;--secondary:#204f78;--text:#182230;--muted:#667085;--border:#d0d5dd;--surface:#fff;--page:#f8f7fc}
-        body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 10% 12%,rgba(75,46,131,.08) 0 90px,transparent 91px),radial-gradient(circle at 90% 88%,rgba(32,79,120,.07) 0 120px,transparent 121px),var(--page);font-family:Arial,sans-serif;color:var(--text)}
+        body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--page);font-family:Arial,sans-serif;color:var(--text)}
         .login-shell{width:100%;max-width:26.875rem}
         .login-card{width:100%;background:var(--surface);padding:30px;border:1px solid #e6e7ec;border-radius:10px;box-shadow:0 18px 50px rgba(16,24,40,.08)}
         .brand{text-align:center;margin-bottom:22px}

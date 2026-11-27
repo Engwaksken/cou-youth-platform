@@ -173,10 +173,7 @@
     .register-page {
         min-height: calc(100vh - 150px);
         padding: 34px 18px 46px;
-        background:
-            radial-gradient(circle at 7% 12%, color-mix(in srgb, var(--primary) 7%, transparent) 0 100px, transparent 101px),
-            radial-gradient(circle at 94% 88%, color-mix(in srgb, var(--secondary) 6%, transparent) 0 120px, transparent 121px),
-            #f8f7fc;
+        background: #f8f7fc;
     }
 
     .register-shell { width: min(100%, 620px); margin: 0 auto; }
