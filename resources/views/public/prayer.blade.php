@@ -7,13 +7,7 @@
     $underReviewOnPage = $pageRequests->whereIn('status', ['under_review','referred'])->count();
     $notesOnPage = $pageRequests->filter(fn($item) => !empty($item->pastoral_notes))->count();
 @endphp
-<section class="hero"><span class="section-kicker">PRAYER & CARE</span><h1>Prayer & Pastoral Support</h1><p>Whatever you're carrying, you don't have to carry it alone. Share a prayer request with our youth pastoral team and see how they're following up.</p></section>
-<div class="page-stats">
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-hands-praying"></i></span><div><strong>{{ $requests->total() }}</strong><span>Total prayer requests</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-circle-check"></i></span><div><strong>{{ $resolvedOnPage }}</strong><span>Resolved on this page</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-magnifying-glass"></i></span><div><strong>{{ $underReviewOnPage }}</strong><span>Under review on page</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-note-sticky"></i></span><div><strong>{{ $notesOnPage }}</strong><span>Pastoral notes available</span></div></div>
-</div>
+<section class="hero"><span class="section-kicker">PRAYER & CARE</span><h1>You don't have to carry it <span class="scribble">alone</span></h1><p>Exams, family, money, faith, anything. Share a prayer request with our youth pastoral team and see how they're following up.</p></section>
 <div class="support-grid">
 <section class="card prayer-form-card" aria-labelledby="prayer-form-title"><div class="section-head"><div class="icon-box"><i class="fas fa-hands-praying" aria-hidden="true"></i></div><div><h2 id="prayer-form-title">Submit a prayer request</h2><p class="muted">You decide who can see your request.</p></div></div>
 @if($errors->any())<div class="form-errors" role="alert"><strong>Please correct the following:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif

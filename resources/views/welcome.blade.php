@@ -6,12 +6,59 @@
 @php
     $slides = $slides ?? collect();
     $cards = $cards ?? collect();
+    $verse = app(\App\Services\Engagement\DailyEngagementService::class)->verseOfTheDay();
+    $nextEvent = $upcomingEvents->first();
 @endphp
+
+<section class="home-hero">
+    <div class="hero-copy">
+        <span class="hello">Church of Uganda Youth</span>
+        <h1>Faith that fits <span class="scribble">your life.</span></h1>
+        <p>Daily Scripture on your phone. Courses you can finish between classes. Events worth showing up for, and a life group where people actually know your name.</p>
+        <div class="hero-actions">
+            @guest
+                <a class="btn btn-sun btn-lg" href="{{ route('register') }}">Create Youth Account <i class="fas fa-arrow-right"></i></a>
+                <a class="btn btn-ghost btn-lg" href="{{ route('login') }}">I already have one</a>
+            @else
+                <a class="btn btn-sun btn-lg" href="{{ route('youth.dashboard') }}">Go to my space <i class="fas fa-arrow-right"></i></a>
+                <a class="btn btn-ghost btn-lg" href="{{ route('public.courses') }}">Browse courses</a>
+            @endguest
+        </div>
+        <p class="proof">
+            <span><b>{{ number_format($stats['events'] ?? 0) }}</b> events</span>
+            <span><b>{{ number_format($stats['courses'] ?? 0) }}</b> courses</span>
+            <span><b>{{ number_format($stats['church_locations'] ?? 0) }}</b> churches</span>
+        </p>
+    </div>
+
+    <div class="collage" aria-hidden="true">
+        @if($verse)
+            <div class="sticker s-verse">
+                <span class="tag">Today's word</span>
+                <p>{{ \Illuminate\Support\Str::limit($verse['text'], 120) }}</p>
+                <cite>{{ $verse['ref'] }}</cite>
+            </div>
+        @endif
+        @if($nextEvent)
+            <div class="sticker s-event">
+                <span class="date-tile"><b>{{ optional($nextEvent->starts_at)->format('j') }}</b><small>{{ optional($nextEvent->starts_at)->format('M') }}</small></span>
+                <span><small>Next up</small><strong>{{ \Illuminate\Support\Str::limit($nextEvent->title, 34) }}</strong></span>
+            </div>
+        @else
+            <div class="sticker s-event">
+                <span class="date-tile"><b><i class="fas fa-people-group"></i></b></span>
+                <span><small>This week</small><strong>Life groups near you</strong></span>
+            </div>
+        @endif
+        <div class="sticker s-streak"><i class="fas fa-fire"></i> 7-day streak</div>
+        <div class="sticker s-badge"><i class="fas fa-award"></i></div>
+    </div>
+</section>
 
 @if($slides->isNotEmpty())
 <section class="slides-banner" aria-label="Featured highlights">
     @foreach($slides as $slide)
-        <article class="slide-card">
+        <article class="slide-card card">
             @if(!empty($slide->media_path))
                 <img src="{{ asset('storage/' . $slide->media_path) }}" alt="{{ $slide->title ?? 'Highlight' }}">
             @endif
@@ -19,7 +66,7 @@
                 @if(!empty($slide->title))<h2>{{ $slide->title }}</h2>@endif
                 @if(!empty($slide->subtitle))<p class="muted">{{ $slide->subtitle }}</p>@endif
                 @if(!empty($slide->link_url))
-                    <a class="btn btn-primary" href="{{ $slide->link_url }}">Learn more</a>
+                    <a class="btn" href="{{ $slide->link_url }}">Find out more <i class="fas fa-arrow-right"></i></a>
                 @endif
             </div>
         </article>
@@ -27,89 +74,69 @@
 </section>
 @endif
 
-<section class="hero home-hero">
-    <div class="hero-copy">
-        <span class="badge"><i class="fas fa-cross"></i> Church of Uganda Youth Ministry</span>
-        <h1>Grow in faith. Find your people.</h1>
-        <p>Whether you're new to church or have been coming all your life, this is your space to learn, make friends, find a church near you and get involved in what God is doing among young people in Uganda.</p>
-        <div class="hero-actions">
-            @guest
-                <a class="btn btn-primary" href="{{ route('register') }}"><i class="fas fa-user-plus"></i> Create Youth Account</a>
-                <a class="btn" href="{{ route('login') }}"><i class="fas fa-right-to-bracket"></i> Youth Login</a>
-            @else
-                <a class="btn btn-primary" href="{{ route('public.courses') }}"><i class="fas fa-book-bible"></i> Explore Courses</a>
-            @endguest
-        </div>
+<section class="home-section">
+    <div class="section-head"><h2>Start wherever you are</h2></div>
+    <div class="paths">
+        <a class="path p-sun" href="{{ route('public.events') }}">
+            <span class="path-icon"><i class="fas fa-ticket"></i></span>
+            <h3>Show up</h3>
+            <p>Worship nights, camps, conferences and missions. Come along, and bring a friend.</p>
+            <span class="path-go">See events <i class="fas fa-arrow-right"></i></span>
+        </a>
+        <a class="path p-leaf" href="{{ route('public.courses') }}">
+            <span class="path-icon"><i class="fas fa-book-open"></i></span>
+            <h3>Go deeper</h3>
+            <p>Short Bible studies and life-skills courses. Do a lesson on the taxi home.</p>
+            <span class="path-go">Browse courses <i class="fas fa-arrow-right"></i></span>
+        </a>
+        <a class="path p-coral" href="{{ route('public.churches') }}">
+            <span class="path-icon"><i class="fas fa-location-dot"></i></span>
+            <h3>Find your church</h3>
+            <p>See which churches near you have a youth fellowship, and when they meet.</p>
+            <span class="path-go">Search the map <i class="fas fa-arrow-right"></i></span>
+        </a>
     </div>
-
-    <aside class="card explore-card" aria-label="Explore the platform">
-        <span class="section-kicker">START HERE</span>
-        <h2>Where would you like to start?</h2>
-        <p>Pick whatever catches your eye. There's no wrong place to begin.</p>
-        <div class="explore-links">
-            <a href="{{ route('public.news') }}"><span><i class="fas fa-newspaper"></i> News & Resources</span><i class="fas fa-arrow-right"></i></a>
-            <a href="{{ route('public.events') }}"><span><i class="fas fa-calendar-days"></i> Events</span><i class="fas fa-arrow-right"></i></a>
-            <a href="{{ route('public.courses') }}"><span><i class="fas fa-book-bible"></i> Courses</span><i class="fas fa-arrow-right"></i></a>
-            <a href="{{ route('public.churches') }}"><span><i class="fas fa-location-dot"></i> Church Locator</span><i class="fas fa-arrow-right"></i></a>
-            <a href="{{ route('public.donate') }}"><span><i class="fas fa-hand-holding-heart"></i> Donate</span><i class="fas fa-arrow-right"></i></a>
-        </div>
-    </aside>
 </section>
 
 @if($annualTheme)
 <section class="annual-theme" aria-labelledby="annual-theme-title">
     @if(!empty($annualTheme->image_path))
-        <div class="annual-theme-media">
-            <img src="{{ asset('storage/' . $annualTheme->image_path) }}" alt="{{ $annualTheme->theme }}">
-        </div>
+        <div class="annual-theme-media"><img src="{{ asset('storage/' . $annualTheme->image_path) }}" alt=""></div>
     @endif
     <div class="annual-theme-copy">
-        <span class="section-kicker">{{ $annualTheme->year }} ANNUAL THEME</span>
+        <span class="theme-year">Our {{ $annualTheme->year }} theme</span>
         <h2 id="annual-theme-title">{{ $annualTheme->theme }}</h2>
-        @if(!empty($annualTheme->scripture_reference))
-            <p class="theme-scripture"><i class="fas fa-book-bible"></i> {{ $annualTheme->scripture_reference }}</p>
-        @endif
-        @if(!empty($annualTheme->description))
-            <p>{{ $annualTheme->description }}</p>
-        @endif
+        @if(!empty($annualTheme->scripture_reference))<p class="theme-scripture"><i class="fas fa-book-bible"></i> {{ $annualTheme->scripture_reference }}</p>@endif
+        @if(!empty($annualTheme->description))<p class="theme-desc">{{ $annualTheme->description }}</p>@endif
     </div>
 </section>
 @endif
 
+@if($upcomingEvents->isNotEmpty())
 <section class="home-section">
-    <div class="section-head">
-        <div>
-            <span class="section-kicker">DISCOVER</span>
-            <h2>What's happening right now</h2>
-            <p class="muted">A quick look at what young people across the Church of Uganda are up to.</p>
-        </div>
-    </div>
-    <div class="grid">
-        <a class="card glance-card" href="{{ route('public.events') }}">
-            <span class="glance-icon"><i class="fas fa-calendar-days"></i></span>
-            <div><h3>{{ number_format($stats['events'] ?? 0) }} Events</h3><p class="muted">Worship nights, fellowships, missions and get-togethers you can join.</p></div>
-        </a>
-        <a class="card glance-card" href="{{ route('public.courses') }}">
-            <span class="glance-icon"><i class="fas fa-book-bible"></i></span>
-            <div><h3>{{ number_format($stats['courses'] ?? 0) }} Courses</h3><p class="muted">Bible studies you can take at your own pace, on your own or with friends.</p></div>
-        </a>
-        <a class="card glance-card" href="{{ route('public.churches') }}">
-            <span class="glance-icon"><i class="fas fa-church"></i></span>
-            <div><h3>{{ number_format($stats['church_locations'] ?? 0) }} Church Locations</h3><p class="muted">Find a church near you and see when its youth fellowship meets.</p></div>
-        </a>
+    <div class="section-head"><div><h2>Coming up</h2><p class="muted">Save the date.</p></div><a class="btn" href="{{ route('public.events') }}">All events</a></div>
+    <div class="event-list">
+        @foreach($upcomingEvents->take(4) as $event)
+            <a class="card event-row" href="{{ route('public.events.show', $event) }}">
+                <span class="date-tile"><b>{{ optional($event->starts_at)->format('j') }}</b><small>{{ optional($event->starts_at)->format('M') }}</small></span>
+                <span class="event-copy">
+                    <strong>{{ $event->title }}</strong>
+                    <small>{{ optional($event->starts_at)->format('l · g:i A') ?: 'Date to be confirmed' }} · {{ $event->venue ?: 'Venue to be confirmed' }}</small>
+                </span>
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </a>
+        @endforeach
     </div>
 </section>
+@endif
 
 @if($latestNews->isNotEmpty())
 <section class="home-section">
-    <div class="section-head">
-        <div><span class="section-kicker">LATEST</span><h2>Stories &amp; opportunities</h2><p class="muted">Devotionals, stories and opportunities from around the church.</p></div>
-        <a class="btn" href="{{ route('public.news') }}">View all</a>
-    </div>
+    <div class="section-head"><div><h2>Stories &amp; devotionals</h2><p class="muted">From young people and leaders around the church.</p></div><a class="btn" href="{{ route('public.news') }}">Read more</a></div>
     <div class="grid">
         @foreach($latestNews->take(3) as $item)
-            <article class="card update-card">
-                <span class="badge">{{ ucwords(str_replace('_', ' ', $item->type ?? 'update')) }}</span>
+            <article class="card story-card">
+                <span class="badge badge-sun">{{ ucwords(str_replace('_', ' ', $item->type ?? 'story')) }}</span>
                 <h3>{{ $item->title }}</h3>
                 <p class="muted">{{ $item->summary ?: \Illuminate\Support\Str::limit(strip_tags($item->body ?? ''), 130) }}</p>
             </article>
@@ -118,29 +145,9 @@
 </section>
 @endif
 
-@if($upcomingEvents->isNotEmpty())
-<section class="home-section">
-    <div class="section-head">
-        <div><span class="section-kicker">COMING UP</span><h2>Upcoming Events</h2><p class="muted">Come along, and bring a friend.</p></div>
-        <a class="btn" href="{{ route('public.events') }}">View all</a>
-    </div>
-    <div class="grid">
-        @foreach($upcomingEvents->take(3) as $event)
-            <a class="card event-card clickable-card" href="{{ route('public.events.show', $event) }}">
-                <span class="event-icon"><i class="fas fa-calendar-days"></i></span>
-                <h3>{{ $event->title }}</h3>
-                <p><i class="fas fa-calendar"></i> {{ optional($event->starts_at)->format('d M Y H:i') ?: 'Date to be confirmed' }}</p>
-                <p class="muted"><i class="fas fa-location-dot"></i> {{ $event->venue ?: 'Venue to be confirmed' }}</p>
-                <span class="detail-link">View event details <i class="fas fa-arrow-right"></i></span>
-            </a>
-        @endforeach
-    </div>
-</section>
-@endif
-
 @if($cards->isNotEmpty())
 <section class="home-section page-cards-grid" aria-label="Highlights">
-    <div class="section-head"><div><span class="section-kicker">FEATURED</span><h2>Highlights</h2><p class="muted">A few things we'd love you to see.</p></div></div>
+    <div class="section-head"><h2>Don't miss</h2></div>
     <div class="grid">
         @foreach($cards as $card)
             <article class="card highlight-card">
@@ -151,7 +158,7 @@
                 @endif
                 @if(!empty($card->title))<h3>{{ $card->title }}</h3>@endif
                 @if(!empty($card->body))<p class="muted">{{ $card->body }}</p>@endif
-                @if(!empty($card->link_url))<a class="btn" href="{{ $card->link_url }}">Learn more</a>@endif
+                @if(!empty($card->link_url))<a class="btn" href="{{ $card->link_url }}">Find out more</a>@endif
             </article>
         @endforeach
     </div>
@@ -159,22 +166,102 @@
 @endif
 
 <section class="home-section">
-    <div class="card connect-card">
-        <div><h2>Ready to join us?</h2><p class="muted">Create a free youth account to save your courses, sign up for events and stay connected with your church family.</p></div>
+    <div class="join-band">
+        <div>
+            <h2>There's a seat saved for you.</h2>
+            <p>It's free. Make an account to keep your courses, sign up for events and get a fresh verse every morning.</p>
+        </div>
         @guest
-            <a class="btn btn-primary" href="{{ route('register') }}">Sign Up</a>
+            <a class="btn btn-lg join-btn" href="{{ route('register') }}">Join free <i class="fas fa-arrow-right"></i></a>
         @else
-            <a class="btn btn-primary" href="{{ route('public.courses') }}">Keep exploring</a>
+            <a class="btn btn-lg join-btn" href="{{ route('youth.dashboard') }}">Open my space <i class="fas fa-arrow-right"></i></a>
         @endguest
     </div>
 </section>
 
 <style>
-.slides-banner{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:28px}.slide-card{overflow:hidden;border-radius:10px;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow-sm)}.slide-card img{width:100%;height:220px;object-fit:cover;display:block}.slide-body{padding:18px}.slide-body h2{margin:0 0 6px}.slide-body p{margin:0 0 12px}
-.home-hero{display:grid;grid-template-columns:1.35fr .9fr;gap:28px;align-items:center}.hero-copy h1{margin:14px 0 12px}.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.explore-card{background:var(--primary);color:#fff;border:0;padding:24px;border-radius:10px}.explore-card h2,.explore-card p{color:#fff}.explore-links{display:grid;gap:8px;margin-top:16px}.explore-links a{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-weight:800}.explore-links a:hover{background:#fff;color:var(--primary)}
-.section-kicker{display:inline-block;color:var(--primary);font-size:.72rem;font-weight:900;letter-spacing:.12em;margin-bottom:6px}.annual-theme{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr);gap:0;margin:10px 0 38px;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-sm)}.annual-theme-media img{width:100%;height:100%;min-height:250px;object-fit:cover;display:block}.annual-theme-copy{padding:30px;align-self:center}.annual-theme-copy h2{font-size:clamp(1.7rem,4vw,2.5rem);margin:0 0 10px;color:#1e1830}.annual-theme-copy p{color:var(--muted)}.theme-scripture{font-weight:800;color:var(--primary)!important}
-.home-section{margin-top:38px}.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:16px}.section-head h2{margin:0 0 4px}.section-head p{margin:0}.glance-card{display:flex;gap:14px;align-items:flex-start}.glance-icon,.event-icon,.highlight-icon{width:46px;height:46px;min-width:46px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary) 12%,#fff 88%);color:var(--primary);font-size:1.1rem}.event-card .event-icon,.highlight-icon{margin-bottom:14px}.clickable-card{display:block;color:inherit}.detail-link{display:inline-flex;align-items:center;gap:8px;margin-top:10px;color:var(--primary);font-weight:800}.clickable-card:hover .detail-link{color:var(--primary-2)}.page-card-img{width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:14px}.connect-card{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}.connect-card h2{margin:0 0 8px}.connect-card p{margin:0}
-.card{border-radius:10px!important}
-@media(max-width:900px){.slides-banner{grid-template-columns:repeat(2,minmax(0,1fr))}.annual-theme{grid-template-columns:1fr}.annual-theme-media img{max-height:300px}.home-hero{grid-template-columns:1fr}}@media(max-width:640px){.slides-banner{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-direction:column}.connect-card{align-items:stretch}.connect-card .btn{width:100%}.annual-theme-copy{padding:22px}}
+body .btn.btn-lg{min-height:52px;padding:12px 24px;font-size:1.02rem}
+.home-hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px;align-items:center;padding:28px 0 18px}
+.hello{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--ink-soft)}
+.hello::before{content:'';width:28px;height:3px;border-radius:3px;background:var(--coral)}
+.hero-copy h1{font-size:clamp(2.6rem,7vw,5rem);line-height:.98;letter-spacing:-.045em;margin:14px 0 18px;font-weight:800}
+.hero-copy>p{font-size:1.15rem;color:var(--ink-soft);max-width:34rem;margin:0}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.proof{display:flex;gap:8px 22px;flex-wrap:wrap;margin:26px 0 0;color:var(--muted);font-weight:600}
+.proof b{font-family:var(--font-display);font-size:1.25rem;color:var(--ink);margin-right:3px}
+
+.collage{position:relative;min-height:420px}
+.sticker{position:absolute;background:#fff;border:1.5px solid var(--ink);border-radius:22px;box-shadow:5px 5px 0 var(--ink)}
+.s-verse{top:6%;left:4%;right:10%;padding:24px;background:var(--primary);color:#fff;transform:rotate(-3deg)}
+.s-verse .tag{display:inline-block;padding:2px 10px;border-radius:6px;background:var(--sun);color:var(--ink);font-weight:800;font-size:.85rem}
+.s-verse p{font-family:var(--font-display);font-size:1.3rem;line-height:1.3;font-weight:600;margin:12px 0 8px;color:#fff}
+.s-verse cite{font-style:normal;font-weight:800;color:var(--sun)}
+.s-event{bottom:12%;right:0;display:flex;align-items:center;gap:12px;padding:12px 18px 12px 12px;transform:rotate(2.5deg);max-width:80%}
+.s-event small{display:block;color:var(--muted);font-weight:700}
+.s-event strong{display:block;font-size:1.02rem;line-height:1.2}
+.s-streak{bottom:2%;left:2%;padding:10px 18px;background:var(--coral);color:#fff;font-weight:800;font-size:1.05rem;transform:rotate(-6deg)}
+.s-badge{top:0;right:2%;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--sun);font-size:1.6rem;color:var(--ink);transform:rotate(12deg)}
+@media(prefers-reduced-motion:no-preference){
+    .sticker{animation:drop .6s cubic-bezier(.22,1.4,.36,1) both}
+    .s-event{animation-delay:.12s}.s-streak{animation-delay:.24s}.s-badge{animation-delay:.36s}
+    @keyframes drop{from{opacity:0;translate:0 -18px}to{opacity:1;translate:0 0}}
+}
+
+.slides-banner{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:34px 0 0}
+.slide-card{overflow:hidden;padding:0}
+.slide-card img{width:100%;height:220px;object-fit:cover;display:block;border-radius:0}
+.slide-body{padding:18px}
+.slide-body h2{margin:0 0 6px;font-size:1.3rem}
+.slide-body p{margin:0 0 14px}
+
+.home-section{margin-top:54px}
+.paths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.path{display:flex;flex-direction:column;gap:6px;padding:26px;border-radius:var(--r-card);border:1.5px solid var(--ink);transition:transform .18s ease,box-shadow .18s ease}
+.path:hover{transform:translate(-3px,-3px);box-shadow:6px 6px 0 var(--ink)}
+.path h3{font-size:1.6rem;margin:10px 0 2px;letter-spacing:-.03em}
+.path p{margin:0 0 12px;color:var(--ink-soft)}
+.path-icon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:#fff;border:1.5px solid var(--ink);font-size:1.25rem;color:var(--ink)}
+.path-go{margin-top:auto;font-weight:800}
+.p-sun{background:var(--sun-soft)}.p-leaf{background:var(--leaf-soft)}.p-coral{background:var(--coral-soft)}
+
+.annual-theme{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);margin-top:54px;border-radius:var(--r-card);overflow:hidden;background:var(--ink);color:#fff}
+.annual-theme:not(:has(.annual-theme-media)){grid-template-columns:1fr}
+.annual-theme-media img{width:100%;height:100%;min-height:260px;object-fit:cover;display:block}
+.annual-theme-copy{padding:clamp(24px,4vw,46px);align-self:center}
+.theme-year{display:inline-block;padding:4px 12px;border-radius:999px;background:var(--sun);color:var(--ink);font-weight:800}
+.annual-theme-copy h2{color:#fff;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.08;letter-spacing:-.03em;margin:16px 0 10px}
+.theme-scripture{font-weight:800;color:var(--sun)}
+.theme-desc{color:rgba(255,255,255,.8);max-width:38rem}
+
+.event-list{display:grid;gap:10px}
+.event-row{display:flex;align-items:center;gap:16px;padding:12px 18px 12px 12px}
+.event-copy{flex:1;min-width:0}
+.event-copy strong,.event-copy small{display:block}
+.event-copy strong{font-size:1.08rem}
+.event-copy small{color:var(--muted);margin-top:2px}
+.event-row>i{color:var(--muted)}
+.story-card{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.story-card h3{margin:8px 0 4px}
+.highlight-icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--sun-soft);color:var(--ink);font-size:1.2rem;margin-bottom:12px}
+.page-card-img{width:100%;height:180px;object-fit:cover;border-radius:14px;margin-bottom:14px}
+
+.join-band{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:clamp(26px,5vw,48px);border-radius:28px;background:var(--sun);border:1.5px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
+.join-band h2{font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:-.035em;margin:0 0 8px}
+.join-band p{margin:0;max-width:36rem;color:var(--ink);font-size:1.05rem}
+body .btn.join-btn{background:var(--ink);border-color:var(--ink);color:#fff}
+body .btn.join-btn:hover{background:#000;color:#fff}
+
+@media(max-width:900px){
+    .home-hero{grid-template-columns:1fr;gap:10px}
+    .collage{min-height:360px;max-width:520px}
+    .paths,.slides-banner{grid-template-columns:1fr}
+    .annual-theme{grid-template-columns:1fr}.annual-theme-media img{max-height:260px;min-height:0}
+}
+@media(max-width:640px){
+    .collage{min-height:330px}
+    .s-verse{left:0;right:4%;padding:18px}.s-verse p{font-size:1.1rem}
+    .hero-actions .btn{flex:1 1 100%}
+    .join-band .btn{width:100%}
+}
 </style>
 @endsection

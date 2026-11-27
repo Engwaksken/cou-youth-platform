@@ -6,12 +6,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\CourseEnrolment;
+use App\Models\Event;
+use App\Models\EventRegistration;
 use App\Models\GuardianConsent;
 use App\Models\LifeGroup;
 use App\Models\LifeGroupMember;
 use App\Models\MediaAsset;
 use App\Models\PlatformNotificationReceipt;
 use App\Models\YouthProfile;
+use App\Services\Engagement\DailyEngagementService;
 use App\Services\Safeguarding\AgeCategoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,96 +29,63 @@ final class YouthPortalController extends Controller
 {
     public function __construct(private readonly AgeCategoryService $ages) {}
 
-    public function dashboard(Request $request): View
+    public function dashboard(Request $request, DailyEngagementService $daily): View
     {
         $user = $request->user();
         $profile = YouthProfile::with('organisationUnit')->where('user_id', $user->id)->first();
-        $search = trim((string) $request->query('q', ''));
-        $period = (string) $request->query('period', 'month');
-        $allowedPeriods = ['today', 'week', 'month', 'year', 'all'];
-        if (! in_array($period, $allowedPeriods, true)) {
-            $period = 'month';
-        }
 
-        $periodBounds = match ($period) {
-            'today' => [now()->startOfDay(), now()->endOfDay()],
-            'week' => [now()->startOfWeek(), now()->endOfWeek()],
-            'month' => [now()->startOfMonth(), now()->endOfMonth()],
-            'year' => [now()->startOfYear(), now()->endOfYear()],
-            default => [null, null],
-        };
-
-        $applyPeriod = static function ($query, string $column = 'created_at') use ($periodBounds) {
-            [$from, $to] = $periodBounds;
-            if ($from && $to) {
-                $query->whereBetween($column, [$from, $to]);
-            }
-
-            return $query;
-        };
-
-        $membershipQuery = LifeGroupMember::query()
+        // "Pick up where you left off": the unfinished course touched most recently.
+        $continueCourse = CourseEnrolment::query()
             ->where('user_id', $user->id)
-            ->where('status', 'active');
-        $applyPeriod($membershipQuery);
-        $memberships = $membershipQuery->count();
-
-        $enrolmentQuery = CourseEnrolment::query()
-            ->where('user_id', $user->id)
+            ->whereNull('completed_at')
+            ->whereHas('course')
             ->with('course')
-            ->when($search !== '', function ($query) use ($search): void {
-                $query->whereHas('course', function ($courseQuery) use ($search): void {
-                    $courseQuery->where(function ($nested) use ($search): void {
-                        $nested->where('title', 'like', '%'.$search.'%')
-                            ->orWhere('description', 'like', '%'.$search.'%');
-                    });
-                });
-            });
-        $applyPeriod($enrolmentQuery);
-        $enrolments = $enrolmentQuery
-            ->latest()
-            ->paginate(6, ['*'], 'learning_page')
-            ->withQueryString();
+            ->orderByDesc('updated_at')
+            ->first();
 
-        $notificationQuery = PlatformNotificationReceipt::query()
+        $enrolledCourseIds = CourseEnrolment::query()->where('user_id', $user->id)->pluck('course_id');
+        $suggestedCourse = $continueCourse === null && Schema::hasTable('courses')
+            ? Course::query()
+                ->when(Schema::hasColumn('courses', 'is_published'), fn ($query) => $query->where('is_published', true))
+                ->whereNotIn('id', $enrolledCourseIds)
+                ->latest()
+                ->first()
+            : null;
+
+        $registeredEventIds = Schema::hasTable('event_registrations')
+            ? EventRegistration::query()->where('user_id', $user->id)->pluck('event_id')->all()
+            : [];
+        $upcomingEvents = Schema::hasTable('events')
+            ? Event::query()
+                ->where('status', 'published')
+                ->where('starts_at', '>=', now()->subHours(3))
+                ->orderBy('starts_at')
+                ->limit(3)
+                ->get()
+            : collect();
+
+        $services = Schema::hasTable('online_services')
+            ? DB::table('online_services')
+                ->where(function ($query): void {
+                    $query->where('status', 'live')
+                        ->orWhere(function ($scheduled): void {
+                            $scheduled->where('status', 'scheduled')
+                                ->whereBetween('starts_at', [now()->subHours(3), now()->addDays(14)]);
+                        });
+                })
+                ->orderByRaw("case when status = 'live' then 0 else 1 end")
+                ->orderBy('starts_at')
+                ->limit(2)
+                ->get()
+            : collect();
+
+        $notifications = PlatformNotificationReceipt::query()
             ->with('notification')
             ->where('user_id', $user->id)
-            ->when($search !== '', function ($query) use ($search): void {
-                $query->whereHas('notification', function ($notificationQuery) use ($search): void {
-                    $notificationQuery->where(function ($nested) use ($search): void {
-                        $nested->where('title', 'like', '%'.$search.'%')
-                            ->orWhere('body', 'like', '%'.$search.'%');
-                    });
-                });
-            });
-        $applyPeriod($notificationQuery);
-        $notifications = $notificationQuery
+            ->whereHas('notification')
             ->latest()
-            ->paginate(6, ['*'], 'updates_page')
-            ->withQueryString();
-
-        if (Schema::hasTable('online_services')) {
-            $serviceQuery = DB::table('online_services')
-                ->whereIn('status', ['scheduled', 'live'])
-                ->when($search !== '', function ($query) use ($search): void {
-                    $query->where(function ($nested) use ($search): void {
-                        $nested->where('title', 'like', '%'.$search.'%')
-                            ->orWhere('speaker', 'like', '%'.$search.'%')
-                            ->orWhere('platform', 'like', '%'.$search.'%');
-                    });
-                });
-            $applyPeriod($serviceQuery, 'starts_at');
-            $upcomingServices = $serviceQuery
-                ->orderBy('starts_at')
-                ->paginate(6, ['*'], 'ministry_page')
-                ->withQueryString();
-        } else {
-            $upcomingServices = new LengthAwarePaginator([], 0, 6, 1, [
-                'path' => $request->url(),
-                'query' => $request->query(),
-                'pageName' => 'ministry_page',
-            ]);
-        }
+            ->limit(4)
+            ->get();
 
         $currentTheme = Schema::hasTable('annual_themes')
             ? DB::table('annual_themes')
@@ -124,68 +94,49 @@ final class YouthPortalController extends Controller
                 ->first()
             : null;
 
-        $courseStats = CourseEnrolment::query()->where('user_id', $user->id);
-        $applyPeriod($courseStats);
-
-        $unreadStats = PlatformNotificationReceipt::query()
-            ->where('user_id', $user->id)
-            ->whereNull('read_at');
-        $applyPeriod($unreadStats);
-
-        $eventStats = Schema::hasTable('event_registrations')
-            ? DB::table('event_registrations')->where('user_id', $user->id)
-            : null;
-        if ($eventStats) {
-            $applyPeriod($eventStats);
-        }
-
-        $certificateStats = Schema::hasTable('course_certificates')
-            ? DB::table('course_certificates')->where('user_id', $user->id)
-            : null;
-        if ($certificateStats) {
-            $applyPeriod($certificateStats);
-        }
-
-        $prayerStats = Schema::hasTable('prayer_requests')
-            ? DB::table('prayer_requests')->where('user_id', $user->id)
-            : null;
-        if ($prayerStats) {
-            $applyPeriod($prayerStats);
-        }
-
-        $mediaStats = Schema::hasTable('media_assets')
-            ? DB::table('media_assets')->where('is_published', true)
-            : null;
-        if ($mediaStats) {
-            $applyPeriod($mediaStats);
-        }
-
-        $serviceStats = Schema::hasTable('online_services')
-            ? DB::table('online_services')->whereIn('status', ['scheduled', 'live'])
-            : null;
-        if ($serviceStats) {
-            $applyPeriod($serviceStats, 'starts_at');
-        }
+        $profileFields = ['date_of_birth', 'organisation_unit_id', 'school_institution', 'interests', 'talents', 'skills', 'ministry_interests'];
+        $filledFields = $profile
+            ? collect($profileFields)->filter(fn (string $field): bool => ! empty($profile->{$field}))->count()
+            : 0;
 
         return view('youth.dashboard', [
             'profile' => $profile,
-            'enrolments' => $enrolments,
+            'profileCompletion' => (int) round($filledFields / count($profileFields) * 100),
+            'continueCourse' => $continueCourse,
+            'suggestedCourse' => $suggestedCourse,
+            'upcomingEvents' => $upcomingEvents,
+            'registeredEventIds' => $registeredEventIds,
+            'services' => $services,
             'notifications' => $notifications,
-            'upcomingServices' => $upcomingServices,
             'currentTheme' => $currentTheme,
-            'search' => $search,
-            'period' => $period,
+            'greeting' => $daily->greeting(),
+            'streak' => $daily->streak($user),
+            'verse' => $daily->verseOfTheDay(),
             'stats' => [
-                'life_groups' => $memberships,
-                'courses' => $courseStats->count(),
-                'unread' => $unreadStats->count(),
-                'prayers' => $prayerStats?->count() ?? 0,
-                'events' => $eventStats?->count() ?? 0,
-                'certificates' => $certificateStats?->count() ?? 0,
-                'media' => $mediaStats?->count() ?? 0,
-                'services' => $serviceStats?->count() ?? 0,
+                'life_groups' => LifeGroupMember::query()->where('user_id', $user->id)->where('status', 'active')->count(),
+                'courses_done' => CourseEnrolment::query()->where('user_id', $user->id)->whereNotNull('completed_at')->count(),
+                'certificates' => Schema::hasTable('course_certificates')
+                    ? DB::table('course_certificates')->where('user_id', $user->id)->count()
+                    : 0,
+                'events' => count($registeredEventIds),
+                'unread' => PlatformNotificationReceipt::query()->where('user_id', $user->id)->whereNull('read_at')->count(),
             ],
         ]);
+    }
+
+    public function checkIn(Request $request, DailyEngagementService $daily): RedirectResponse
+    {
+        $isNew = $daily->checkIn($request->user());
+        $streak = $daily->streak($request->user());
+
+        $message = match (true) {
+            ! $isNew => "You're already checked in for today. See you tomorrow!",
+            $streak['current'] === 1 => 'Checked in. Day one, let’s go!',
+            in_array($streak['current'], [3, 7, 14, 30, 50, 100, 200, 365], true) => "{$streak['current']} days in a row. That's a milestone, well done!",
+            default => "Checked in. That's {$streak['current']} days in a row.",
+        };
+
+        return redirect()->route('youth.dashboard')->with('success', $message);
     }
 
     public function profile(Request $request): View

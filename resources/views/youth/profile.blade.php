@@ -2,33 +2,100 @@
 @section('title', 'My Profile | COU Youth')
 @section('youth_content')
 @php
-    $interestCount = count($profile?->interests ?? []);
-    $talentCount = count($profile?->talents ?? []);
-    $skillCount = count($profile?->skills ?? []);
-    $ministryCount = count($profile?->ministry_interests ?? []);
+    $ageLabels = ['teen' => 'Teens', 'youth' => 'Youth', 'young_adult' => 'Young adults'];
+    $initials = \Illuminate\Support\Str::of(auth()->user()->name)->trim()->explode(' ')->filter()->take(2)
+        ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
 @endphp
-<section class="hero"><span class="section-kicker">MY PROFILE</span><h1>Youth profile</h1><p>Keep your information up to date so your learning, groups and opportunities can be more relevant to you.</p></section>
-<div class="page-stats">
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-heart"></i></span><div><strong>{{ $interestCount }}</strong><span>Interests</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-star"></i></span><div><strong>{{ $talentCount }}</strong><span>Talents</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-screwdriver-wrench"></i></span><div><strong>{{ $skillCount }}</strong><span>Skills</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-church"></i></span><div><strong>{{ $ministryCount }}</strong><span>Ministry interests</span></div></div>
-</div>
-@if($errors->any())<div class="form-errors" role="alert"><strong>Please correct the following:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
-<form class="card profile-form" method="POST" action="{{ route('youth.profile.update') }}">
-@csrf @method('PUT')
-<div class="form-grid">
-<label>Date of birth<input type="date" name="date_of_birth" value="{{ old('date_of_birth', optional($profile?->date_of_birth)->format('Y-m-d')) }}" required></label>
-<label>Age category<select name="age_category" required><option value="">Select category</option>@foreach(['teen'=>'Teen','youth'=>'Youth','young_adult'=>'Young adult'] as $value=>$label)<option value="{{ $value }}" @selected(old('age_category',$profile?->age_category)===$value)>{{ $label }}</option>@endforeach</select></label>
-<label>Church / organisation unit<select name="organisation_unit_id"><option value="">Select church / unit</option>@foreach($units as $unit)<option value="{{ $unit->id }}" @selected((string)old('organisation_unit_id',$profile?->organisation_unit_id)===(string)$unit->id)>{{ $unit->name }}</option>@endforeach</select></label>
-<label>School / institution<input type="text" name="school_institution" maxlength="190" value="{{ old('school_institution',$profile?->school_institution) }}" placeholder="School, university, workplace or institution"></label>
-<label class="span-2">Interests<input type="text" name="interests" value="{{ old('interests', implode(', ', $profile?->interests ?? [])) }}" placeholder="Music, entrepreneurship, technology, sports"></label>
-<label class="span-2">Talents<input type="text" name="talents" value="{{ old('talents', implode(', ', $profile?->talents ?? [])) }}" placeholder="Singing, leadership, public speaking"></label>
-<label class="span-2">Skills<input type="text" name="skills" value="{{ old('skills', implode(', ', $profile?->skills ?? [])) }}" placeholder="Coding, design, photography, farming"></label>
-<label class="span-2">Ministry interests<input type="text" name="ministry_interests" value="{{ old('ministry_interests', implode(', ', $profile?->ministry_interests ?? [])) }}" placeholder="Worship, outreach, children, media"></label>
-</div>
-<label class="privacy-option"><input type="checkbox" name="profile_public" value="1" @checked(old('profile_public',$profile?->profile_public))><span><strong>Allow my profile to be visible in approved youth community features</strong><small>Your account and sensitive information remain protected.</small></span></label>
-<div class="form-actions"><a class="btn" href="{{ route('youth.dashboard') }}">Back to dashboard</a><button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i> Save profile</button></div>
+<section class="profile-hero">
+    <span class="big-avatar" aria-hidden="true">{{ $initials ?: '🙂' }}</span>
+    <div>
+        <h1>All about <span class="scribble">you</span></h1>
+        <p>{{ auth()->user()->name }}@if($profile?->age_category) · {{ $ageLabels[$profile->age_category] ?? ucfirst(str_replace('_', ' ', $profile->age_category)) }}@endif @if($profile?->organisationUnit) · {{ $profile->organisationUnit->name }}@endif</p>
+    </div>
+</section>
+
+@if($errors->any())
+    <div class="form-errors" role="alert"><strong>A couple of things to fix:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+@endif
+
+<form class="profile-form" method="POST" action="{{ route('youth.profile.update') }}">
+    @csrf @method('PUT')
+
+    <section class="card form-block">
+        <h2>The basics</h2>
+        <div class="form-grid">
+            <label>Birthday
+                <input type="date" name="date_of_birth" value="{{ old('date_of_birth', optional($profile?->date_of_birth)->format('Y-m-d')) }}" required>
+                <small>We use this to show you the right age group. It's never shown publicly.</small>
+            </label>
+            <label>Your church
+                <select name="organisation_unit_id">
+                    <option value="">Choose your church</option>
+                    @foreach($units as $unit)<option value="{{ $unit->id }}" @selected((string) old('organisation_unit_id', $profile?->organisation_unit_id) === (string) $unit->id)>{{ $unit->name }}</option>@endforeach
+                </select>
+            </label>
+            <label class="span-2">School, college or work
+                <input type="text" name="school_institution" maxlength="190" value="{{ old('school_institution', $profile?->school_institution) }}" placeholder="e.g. Makerere University, Gayaza High School, or where you work">
+            </label>
+        </div>
+    </section>
+
+    <section class="card form-block">
+        <h2>What you're into</h2>
+        <p class="muted">Separate things with commas. This helps us point you to the right groups, courses and ways to serve.</p>
+        <div class="form-grid">
+            <label class="span-2">Things you love
+                <input type="text" name="interests" value="{{ old('interests', implode(', ', $profile?->interests ?? [])) }}" placeholder="Music, football, tech, fashion, business">
+            </label>
+            <label>Gifts &amp; talents
+                <input type="text" name="talents" value="{{ old('talents', implode(', ', $profile?->talents ?? [])) }}" placeholder="Singing, drumming, speaking">
+            </label>
+            <label>Skills
+                <input type="text" name="skills" value="{{ old('skills', implode(', ', $profile?->skills ?? [])) }}" placeholder="Design, coding, photography">
+            </label>
+            <label class="span-2">Where you'd like to serve
+                <input type="text" name="ministry_interests" value="{{ old('ministry_interests', implode(', ', $profile?->ministry_interests ?? [])) }}" placeholder="Worship team, outreach, Sunday school, media">
+            </label>
+        </div>
+    </section>
+
+    <label class="card privacy-option">
+        <input class="switch" type="checkbox" name="profile_public" value="1" @checked(old('profile_public', $profile?->profile_public))>
+        <span><strong>Let other members see my profile</strong><small>Only in approved community spaces. Your birthday, email and phone always stay private.</small></span>
+    </label>
+
+    <div class="form-actions">
+        <a class="btn btn-ghost" href="{{ route('youth.dashboard') }}">Cancel</a>
+        <button class="btn btn-primary" type="submit"><i class="fas fa-check"></i> Save changes</button>
+    </div>
 </form>
-<style>.profile-form{max-width:56.25rem;margin:auto}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.form-grid label{font-size:.84rem;font-weight:800;color:#344054}.form-grid input,.form-grid select{width:100%;margin-top:6px;border:1px solid #d0d5dd;border-radius:10px;padding:12px;background:#fff;color:var(--text)}.span-2{grid-column:span 2}.privacy-option{display:flex;gap:12px;align-items:flex-start;margin:20px 0;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}.privacy-option input{margin-top:5px}.privacy-option strong,.privacy-option small{display:block}.privacy-option small{color:var(--muted);margin-top:3px}.form-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}.form-errors{max-width:56.25rem;margin:0 auto 18px;padding:14px 16px;border:1px solid #f5b7b1;background:#fff1f0;color:#8a1c16;border-radius:10px}.form-errors ul{margin-bottom:0}@media(max-width:700px){.form-grid{grid-template-columns:1fr}.span-2{grid-column:auto}}</style>
+
+<style>
+.profile-hero{display:flex;align-items:center;gap:20px;margin:6px 0 26px}
+.big-avatar{width:84px;height:84px;flex:0 0 84px;border-radius:28px;display:grid;place-items:center;background:var(--sun);border:1.5px solid var(--ink);font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--ink);transform:rotate(-5deg);box-shadow:4px 4px 0 var(--ink)}
+.profile-hero h1{font-size:clamp(2rem,5vw,3rem);margin:0 0 4px;letter-spacing:-.035em;line-height:1.05}
+.profile-hero p{margin:0;color:var(--ink-soft);font-weight:600}
+.profile-form{max-width:52rem;display:grid;gap:18px}
+.form-block{padding:22px}
+.form-block h2{font-size:1.25rem;margin:0 0 4px}
+.form-block>p{margin:0 0 14px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+.form-grid label{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var(--ink)}
+.form-grid small{font-weight:500;color:var(--muted)}
+.form-grid input,.form-grid select{border:1.5px solid var(--line);border-radius:12px!important;background:#fff;color:var(--ink);padding-inline:12px}
+.form-grid input:focus,.form-grid select:focus{border-color:var(--ink);box-shadow:0 0 0 4px var(--sun-soft);outline:none}
+.span-2{grid-column:span 2}
+.privacy-option{display:flex;gap:14px;align-items:center;padding:18px 20px;cursor:pointer}
+.privacy-option strong,.privacy-option small{display:block}
+.privacy-option small{color:var(--muted);margin-top:2px}
+.switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:52px!important;height:30px!important;min-height:0!important;margin:0;padding:0!important;border-radius:999px;border:1.5px solid var(--ink);background:var(--paper-2);position:relative;cursor:pointer;transition:background .2s ease}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;border:1.5px solid var(--ink);transition:transform .2s cubic-bezier(.22,1,.36,1)}
+.switch:checked{background:var(--leaf)}
+.switch:checked::after{transform:translateX(22px)}
+.switch:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.form-actions{display:flex;justify-content:flex-end;gap:10px}
+.form-errors{max-width:52rem;margin:0 0 18px;padding:14px 18px;border:1.5px solid var(--coral);background:var(--coral-soft);color:var(--ink);border-radius:16px}
+.form-errors ul{margin:6px 0 0}
+@media(max-width:700px){.form-grid{grid-template-columns:1fr}.span-2{grid-column:auto}.profile-hero{gap:14px}.big-avatar{width:64px;height:64px;flex-basis:64px;font-size:1.5rem;border-radius:20px}.form-actions .btn{flex:1}}
+</style>
 @endsection

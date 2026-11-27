@@ -1,31 +1,68 @@
 @extends('youth.layout')
-@section('title', 'Notification Preferences | COU Youth')
+@section('title', 'Settings | COU Youth')
 @section('youth_content')
-@php
-    $enabledChannels = collect(['in_app','push','email'])->filter(fn($field) => (bool) $preferences->{$field})->count();
-    $enabledTopics = collect(['events','discipleship','opportunities','donations','life_groups'])->filter(fn($field) => (bool) $preferences->{$field})->count();
-@endphp
-<section class="hero"><span class="section-kicker">PREFERENCES</span><h1>Notification preferences</h1><p>Choose how you want to receive updates and the topics you want to hear about.</p></section>
-<div class="page-stats">
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-tower-broadcast"></i></span><div><strong>{{ $enabledChannels }}</strong><span>Enabled channels</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-list-check"></i></span><div><strong>{{ $enabledTopics }}</strong><span>Enabled topics</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-mobile-screen"></i></span><div><strong>{{ $preferences->push ? 'On' : 'Off' }}</strong><span>Push notifications</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-envelope"></i></span><div><strong>{{ $preferences->email ? 'On' : 'Off' }}</strong><span>Email notifications</span></div></div>
-</div>
-<section class="card preference-card">
-<form method="POST" action="{{ route('youth.notification-preferences.update') }}">@csrf @method('PUT')
-<div class="preference-group"><span class="section-kicker">CHANNELS</span><h2>Delivery channels</h2><div class="preference-grid">
-@foreach(['in_app'=>'In-app notifications','push'=>'Push notifications','email'=>'Email notifications'] as $field=>$label)
-<label class="preference-option"><span><strong>{{ $label }}</strong><small>{{ $field==='in_app' ? 'See alerts inside your COU Youth account.' : ($field==='push' ? 'Receive device notifications when supported.' : 'Receive updates at your account email address.') }}</small></span><input type="checkbox" name="{{ $field }}" value="1" @checked($preferences->{$field})></label>
-@endforeach
-</div></div>
-<div class="preference-group"><span class="section-kicker">TOPICS</span><h2>Topics</h2><div class="preference-grid">
-@foreach(['events'=>'Events','discipleship'=>'Discipleship & learning','opportunities'=>'Youth opportunities','donations'=>'Giving & donations','life_groups'=>'Life Groups'] as $field=>$label)
-<label class="preference-option"><span><strong>{{ $label }}</strong><small>Receive relevant {{ strtolower($label) }} updates.</small></span><input type="checkbox" name="{{ $field }}" value="1" @checked($preferences->{$field})></label>
-@endforeach
-</div></div>
-<div class="form-actions"><a class="btn" href="{{ route('youth.notifications') }}">Back to notifications</a><button class="btn btn-primary" type="submit">Save preferences</button></div>
-</form>
+<section class="hero">
+    <h1>How should we <span class="scribble">reach you?</span></h1>
+    <p>Choose what you hear about and where. You can change this any time.</p>
 </section>
-<style>.preference-card{max-width:56.25rem;margin:0 auto;padding:24px}.preference-group+ .preference-group{margin-top:28px}.preference-group h2{margin:3px 0 14px}.preference-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.preference-option{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid var(--border);border-radius:10px;padding:14px;background:#fff;cursor:pointer}.preference-option strong,.preference-option small{display:block}.preference-option small{color:var(--muted);font-size:.8rem;margin-top:3px}.preference-option input{width:20px;height:20px;accent-color:var(--primary)}.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}@media(max-width:650px){.preference-grid{grid-template-columns:1fr}.form-actions{flex-direction:column}.form-actions .btn{width:100%}}</style>
+
+<form class="pref-form" method="POST" action="{{ route('youth.notification-preferences.update') }}">
+    @csrf @method('PUT')
+
+    <section class="card pref-group">
+        <h2>Where</h2>
+        @foreach([
+            'in_app' => ['In the app', 'Updates show up in your feed here.', 'fa-bell'],
+            'push' => ['Phone notifications', 'A ping on your phone, if your browser allows it.', 'fa-mobile-screen'],
+            'email' => ['Email', 'Sent to the email address on your account.', 'fa-envelope'],
+        ] as $field => [$label, $help, $icon])
+            <label class="toggle-row">
+                <span class="toggle-icon" aria-hidden="true"><i class="fas {{ $icon }}"></i></span>
+                <span class="toggle-copy"><strong>{{ $label }}</strong><small>{{ $help }}</small></span>
+                <input class="switch" type="checkbox" name="{{ $field }}" value="1" @checked($preferences->{$field})>
+            </label>
+        @endforeach
+    </section>
+
+    <section class="card pref-group">
+        <h2>What</h2>
+        @foreach([
+            'events' => ['Events', 'New events, reminders and changes.', 'fa-ticket'],
+            'discipleship' => ['Courses & Bible study', 'New courses and nudges to keep going.', 'fa-book-open'],
+            'opportunities' => ['Opportunities', 'Ways to serve, lead and get involved.', 'fa-lightbulb'],
+            'life_groups' => ['Life groups', 'News from the groups you belong to.', 'fa-people-group'],
+            'donations' => ['Giving', 'Receipts and updates on what your giving supports.', 'fa-hand-holding-heart'],
+        ] as $field => [$label, $help, $icon])
+            <label class="toggle-row">
+                <span class="toggle-icon" aria-hidden="true"><i class="fas {{ $icon }}"></i></span>
+                <span class="toggle-copy"><strong>{{ $label }}</strong><small>{{ $help }}</small></span>
+                <input class="switch" type="checkbox" name="{{ $field }}" value="1" @checked($preferences->{$field})>
+            </label>
+        @endforeach
+    </section>
+
+    <div class="form-actions">
+        <a class="btn btn-ghost" href="{{ route('youth.notifications') }}">Cancel</a>
+        <button class="btn btn-primary" type="submit"><i class="fas fa-check"></i> Save</button>
+    </div>
+</form>
+
+<style>
+.pref-form{max-width:46rem;display:grid;gap:18px}
+.pref-group{padding:8px 20px}
+.pref-group h2{font-size:1.2rem;margin:14px 0 4px}
+.toggle-row{display:flex;align-items:center;gap:14px;padding:14px 0;cursor:pointer}
+.toggle-row+.toggle-row{border-top:1px solid var(--line)}
+.toggle-icon{width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:grid;place-items:center;background:var(--paper-2);color:var(--primary)}
+.toggle-copy{flex:1;min-width:0}
+.toggle-copy strong,.toggle-copy small{display:block}
+.toggle-copy small{color:var(--muted);margin-top:2px}
+.switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:52px!important;height:30px!important;min-height:0!important;margin:0;padding:0!important;border-radius:999px;border:1.5px solid var(--ink);background:var(--paper-2);position:relative;cursor:pointer;transition:background .2s ease}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;border:1.5px solid var(--ink);transition:transform .2s cubic-bezier(.22,1,.36,1)}
+.switch:checked{background:var(--leaf)}
+.switch:checked::after{transform:translateX(22px)}
+.switch:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.form-actions{display:flex;justify-content:flex-end;gap:10px}
+@media(max-width:560px){.form-actions .btn{flex:1}}
+</style>
 @endsection

@@ -20,7 +20,7 @@
 
 <section class="hero">
 <span class="section-kicker">BELONG & GROW</span>
-<h1>Life Groups</h1>
+<h1>Life Groups: find your <span class="scribble">people</span></h1>
 <p>Find a youth fellowship or small group where you can build friendships, study Scripture, pray together and serve your community.</p>
 </section>
 

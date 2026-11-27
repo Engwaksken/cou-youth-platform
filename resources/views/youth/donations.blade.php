@@ -1,22 +1,25 @@
 @extends('youth.layout')
 @section('title', 'Donations & Contributions | COU Youth')
 @section('youth_content')
-<section class="hero"><span class="section-kicker">GIVING</span><h1>Donations & Contributions</h1><p>Support youth ministry securely from your account and review your personal giving history in one place.</p></section>
+<section class="hero"><h1><span class="scribble">Give</span></h1><p>Your giving funds camps, Bible studies, mentorship and outreach for young people across Uganda. Every shilling goes further than you think.</p></section>
 
 @if($errors->any())
 <div class="form-errors" role="alert"><strong>Please correct the following:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
 @endif
 
-<div class="page-stats">
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-hand-holding-heart"></i></span><div><strong>UGX {{ number_format($stats['successful_ugx'],0) }}</strong><span>Successful giving</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-receipt"></i></span><div><strong>{{ $stats['donation_count'] }}</strong><span>Donation records</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-clock"></i></span><div><strong>{{ $stats['pending'] }}</strong><span>Pending payments</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-coins"></i></span><div><strong>{{ $stats['other_contributions'] }}</strong><span>Other contributions</span></div></div>
-</div>
+<p class="giving-summary">
+    @if($stats['successful_ugx'] > 0)
+        <span aria-hidden="true">💛</span> You've given <strong>UGX {{ number_format($stats['successful_ugx'], 0) }}</strong> so far. Thank you.
+    @else
+        <span aria-hidden="true">💛</span> Big or small, every gift helps a young person grow.
+    @endif
+    @if($stats['pending'] > 0)<span class="chip"><i class="fas fa-clock"></i> {{ $stats['pending'] }} waiting for payment</span>@endif
+</p>
+<style>.giving-summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-10px 0 22px;font-size:1.02rem;color:var(--ink-soft)}.giving-summary strong{color:var(--ink)}</style>
 
 <div class="giving-grid">
     <section class="card giving-form-card">
-        <div class="section-head"><div><span class="section-kicker">MAKE A DONATION</span><h2>Give to youth ministry</h2><p class="muted">Choose a campaign and available payment method. Mobile Money payments will send a prompt to your phone.</p></div></div>
+        <div class="section-head"><div><h2>Make a gift</h2><p class="muted">Choose a campaign and available payment method. Mobile Money payments will send a prompt to your phone.</p></div></div>
         @if($gateways->isEmpty())
             <div class="empty-note"><i class="fas fa-circle-info"></i><span>No payment method is currently enabled. Please check again later.</span></div>
         @else

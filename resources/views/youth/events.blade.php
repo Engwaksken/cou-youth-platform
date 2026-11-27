@@ -1,43 +1,94 @@
 @extends('youth.layout')
 @section('title', 'My Events | COU Youth')
 @section('youth_content')
-@php
-    $pageRegistrations = collect($registrations->items());
-    $attendedOnPage = $pageRegistrations->filter(fn($item) => ($item->attendance_status ?? null) === 'attended')->count();
-    $pendingOnPage = $pageRegistrations->filter(fn($item) => in_array(($item->attendance_status ?? 'pending'), ['pending','not_marked'], true))->count();
-@endphp
-<section class="hero"><span class="section-kicker">EVENTS</span><h1>My events</h1><p>Track your registrations, attendance and upcoming Church of Uganda youth events.</p></section>
-<div class="page-stats">
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-ticket"></i></span><div><strong>{{ $registrations->total() }}</strong><span>Total registrations</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-calendar-plus"></i></span><div><strong>{{ $upcomingEvents->count() }}</strong><span>Upcoming opportunities</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-user-check"></i></span><div><strong>{{ $attendedOnPage }}</strong><span>Attended on this page</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-hourglass-half"></i></span><div><strong>{{ $pendingOnPage }}</strong><span>Pending attendance</span></div></div>
-</div>
-<section class="activity-section">
-<div class="section-head"><div><span class="section-kicker">REGISTERED</span><h2>Your event registrations</h2></div><a class="btn" href="{{ route('public.events') }}">Browse all events</a></div>
-<div class="event-grid">
-@forelse($registrations as $registration)
-@php($event=$registration->event)
-<article class="card event-card">
-<div class="event-icon"><i class="fas fa-calendar-check"></i></div>
-<h3>{{ $event?->title ?? 'Event unavailable' }}</h3>
-@if($event?->starts_at)<p class="event-meta"><i class="fas fa-clock"></i> {{ $event->starts_at->format('D, d M Y · H:i') }}</p>@endif
-@if($event?->venue)<p class="event-meta"><i class="fas fa-location-dot"></i> {{ $event->venue }}</p>@endif
-<div class="status-row"><span class="badge">{{ ucfirst($registration->status ?? 'registered') }}</span><span class="badge">Attendance: {{ ucfirst(str_replace('_',' ',$registration->attendance_status ?? 'pending')) }}</span></div>
-@if($event)<a class="btn" href="{{ route('public.events.show',$event) }}">View event</a>@endif
-</article>
-@empty
-<div class="card empty-card"><h3>No event registrations yet</h3><p class="muted">Browse upcoming events and register for the ones you want to attend.</p><a class="btn btn-primary" href="{{ route('public.events') }}">Explore events</a></div>
-@endforelse
-</div>
-<div class="pagination">{{ $registrations->links() }}</div>
+<section class="hero">
+    <h1>My <span class="scribble">events</span></h1>
+    <p>Worship nights, camps, conferences and get-togethers. Everything you've signed up for, plus what's coming next.</p>
 </section>
+
 @if($upcomingEvents->isNotEmpty())
-<section class="activity-section"><div class="section-head"><div><span class="section-kicker">UPCOMING</span><h2>Events you can join</h2></div></div><div class="event-grid">
-@foreach($upcomingEvents as $event)
-<article class="card event-card"><div class="event-icon"><i class="fas fa-calendar-days"></i></div><h3>{{ $event->title }}</h3><p class="event-meta"><i class="fas fa-clock"></i> {{ $event->starts_at?->format('D, d M Y · H:i') }}</p>@if($event->venue)<p class="event-meta"><i class="fas fa-location-dot"></i> {{ $event->venue }}</p>@endif @if($event->registration_required)<form method="POST" action="{{ route('youth.events.register',$event) }}">@csrf<button class="btn btn-primary" type="submit">Register</button></form>@else<a class="btn" href="{{ route('public.events.show',$event) }}">View event</a>@endif</article>
-@endforeach
-</div></section>
+<section class="activity-section">
+    <div class="section-head"><div><h2>Coming up near you</h2><p class="muted">Grab a spot, and bring a friend along.</p></div><a class="btn" href="{{ route('public.events') }}">See every event</a></div>
+    <div class="event-list">
+        @foreach($upcomingEvents as $event)
+            <article class="card event-row">
+                <span class="date-tile"><b>{{ $event->starts_at?->format('j') }}</b><small>{{ $event->starts_at?->format('M') }}</small></span>
+                <div class="event-copy">
+                    <h3><a href="{{ route('public.events.show', $event) }}">{{ $event->title }}</a></h3>
+                    <p>{{ $event->starts_at?->format('l · g:i A') }}@if($event->venue) · {{ $event->venue }}@endif</p>
+                </div>
+                @if($event->registration_required)
+                    <form method="POST" action="{{ route('youth.events.register', $event) }}">@csrf<button class="btn btn-primary" type="submit"><i class="fas fa-plus"></i> Count me in</button></form>
+                @else
+                    <a class="btn" href="{{ route('public.events.show', $event) }}">Details</a>
+                @endif
+            </article>
+        @endforeach
+    </div>
+</section>
 @endif
-<style>.activity-section{margin-bottom:34px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:15px}.section-head h2{margin:2px 0 0}.event-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.event-card{display:flex;flex-direction:column;gap:10px}.event-card h3{margin:0}.event-icon{width:46px;height:46px;border-radius:10px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center}.event-meta{margin:0;color:var(--muted);font-size:.88rem}.status-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto}.empty-card{grid-column:1/-1;text-align:center;padding:30px}@media(max-width:900px){.event-grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.event-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-direction:column}}</style>
+
+<section class="activity-section">
+    <div class="section-head"><h2>You signed up for</h2></div>
+    <div class="ticket-grid">
+        @forelse($registrations as $registration)
+            @php($event = $registration->event)
+            @php($attendance = $registration->attendance_status ?? 'pending')
+            <article class="ticket {{ $event?->starts_at?->isPast() ? 'is-past' : '' }}">
+                <div class="ticket-main">
+                    <span class="ticket-when">{{ $event?->starts_at?->format('D j M · g:i A') ?? 'Date to be confirmed' }}</span>
+                    <h3>{{ $event?->title ?? 'Event no longer listed' }}</h3>
+                    @if($event?->venue)<p><i class="fas fa-location-dot"></i> {{ $event->venue }}</p>@endif
+                </div>
+                <div class="ticket-stub">
+                    @if($attendance === 'attended')
+                        <span class="badge badge-good"><i class="fas fa-check"></i> You were there</span>
+                    @elseif($event?->starts_at?->isFuture())
+                        <span class="badge badge-sun">{{ ucfirst($registration->status ?? 'registered') }}</span>
+                    @else
+                        <span class="badge">{{ ucfirst(str_replace('_', ' ', $attendance)) }}</span>
+                    @endif
+                    @if($event)<a class="btn btn-ghost" href="{{ route('public.events.show', $event) }}">Details <i class="fas fa-arrow-right"></i></a>@endif
+                </div>
+            </article>
+        @empty
+            <div class="card empty-card">
+                <span class="empty-emoji" aria-hidden="true">🎟️</span>
+                <h3>No tickets yet</h3>
+                <p class="muted">When you sign up for something it'll show up here, so you never forget where to be.</p>
+                <a class="btn btn-primary" href="{{ route('public.events') }}">Find an event</a>
+            </div>
+        @endforelse
+    </div>
+    <div class="pagination">{{ $registrations->links() }}</div>
+</section>
+
+<style>
+.activity-section{margin-bottom:38px}
+.event-list{display:grid;gap:10px}
+.event-row{display:flex;align-items:center;gap:16px;padding:12px 16px 12px 12px}
+.event-copy{flex:1;min-width:0}
+.event-copy h3{margin:0 0 2px;font-size:1.1rem}
+.event-copy h3 a:hover{color:var(--primary)}
+.event-copy p{margin:0;color:var(--muted)}
+.event-row form{margin:0}
+.ticket-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.ticket{display:grid;grid-template-columns:minmax(0,1fr) auto;background:#fff;border:1.5px solid var(--ink);border-radius:var(--r-card);overflow:hidden;position:relative}
+.ticket::before,.ticket::after{content:'';position:absolute;right:calc(var(--stub-w,150px) - 11px);width:22px;height:22px;border-radius:50%;background:var(--paper);border:1.5px solid var(--ink)}
+.ticket::before{top:-12px}.ticket::after{bottom:-12px}
+.ticket-main{padding:18px 20px}
+.ticket-when{font-size:.82rem;font-weight:800;color:var(--primary)}
+.ticket-main h3{margin:4px 0 6px}
+.ticket-main p{margin:0;color:var(--muted);font-size:.9rem}
+.ticket-stub{width:var(--stub-w,150px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px;border-left:2px dashed color-mix(in srgb,var(--ink) 30%,transparent);background:var(--sun-soft);text-align:center}
+.ticket.is-past .ticket-stub{background:var(--paper-2)}
+.ticket.is-past{opacity:.85}
+.empty-card{grid-column:1/-1}
+@media(max-width:900px){.ticket-grid{grid-template-columns:1fr}}
+@media(max-width:560px){
+    .event-row{flex-wrap:wrap}.event-row form,.event-row>.btn{width:100%}.event-row form .btn{width:100%}
+    .ticket{grid-template-columns:1fr}.ticket::before,.ticket::after{display:none}
+    .ticket-stub{width:auto;flex-direction:row;justify-content:space-between;border-left:0;border-top:2px dashed color-mix(in srgb,var(--ink) 30%,transparent)}
+}
+</style>
 @endsection

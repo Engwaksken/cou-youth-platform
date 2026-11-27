@@ -55,7 +55,7 @@
             Church of Uganda
         </span>
 
-        <h1>Church Locator</h1>
+        <h1>Find a church <span class="scribble">near you</span></h1>
 
         <p>
             Looking for a church? Find one near you, see how to get in touch and when the youth fellowship meets.
