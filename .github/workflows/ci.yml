@@ -53,8 +53,9 @@ jobs:
       - name: Clear cached configuration
         run: php artisan optimize:clear
 
+      # MySQL-only tests run in the RBAC MySQL workflow against a real server.
       - name: Run Laravel tests
-        run: php artisan test
+        run: php artisan test --exclude-group mysql
 
       - name: Install frontend dependencies
         run: npm install --no-audit --no-fund

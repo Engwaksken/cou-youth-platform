@@ -27,8 +27,8 @@ final class ChurchLocationController extends Controller
         if ($request->filled('q')) {
             $search = trim((string) $request->q);
             $query->where(function ($builder) use ($search): void {
-                $builder->where('name', 'like', "%{$search}%")
-                    ->orWhere('address', 'like', "%{$search}%")
+                // The church's name lives on its organisation unit; church_locations has no name column.
+                $builder->where('address', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('organisationUnit', fn ($unit) => $unit->where('name', 'like', "%{$search}%"));

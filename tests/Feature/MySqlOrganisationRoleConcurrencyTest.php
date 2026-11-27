@@ -12,13 +12,18 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
 
 /**
  * Destructive-schema-safe MySQL integration checks. Run only against a throwaway
  * database explicitly named by ROLE_MYSQL_TEST_DATABASE. Opt-in/CI also requires
  * ROLE_MYSQL_TEST_HOST and ROLE_MYSQL_TEST_SERVER_HOST/PORT as independent identity pins.
+ *
+ * Grouped as "mysql" so the SQLite CI job can exclude it; the RBAC MySQL
+ * workflow runs it against a real server.
  */
+#[Group('mysql')]
 class MySqlOrganisationRoleConcurrencyTest extends TestCase
 {
     /** @var array<string, mixed> */

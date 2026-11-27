@@ -146,8 +146,8 @@ final class PublicSiteController extends Controller
         $query = ChurchLocation::query()->with('organisationUnit');
         if ($request->filled('q')) {
             $search = trim((string) $request->query('q'));
-            $query->where(fn ($q) => $q->where('name', 'like', "%{$search}%")
-                ->orWhere('address', 'like', "%{$search}%")
+            // The church's name lives on its organisation unit; church_locations has no name column.
+            $query->where(fn ($q) => $q->where('address', 'like', "%{$search}%")
                 ->orWhereHas('organisationUnit', fn ($unit) => $unit->where('name', 'like', "%{$search}%")));
         }
 

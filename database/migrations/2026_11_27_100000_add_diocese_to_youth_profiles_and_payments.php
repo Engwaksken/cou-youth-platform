@@ -24,7 +24,8 @@ return new class extends Migration
             });
         }
 
-        $this->seedDioceses();
+        // Same idempotent seeding the tests and future installs use.
+        ChurchOfUgandaDioceses::seed();
         $this->backfill();
     }
 
@@ -41,50 +42,6 @@ return new class extends Migration
         }
 
         // Seeded dioceses are left in place: other records may now point at them.
-    }
-
-    private function seedDioceses(): void
-    {
-        $now = now();
-
-        $provinceId = DB::table('organisation_units')->where('type', 'province')->orderBy('id')->value('id')
-            ?? DB::table('organisation_units')->insertGetId([
-                'type' => 'province',
-                'name' => 'Province of the Church of Uganda',
-                'code' => DB::table('organisation_units')->where('code', ChurchOfUgandaDioceses::PROVINCE_CODE)->exists()
-                    ? null
-                    : ChurchOfUgandaDioceses::PROVINCE_CODE,
-                'is_active' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-        $existing = DB::table('organisation_units')
-            ->where('type', 'diocese')
-            ->pluck('name')
-            ->map(fn ($name) => mb_strtolower(trim((string) $name)))
-            ->all();
-
-        foreach (ChurchOfUgandaDioceses::NAMES as $name) {
-            $label = ChurchOfUgandaDioceses::label($name);
-            $code = ChurchOfUgandaDioceses::code($name);
-
-            if (in_array(mb_strtolower($label), $existing, true)
-                || in_array(mb_strtolower($name), $existing, true)
-                || DB::table('organisation_units')->where('code', $code)->exists()) {
-                continue;
-            }
-
-            DB::table('organisation_units')->insert([
-                'parent_id' => $provinceId,
-                'type' => 'diocese',
-                'name' => $label,
-                'code' => $code,
-                'is_active' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-        }
     }
 
     /** Fill in dioceses we can already work out from a youth's church unit. */

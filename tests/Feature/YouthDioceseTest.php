@@ -53,8 +53,11 @@ class YouthDioceseTest extends TestCase
         ]);
     }
 
-    public function test_church_of_uganda_dioceses_are_seeded(): void
+    public function test_diocese_seeding_creates_every_diocese_once(): void
     {
+        ChurchOfUgandaDioceses::seed();
+        ChurchOfUgandaDioceses::seed();
+
         $this->assertSame(
             count(ChurchOfUgandaDioceses::NAMES),
             OrganisationUnit::query()->where('type', 'diocese')->count(),
@@ -64,6 +67,8 @@ class YouthDioceseTest extends TestCase
 
     public function test_registration_page_lists_dioceses(): void
     {
+        $this->dioceseId();
+
         $this->get('/signup')->assertOk()->assertSee('Church of Uganda diocese')->assertSee('Namirembe Diocese');
     }
 

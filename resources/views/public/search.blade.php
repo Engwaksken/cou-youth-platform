@@ -79,9 +79,10 @@
                         </a>
                         @break
                     @case('churches')
-                        <a class="result" href="{{ route('public.churches', ['q' => $item->name]) }}">
+                        @php($churchName = $item->organisationUnit?->name ?? 'Church')
+                        <a class="result" href="{{ route('public.churches', ['q' => $churchName]) }}">
                             <span class="result-icon"><i class="fas fa-church"></i></span>
-                            <span class="result-copy"><strong>{{ $item->name }}</strong><small>{{ $item->address ?: ($item->organisationUnit?->name ?? '') }}</small></span>
+                            <span class="result-copy"><strong>{{ $churchName }}</strong><small>{{ $item->address ?: '' }}</small></span>
                         </a>
                         @break
                 @endswitch

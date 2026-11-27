@@ -9,6 +9,7 @@ use App\Models\Content;
 use App\Models\Course;
 use App\Models\Event;
 use App\Models\LifeGroup;
+use App\Models\OrganisationUnit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -68,12 +69,15 @@ final class SearchController extends Controller
                 ),
                 'churches' => $this->group(
                     'church_locations',
+                    // A church location's name lives on its organisation unit;
+                    // church_locations has no name column of its own.
                     fn () => ChurchLocation::query()
                         ->with('organisationUnit')
-                        ->where(fn (Builder $q) => $q->where('name', 'like', $like)
-                            ->orWhere('address', 'like', $like)
+                        ->where(fn (Builder $q) => $q->where('address', 'like', $like)
                             ->orWhereHas('organisationUnit', fn (Builder $unit) => $unit->where('name', 'like', $like)))
-                        ->orderBy('name'),
+                        ->orderBy(OrganisationUnit::query()
+                            ->select('name')
+                            ->whereColumn('organisation_units.id', 'church_locations.organisation_unit_id')),
                 ),
             ], fn (?array $group): bool => $group !== null && $group['total'] > 0);
         }
