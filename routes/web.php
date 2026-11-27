@@ -46,6 +46,7 @@ Route::get('/life-groups', [PublicSiteController::class, 'lifeGroups'])->name('p
 Route::get('/churches', [PublicSiteController::class, 'churches'])->name('public.churches');
 Route::get('/donate', [PublicSiteController::class, 'donate'])->name('public.donate');
 Route::get('/about', [PublicSiteController::class, 'about'])->name('public.about');
+Route::get('/search', \App\Http\Controllers\SearchController::class)->middleware('throttle:60,1')->name('public.search');
 Route::get('/e/{token}', [PublicSiteController::class, 'registerByToken'])->name('public.event.register');
 Route::post('/e/{token}', [PublicSiteController::class, 'storeRegistrationByToken'])->name('public.event.register.store');
 

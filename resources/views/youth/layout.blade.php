@@ -78,6 +78,7 @@
         .logout-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;display:grid;place-items:center}
         .logout-btn:hover{border-color:var(--ink);color:var(--ink)}
         .mobile-menu-btn{display:none}
+        .top-actions .mobile-search{display:none}
 
         .wrap{display:grid}
         .side{background:var(--paper-2);border-right:1.5px solid var(--line);padding:18px 14px 28px;position:sticky;overflow:auto;scrollbar-width:thin}
@@ -107,6 +108,7 @@
             .mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center}
             .main{padding-block:18px calc(96px + env(safe-area-inset-bottom))}
             .me-chip{display:none}.brand{max-width:52vw}
+            .top-actions .header-search{display:none}.top-actions .mobile-search{display:grid}
             .branded-menu-toggle{border:1.5px solid var(--line)!important;border-radius:14px!important;color:var(--ink)!important}
             .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:95;background:var(--ink);border-radius:22px;padding:6px;box-shadow:0 10px 30px rgba(29,21,48,.25)}
             .tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;border-radius:16px;color:rgba(255,255,255,.7);font-size:.7rem;font-weight:700}
@@ -129,6 +131,8 @@
         </a>
     </div>
     <div class="top-actions">
+        @include('partials.header-search')
+        <a class="bell mobile-search" href="{{ route('public.search') }}" aria-label="Search"><i class="fas fa-magnifying-glass" aria-hidden="true"></i></a>
         <a class="bell" href="{{ route('youth.notifications') }}" aria-label="Updates{{ $unreadCount ? ', '.$unreadCount.' new' : '' }}">
             <i class="fas fa-bell" aria-hidden="true"></i>
             @if($unreadCount)<span class="dot" aria-hidden="true">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>@endif

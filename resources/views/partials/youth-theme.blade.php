@@ -70,7 +70,7 @@ body .btn.btn-ghost:hover{background:var(--primary-soft);color:var(--primary)}
 .meter>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--primary),color-mix(in srgb,var(--primary) 60%,var(--coral)));transition:width .8s cubic-bezier(.22,1,.36,1)}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:var(--paper-2);color:var(--ink-soft);font-size:.82rem;font-weight:600}
 .chip i{color:var(--primary)}
-.empty-card,.empty-state,.empty-note{text-align:center;padding:34px 20px!important;background:repeating-linear-gradient(-45deg,transparent 0 12px,color-mix(in srgb,var(--paper-2) 60%,transparent) 12px 13px),#fffdf9!important;border:1.5px dashed color-mix(in srgb,var(--ink) 22%,var(--line))!important;border-radius:var(--r-card)!important}
+.empty-card,.empty-state,.empty-note{text-align:center;padding:34px 20px!important;background:#fffdf9!important;border:1.5px dashed color-mix(in srgb,var(--ink) 22%,var(--line))!important;border-radius:var(--r-card)!important}
 .empty-card h2,.empty-card h3,.empty-state h3{font-size:1.2rem;margin:6px 0}
 .empty-card .btn,.empty-state .btn{margin-top:12px}
 .empty-emoji{font-size:2rem;display:block;margin-bottom:4px}

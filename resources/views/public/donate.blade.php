@@ -365,6 +365,10 @@
         opacity: 1;
     }
 
+    .donate-hero .giving-message h2 {
+        color: #fff;
+    }
+
     .giving-icon,
     .campaign-icon,
     .featured-icon,

@@ -352,7 +352,7 @@
     }
 
     /* Theme: warm paper, crisp ink edges, sunflower accents. */
-    .auth-page{background:radial-gradient(circle at 10% 15%,var(--sun-soft) 0 140px,transparent 141px),radial-gradient(circle at 92% 85%,var(--coral-soft) 0 170px,transparent 171px),var(--paper)!important}
+    .auth-page{background:var(--paper)!important}
     .auth-card,.register-card{border:1.5px solid var(--ink)!important;border-radius:26px!important;box-shadow:6px 6px 0 var(--ink)!important}
     .auth-brand-panel strong,.auth-hello h1{font-family:var(--font-display);letter-spacing:-.03em}
     .auth-hello{text-align:center;margin:-8px 0 22px}
