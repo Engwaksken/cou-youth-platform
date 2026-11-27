@@ -62,7 +62,7 @@ final class AppearanceSettingsTest extends TestCase
             ->assertSee("--font-display:'Poppins'", false)
             ->assertSee("--font-body:'Nunito'", false)
             ->assertSee('family=Poppins', false)
-            ->assertSee('--r-card:26px', false);
+            ->assertSee('--r-card:20px;--r-btn:999px;--tilt:.5', false);
 
         // A dark sidebar gets white text in the youth portal and in admin.
         $this->actingAs(User::factory()->create())->get(route('youth.dashboard'))->assertOk()

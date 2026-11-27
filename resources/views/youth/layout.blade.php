@@ -49,6 +49,14 @@
             ['youth.notification-preferences', 'youth.notification-preferences*', 'fa-sliders', 'Settings'],
         ],
     ];
+    $currentGroup = '';
+    foreach ($nav as $groupName => $groupLinks) {
+        foreach ($groupLinks as $groupLink) {
+            if ($groupName && request()->routeIs($groupLink[1])) {
+                $currentGroup = \Illuminate\Support\Str::slug($groupName);
+            }
+        }
+    }
 @endphp
 <!doctype html>
 <html lang="en">
@@ -58,7 +66,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="{{ app(\App\Services\Branding\AppearanceService::class)->data()['background_color'] }}">
     <title>@yield('title', 'COU Youth')</title>
-    <script>try{if(localStorage.getItem('cou.sidebar')==='collapsed')document.documentElement.classList.add('side-collapsed')}catch(e){}</script>
+    <script>try{if(localStorage.getItem('cou.sidebar')==='collapsed')document.documentElement.classList.add('side-collapsed');var g=(localStorage.getItem('cou.navgroups')||'').split(' ').filter(function(k){return k&&k!=={{ \Illuminate\Support\Js::from($currentGroup) }}});document.documentElement.setAttribute('data-nav-folded',g.join(' '))}catch(e){}</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
@@ -83,7 +91,15 @@
         .wrap{display:grid}
         .side{background:var(--side-bg);color:var(--side-ink);border-right:1.5px solid color-mix(in srgb,var(--side-ink) 12%,transparent);padding:14px 14px 28px;position:sticky;overflow:auto;overflow-x:hidden;scrollbar-width:thin;transition:padding .2s ease}
         .side-brand{display:none}
-        .nav-label{font-size:.78rem;font-weight:700;color:color-mix(in srgb,var(--side-ink) 60%,transparent);padding:16px 12px 6px;white-space:nowrap}
+        .nav-label{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:10px 0 2px;padding:8px 12px;border:0;border-radius:10px;background:none;font:inherit;font-size:.78rem;font-weight:700;color:color-mix(in srgb,var(--side-ink) 62%,transparent);white-space:nowrap;cursor:pointer;text-align:left}
+        .nav-label:hover{color:var(--side-ink);background:color-mix(in srgb,var(--side-ink) 6%,transparent)}
+        .nav-label i{font-size:.7rem;transition:transform .2s ease}
+        .nav-label[aria-expanded=false] i{transform:rotate(-90deg)}
+        .nav-label:focus-visible{outline:3px solid var(--sun);outline-offset:1px}
+        .nav-items[hidden]{display:none}
+@foreach(array_filter(array_keys($nav)) as $groupName)
+        html[data-nav-folded~="{{ \Illuminate\Support\Str::slug($groupName) }}"] #nav-{{ \Illuminate\Support\Str::slug($groupName) }}{display:none}
+@endforeach
         .side a{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin:2px 0;border:1.5px solid transparent;border-radius:14px;color:color-mix(in srgb,var(--side-ink) 82%,transparent);font-weight:600;font-size:.95rem;white-space:nowrap;transition:background .15s ease,color .15s ease,border-color .15s ease}
         .side a i{width:20px;flex:0 0 20px;text-align:center;color:color-mix(in srgb,var(--side-ink) 60%,transparent);transition:color .15s ease}
         .side a:hover{background:color-mix(in srgb,var(--side-ink) 9%,transparent);color:var(--side-ink)}
@@ -104,7 +120,8 @@
             .side-collapsed .side .label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
             .side-collapsed .side a,.side-collapsed .side-toggle{justify-content:center;padding-inline:0;gap:0}
             .side-collapsed .side-toggle i{transform:rotate(180deg)}
-            .side-collapsed .nav-label{height:1px;padding:0;margin:12px 8px;overflow:hidden;color:transparent;background:color-mix(in srgb,var(--side-ink) 15%,transparent)}
+            .side-collapsed .nav-label{height:1px;padding:0;margin:12px 8px;overflow:hidden;color:transparent;background:color-mix(in srgb,var(--side-ink) 15%,transparent);pointer-events:none}
+            .side-collapsed .nav-items{display:block!important}
             .side-collapsed .side-foot{display:none}
             .side-collapsed .side .count{position:absolute;top:4px;right:6px;min-width:18px;height:18px;font-size:.62rem;padding:0 4px}
         }
@@ -161,13 +178,22 @@
     <aside class="side" id="portalSidebar" aria-label="Youth portal navigation">
         <button class="side-toggle" type="button" data-side-toggle aria-expanded="true" aria-controls="portalSidebar"><i class="fas fa-angles-left" aria-hidden="true"></i><span class="label">Collapse menu</span></button>
         @foreach($nav as $group => $links)
-            @if($group)<div class="nav-label">{{ $group }}</div>@endif
+            @php($groupKey = \Illuminate\Support\Str::slug($group))
+            @if($group)
+            <div class="nav-group" data-nav-group="{{ $groupKey }}">
+            <button class="nav-label" type="button" data-nav-toggle="{{ $groupKey }}" aria-expanded="true" aria-controls="nav-{{ $groupKey }}"><span class="label">{{ $group }}</span><i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+            <div class="nav-items" id="nav-{{ $groupKey }}">
+            @endif
             @foreach($links as [$route, $pattern, $icon, $label])
                 <a href="{{ route($route) }}" class="{{ request()->routeIs($pattern) ? 'active' : '' }}" data-tip="{{ $label }}" @if(request()->routeIs($pattern)) aria-current="page" @endif>
                     <i class="fas {{ $icon }}" aria-hidden="true"></i> <span class="label">{{ $label }}</span>
                     @if($route === 'youth.notifications' && $unreadCount)<span class="count">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>@endif
                 </a>
             @endforeach
+            @if($group)
+            </div>
+            </div>
+            @endif
         @endforeach
         <div class="side-foot">
             Looking for something else?
@@ -202,6 +228,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     apply(root.classList.contains('side-collapsed'));
+
+    // Fold and unfold the groups (Grow, Together, ...).
+    const folded = new Set((root.getAttribute('data-nav-folded') || '').split(' ').filter(Boolean));
+    document.querySelectorAll('[data-nav-toggle]').forEach(btn => {
+        const key = btn.dataset.navToggle;
+        const items = document.getElementById(btn.getAttribute('aria-controls'));
+        const set = open => {
+            btn.setAttribute('aria-expanded', String(open));
+            items.hidden = !open;
+        };
+        set(!folded.has(key));
+        btn.addEventListener('click', () => {
+            const open = btn.getAttribute('aria-expanded') !== 'true';
+            set(open);
+            open ? folded.delete(key) : folded.add(key);
+            root.setAttribute('data-nav-folded', [...folded].join(' '));
+            try { localStorage.setItem('cou.navgroups', [...folded].join(' ')); } catch (e) {}
+        });
+    });
     toggle.addEventListener('click', () => {
         const collapsed = !root.classList.contains('side-collapsed');
         apply(collapsed);

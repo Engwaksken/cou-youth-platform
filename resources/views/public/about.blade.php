@@ -266,7 +266,7 @@
     .about-slide img {
         display: block;
         width: 100%;
-        height: 210px;
+        height: 170px;
         object-fit: cover;
     }
 
@@ -306,7 +306,7 @@
         background: var(--primary);
         color: #fff;
         border: 0;
-        padding: 28px;
+        padding: 20px;
     }
 
     .about-intro-card h2,

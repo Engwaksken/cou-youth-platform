@@ -92,14 +92,14 @@
 </form>
 
 <style>
-.profile-hero{display:flex;align-items:center;gap:20px;margin:6px 0 26px}
-.big-avatar{width:84px;height:84px;flex:0 0 84px;border-radius:28px;display:grid;place-items:center;background:var(--sun);border:var(--bw) solid var(--edge);font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--ink);transform:rotate(calc(-5deg * var(--tilt)));box-shadow:var(--pop)}
-.profile-hero h1{font-size:clamp(2rem,5vw,3rem);margin:0 0 4px;letter-spacing:-.035em;line-height:1.05}
+.profile-hero{display:flex;align-items:center;gap:16px;margin:2px 0 18px}
+.big-avatar{width:60px;height:60px;flex:0 0 60px;border-radius:20px;display:grid;place-items:center;background:var(--sun);border:var(--bw) solid var(--edge);font-family:var(--font-display);font-size:1.4rem;font-weight:800;color:var(--ink);transform:rotate(calc(-5deg * var(--tilt)));box-shadow:var(--pop)}
+.profile-hero h1{font-size:clamp(1.6rem,3.6vw,2.3rem);margin:0 0 4px;letter-spacing:-.035em;line-height:1.05}
 .profile-hero p{margin:0;color:var(--ink-soft);font-weight:600}
 .profile-form{max-width:52rem;display:grid;gap:18px}
 .profile-form [data-tabset]{min-width:0}
-.form-block{padding:22px}
-.form-block h2{font-size:1.25rem;margin:0 0 4px}
+.form-block{padding:18px}
+.form-block h2{font-size:1.1rem;margin:0 0 4px}
 .form-block>p{margin:0 0 14px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
 .form-grid label{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var(--ink)}

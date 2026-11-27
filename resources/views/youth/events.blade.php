@@ -64,7 +64,7 @@
 </section>
 
 <style>
-.activity-section{margin-bottom:38px}
+.activity-section{margin-bottom:28px}
 .event-list{display:grid;gap:10px}
 .event-row{display:flex;align-items:center;gap:16px;padding:12px 16px 12px 12px}
 .event-copy{flex:1;min-width:0}
@@ -74,13 +74,13 @@
 .event-row form{margin:0}
 .ticket-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .ticket{display:grid;grid-template-columns:minmax(0,1fr) auto;background:#fff;border:var(--bw) solid var(--edge);border-radius:var(--r-card);overflow:hidden;position:relative}
-.ticket::before,.ticket::after{content:'';position:absolute;right:calc(var(--stub-w,150px) - 11px);width:22px;height:22px;border-radius:50%;background:var(--paper);border:var(--bw) solid var(--edge)}
+.ticket::before,.ticket::after{content:'';position:absolute;right:calc(var(--stub-w,130px) - 11px);width:22px;height:22px;border-radius:50%;background:var(--paper);border:var(--bw) solid var(--edge)}
 .ticket::before{top:-12px}.ticket::after{bottom:-12px}
-.ticket-main{padding:18px 20px}
+.ticket-main{padding:14px 16px}
 .ticket-when{font-size:.82rem;font-weight:800;color:var(--primary)}
 .ticket-main h3{margin:4px 0 6px}
 .ticket-main p{margin:0;color:var(--muted);font-size:.9rem}
-.ticket-stub{width:var(--stub-w,150px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px;border-left:2px dashed color-mix(in srgb,var(--ink) 30%,transparent);background:var(--sun-soft);text-align:center}
+.ticket-stub{width:var(--stub-w,130px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px;border-left:2px dashed color-mix(in srgb,var(--ink) 30%,transparent);background:var(--sun-soft);text-align:center}
 .ticket.is-past .ticket-stub{background:var(--paper-2)}
 .ticket.is-past{opacity:.85}
 .empty-card{grid-column:1/-1}

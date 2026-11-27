@@ -325,7 +325,7 @@
     .slide-card img {
         display: block;
         width: 100%;
-        height: 210px;
+        height: 170px;
         object-fit: cover;
     }
 
@@ -357,7 +357,7 @@
         background: var(--primary);
         color: #fff;
         border: 0;
-        padding: 26px;
+        padding: 20px;
     }
 
     .donate-hero .giving-message p {

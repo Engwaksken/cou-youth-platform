@@ -112,4 +112,18 @@ final class YouthPortalTest extends TestCase
         $this->assertSame('2004-01-01', $profile->date_of_birth->toDateString());
         $this->assertSame('youth', $profile->age_category);
     }
+
+    public function test_sidebar_groups_can_fold_and_the_current_group_always_opens(): void
+    {
+        $response = $this->actingAs(User::factory()->create())->get(route('youth.learning'))->assertOk();
+
+        foreach (['grow', 'together', 'watch-give', 'you'] as $group) {
+            $response->assertSee('data-nav-toggle="'.$group.'" aria-expanded="true" aria-controls="nav-'.$group.'"', false)
+                ->assertSee('<div class="nav-items" id="nav-'.$group.'">', false);
+        }
+
+        // The page being viewed (My learning, in "Grow") is never hidden by a saved fold.
+        $response->assertSee("k!=='grow'", false)
+            ->assertSee('data-side-toggle', false);
+    }
 }

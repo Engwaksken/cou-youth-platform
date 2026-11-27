@@ -58,10 +58,10 @@
 <style>
 .pref-form{max-width:46rem;display:grid;gap:18px}
 .pref-group{padding:8px 20px}
-.pref-group h2{font-size:1.2rem;margin:14px 0 4px}
-.toggle-row{display:flex;align-items:center;gap:14px;padding:14px 0;cursor:pointer}
+.pref-group h2{font-size:1.05rem;margin:12px 0 2px}
+.toggle-row{display:flex;align-items:center;gap:12px;padding:11px 0;cursor:pointer}
 .toggle-row+.toggle-row{border-top:1px solid var(--line)}
-.toggle-icon{width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:grid;place-items:center;background:var(--paper-2);color:var(--primary)}
+.toggle-icon{width:34px;height:34px;flex:0 0 34px;border-radius:12px;display:grid;place-items:center;background:var(--paper-2);color:var(--primary)}
 .toggle-copy{flex:1;min-width:0}
 .toggle-copy strong,.toggle-copy small{display:block}
 .toggle-copy small{color:var(--muted);margin-top:2px}

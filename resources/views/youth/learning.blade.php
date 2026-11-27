@@ -79,15 +79,15 @@
 <style>
 .learning-section{margin-bottom:38px}
 .course-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
-.course-card{display:flex;flex-direction:column;gap:12px;padding:20px}
+.course-card{display:flex;flex-direction:column;gap:10px;padding:16px}
 .course-card h3{margin:0}
 .course-card p{margin:0}
 .course-card .btn{margin-top:auto;align-self:flex-start}
 .course-card.is-finished{background:linear-gradient(180deg,var(--leaf-soft),#fff 45%)}
 .course-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.course-icon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:1.3rem;background:var(--primary-soft);color:var(--primary);border:var(--bw) solid var(--edge);transform:rotate(calc(-4deg * var(--tilt)))}
+.course-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:1.05rem;background:var(--primary-soft);color:var(--primary);border:var(--bw) solid var(--edge);transform:rotate(calc(-4deg * var(--tilt)))}
 .course-icon.alt{background:var(--sun-soft);color:#8a5a00}
-.course-image{width:100%;height:150px;object-fit:cover;border-radius:14px}
+.course-image{width:100%;height:120px;object-fit:cover;border-radius:14px}
 .progress-wrap{display:flex;align-items:center;gap:10px;margin-top:auto}
 .progress-wrap .meter{flex:1}
 .progress-wrap strong{font-family:var(--font-display);font-size:.95rem}
