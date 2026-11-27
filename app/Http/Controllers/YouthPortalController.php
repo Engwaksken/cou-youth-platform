@@ -131,7 +131,7 @@ final class YouthPortalController extends Controller
 
         $message = match (true) {
             ! $isNew => "You're already checked in for today. See you tomorrow!",
-            $streak['current'] === 1 => 'Checked in. Day one, let’s go!',
+            $streak['current'] === 1 => "Checked in. Day one, let's go!",
             in_array($streak['current'], [3, 7, 14, 30, 50, 100, 200, 365], true) => "{$streak['current']} days in a row. That's a milestone, well done!",
             default => "Checked in. That's {$streak['current']} days in a row.",
         };

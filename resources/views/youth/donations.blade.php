@@ -9,13 +9,13 @@
 
 <p class="giving-summary">
     @if($stats['successful_ugx'] > 0)
-        <span aria-hidden="true">💛</span> You've given <strong>UGX {{ number_format($stats['successful_ugx'], 0) }}</strong> so far. Thank you.
+        <i class="fas fa-heart" aria-hidden="true"></i> You've given <strong>UGX {{ number_format($stats['successful_ugx'], 0) }}</strong> so far. Thank you.
     @else
-        <span aria-hidden="true">💛</span> Big or small, every gift helps a young person grow.
+        <i class="fas fa-heart" aria-hidden="true"></i> Big or small, every gift helps a young person grow.
     @endif
     @if($stats['pending'] > 0)<span class="chip"><i class="fas fa-clock"></i> {{ $stats['pending'] }} waiting for payment</span>@endif
 </p>
-<style>.giving-summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-10px 0 22px;font-size:1.02rem;color:var(--ink-soft)}.giving-summary strong{color:var(--ink)}</style>
+<style>.giving-summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-10px 0 22px;font-size:1.02rem;color:var(--ink-soft)}.giving-summary strong{color:var(--ink)}.giving-summary>i{color:var(--coral)}</style>
 
 <div class="giving-grid">
     <section class="card giving-form-card">
@@ -29,7 +29,7 @@
                 <select name="campaign_id">
                     <option value="">General youth ministry support</option>
                     @foreach($campaigns as $campaign)
-                        <option value="{{ $campaign->id }}" @selected((string)old('campaign_id',$selectedCampaign)===(string)$campaign->id)>{{ $campaign->title }} · {{ $campaign->currency }}</option>
+                        <option value="{{ $campaign->id }}" @selected((string)old('campaign_id',$selectedCampaign)===(string)$campaign->id)>{{ $campaign->title }}, {{ $campaign->currency }}</option>
                     @endforeach
                 </select>
             </label>
@@ -49,7 +49,7 @@
                 <select name="payment_gateway_id" required>
                     <option value="">Select payment method</option>
                     @foreach($gateways as $gateway)
-                        <option value="{{ $gateway->id }}" @selected((string)old('payment_gateway_id')===(string)$gateway->id)>{{ $gateway->name }} · {{ strtoupper($gateway->currency) }}{{ $gateway->is_test_mode ? ' (Test)' : '' }}</option>
+                        <option value="{{ $gateway->id }}" @selected((string)old('payment_gateway_id')===(string)$gateway->id)>{{ $gateway->name }}, {{ strtoupper($gateway->currency) }}{{ $gateway->is_test_mode ? ' (Test)' : '' }}</option>
                     @endforeach
                 </select>
             </label>
@@ -83,7 +83,7 @@
             @foreach($donations as $donation)
             <div class="history-row">
                 <span class="history-icon"><i class="fas fa-hand-holding-heart"></i></span>
-                <div><strong>{{ $donation->campaign?->title ?? 'General youth ministry support' }}</strong><small>{{ optional($donation->paid_at ?: $donation->created_at)->format('d M Y · H:i') }}</small><small>Ref: {{ $donation->receipt_number ?: $donation->reference }}</small></div>
+                <div><strong>{{ $donation->campaign?->title ?? 'General youth ministry support' }}</strong><small>{{ optional($donation->paid_at ?: $donation->created_at)->format('d M Y, H:i') }}</small><small>Ref: {{ $donation->receipt_number ?: $donation->reference }}</small></div>
                 <div class="history-value"><strong>{{ $donation->currency }} {{ number_format((float)$donation->amount,0) }}</strong><span class="status status-{{ strtolower($donation->status) }}">{{ ucfirst($donation->status) }}</span></div>
             </div>
             @endforeach
@@ -103,7 +103,7 @@
             @foreach($membershipPayments as $payment)
             <div class="history-row">
                 <span class="history-icon"><i class="fas fa-coins"></i></span>
-                <div><strong>{{ $payment->fee_name ?: 'Youth ministry contribution' }}@if($payment->fee_year) · {{ $payment->fee_year }}@endif</strong><small>{{ \Illuminate\Support\Carbon::parse($payment->paid_at)->format('d M Y · H:i') }}</small>@if($payment->reference)<small>Ref: {{ $payment->reference }}</small>@endif</div>
+                <div><strong>{{ $payment->fee_name ?: 'Youth ministry contribution' }}@if($payment->fee_year), {{ $payment->fee_year }}@endif</strong><small>{{ \Illuminate\Support\Carbon::parse($payment->paid_at)->format('d M Y, H:i') }}</small>@if($payment->reference)<small>Ref: {{ $payment->reference }}</small>@endif</div>
                 <div class="history-value"><strong>{{ $payment->currency }} {{ number_format((float)$payment->amount,0) }}</strong><span class="status status-{{ strtolower($payment->status) }}">{{ ucfirst($payment->status) }}</span></div>
             </div>
             @endforeach

@@ -18,7 +18,7 @@
         </article>
     @empty
         <div class="card empty-card">
-            <span class="empty-emoji" aria-hidden="true">🏅</span>
+            <span class="empty-emoji" aria-hidden="true"><i class="fas fa-medal"></i></span>
             <h3>Your first one is closer than you think</h3>
             <p class="muted">Finish every lesson in a course and your certificate shows up here, ready to share.</p>
             <a class="btn btn-primary" href="{{ route('youth.learning') }}">Back to my courses</a>
@@ -29,8 +29,8 @@
 
 <style>
 .certificate-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.certificate{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:30px 22px 22px;background:#fffdf7;border:1.5px solid var(--ink);border-radius:var(--r-card);box-shadow:inset 0 0 0 7px #fffdf7,inset 0 0 0 8.5px var(--sun)}
-.seal{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--sun);color:var(--ink);font-size:1.6rem;border:1.5px solid var(--ink);margin-bottom:10px;transform:rotate(-8deg)}
+.certificate{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:30px 22px 22px;background:#fffdf7;border:var(--bw) solid var(--edge);border-radius:var(--r-card);box-shadow:inset 0 0 0 7px #fffdf7,inset 0 0 0 8.5px var(--sun)}
+.seal{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--sun);color:var(--ink);font-size:1.6rem;border:var(--bw) solid var(--edge);margin-bottom:10px;transform:rotate(calc(-8deg * var(--tilt)))}
 .cert-label{font-size:.78rem;font-weight:800;color:var(--muted);letter-spacing:.04em}
 .certificate h2{font-size:1.3rem;margin:4px 0 2px}
 .cert-date{margin:0;font-weight:700;color:var(--primary)}

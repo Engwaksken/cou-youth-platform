@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Branding;
 
+use App\Models\SiteSetting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -11,12 +12,14 @@ final class BrandingService
 {
     public function data(): array
     {
+        $appearance = app(AppearanceService::class)->data();
+
         return [
             'name' => (string) config('branding.name'),
             'short_name' => (string) config('branding.short_name'),
             'tagline' => (string) config('branding.tagline'),
-            'primary_color' => (string) config('branding.primary_color'),
-            'secondary_color' => (string) config('branding.secondary_color'),
+            'primary_color' => $appearance['primary_color'],
+            'secondary_color' => $appearance['secondary_color'],
             'support_email' => config('branding.support_email'),
             'logo_url' => $this->logoUrl(),
         ];
@@ -26,6 +29,13 @@ final class BrandingService
     {
         return Cache::remember('platform_branding_logo_url', now()->addMinutes(10), function (): ?string {
             $disk = Storage::disk('public');
+
+            // The logo uploaded in Admin > Settings wins over anything else in storage.
+            $uploaded = trim((string) SiteSetting::get('logo', ''));
+            if ($uploaded !== '' && $disk->exists($uploaded)) {
+                return $disk->url($uploaded);
+            }
+
             $configured = trim((string) config('branding.logo_path', ''));
 
             if ($configured !== '' && $disk->exists($configured)) {

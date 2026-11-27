@@ -28,7 +28,7 @@
 @foreach($course->lessons as $index=>$lesson)
 @php($completed=in_array((int)$lesson->id,$completedLessonIds,true))
 <div class="lesson-row {{ $completed ? 'lesson-complete' : '' }}">
-<span class="lesson-number">{{ $completed ? '✓' : $index+1 }}</span>
+<span class="lesson-number">@if($completed)<i class="fas fa-check" aria-label="Done"></i>@else{{ $index+1 }}@endif</span>
 <div class="lesson-body"><strong>{{ $lesson->title ?? 'Lesson '.($index+1) }}</strong>@if(!empty($lesson->body))<p class="muted">{{ \Illuminate\Support\Str::limit(strip_tags($lesson->body),180) }}</p>@endif @if(!empty($lesson->media_url))<a href="{{ $lesson->media_url }}" target="_blank" rel="noopener noreferrer" class="lesson-media"><i class="fas fa-play"></i> Open lesson media</a>@endif</div>
 @auth
 @if($enrolment && !$completed && $lesson->is_published)

@@ -11,7 +11,7 @@
       input.type = show ? 'text' : 'password';
       btn.setAttribute('aria-pressed', String(show));
       btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-      btn.textContent = show ? '🙈' : '👁';
+      btn.innerHTML = show ? '<i class="fas fa-eye-slash" aria-hidden="true"></i>' : '<i class="fas fa-eye" aria-hidden="true"></i>';
     });
   });
   document.querySelectorAll('[data-auth-flash]').forEach(function(el){

@@ -353,17 +353,17 @@
 
     /* Theme: warm paper, crisp ink edges, sunflower accents. */
     .auth-page{background:var(--paper)!important}
-    .auth-card,.register-card{border:1.5px solid var(--ink)!important;border-radius:26px!important;box-shadow:6px 6px 0 var(--ink)!important}
+    .auth-card,.register-card{border:var(--bw) solid var(--edge)!important;border-radius:26px!important;box-shadow:var(--pop)!important}
     .auth-brand-panel strong,.auth-hello h1{font-family:var(--font-display);letter-spacing:-.03em}
     .auth-hello{text-align:center;margin:-8px 0 22px}
     .auth-hello h1{font-size:clamp(1.7rem,5vw,2.2rem);margin:0 0 4px;color:var(--ink)}
     .auth-hello p{margin:0;color:var(--ink-soft)}
-    .auth-logo-fallback{border:1.5px solid var(--ink)!important;border-radius:18px!important;transform:rotate(-5deg);background:var(--sun)!important;color:var(--ink)!important}
+    .auth-logo-fallback{border:var(--bw) solid var(--edge)!important;border-radius:18px!important;transform:rotate(calc(-5deg * var(--tilt)));background:var(--sun)!important;color:var(--ink)!important}
     .auth-input-wrap input,.field{border:1.5px solid var(--line)!important;border-radius:14px!important}
-    .auth-input-wrap input:focus,.field:focus{border-color:var(--ink)!important;box-shadow:0 0 0 4px var(--sun-soft)!important}
+    .auth-input-wrap input:focus,.field:focus{border-color:var(--edge-strong)!important;box-shadow:0 0 0 4px var(--sun-soft)!important}
     .auth-input-wrap>i{color:var(--muted)!important}
-    .auth-card a.auth-secondary-action,.auth-card a.auth-secondary-action:visited{border:1.5px solid var(--ink)!important;border-radius:999px!important;color:var(--ink)!important}
-    .auth-card a.auth-secondary-action:hover,.auth-card a.auth-secondary-action:focus-visible{background:var(--ink)!important;border-color:var(--ink)!important}
+    .auth-card a.auth-secondary-action,.auth-card a.auth-secondary-action:visited{border:var(--bw) solid var(--edge)!important;border-radius:999px!important;color:var(--ink)!important}
+    .auth-card a.auth-secondary-action:hover,.auth-card a.auth-secondary-action:focus-visible{background:var(--ink)!important;border-color:var(--edge-strong)!important}
     .auth-submit{border-radius:999px!important}
     .auth-alert,.form-errors{border-radius:14px!important}
     .register-tab{border-radius:999px!important}

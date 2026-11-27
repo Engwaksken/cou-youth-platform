@@ -38,7 +38,7 @@
             </article>
         @endif
     @empty
-        <div class="empty-note"><span class="empty-emoji" aria-hidden="true">📭</span><h3>Nothing here yet</h3><p class="muted">When your church or the youth team shares news, it'll land here.</p></div>
+        <div class="empty-note"><span class="empty-emoji" aria-hidden="true"><i class="fas fa-inbox"></i></span><h3>Nothing here yet</h3><p class="muted">When your church or the youth team shares news, it'll land here.</p></div>
     @endforelse
 </div>
 <div class="pagination">{{ $receipts->links() }}</div>

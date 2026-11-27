@@ -40,6 +40,7 @@
     </style>
     @include('partials.platform-layout-styles')
     @include('partials.form-control-styles')
+    @include('partials.admin-appearance')
     @stack('styles')
 </head>
 <body>

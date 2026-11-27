@@ -64,27 +64,7 @@
 </section>
 
 
-<form class="filters church-search" method="GET">
-    <input
-        type="search"
-        name="q"
-        value="{{ request('q') }}"
-        placeholder="Search church or location"
-        aria-label="Search church or location"
-    >
-
-    <button class="btn btn-primary" type="submit">
-        <i class="fas fa-search"></i>
-        Search
-    </button>
-
-    @if(request()->filled('q'))
-        <a class="btn" href="{{ route('public.churches') }}">
-            <i class="fas fa-xmark"></i>
-            Clear
-        </a>
-    @endif
-</form>
+@include('partials.active-search', ['route' => 'public.churches'])
 
 
 <div class="grid church-grid">

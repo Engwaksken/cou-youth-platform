@@ -91,7 +91,7 @@
     let utterances = [];
     const resetSpeech = () => { read.disabled = !speechSupported; pause.disabled = true; stop.disabled = true; pause.textContent = 'Pause'; utterances = []; };
     const stopSpeech = () => { if (speechSupported) window.speechSynthesis.cancel(); resetSpeech(); };
-    if (!speechSupported) { read.disabled = true; document.getElementById('speechHelp').textContent = 'Read aloud is not supported by this browser. Use your device’s screen reader or text-to-speech tools.'; }
+    if (!speechSupported) { read.disabled = true; document.getElementById('speechHelp').textContent = 'Read aloud is not supported by this browser. Use your screen reader or the text-to-speech tools on your device instead.'; }
     read.onclick = () => {
         stopSpeech();
         const text = document.getElementById('main-content')?.innerText.trim();

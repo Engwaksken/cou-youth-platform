@@ -9,7 +9,7 @@
     <form class="search-dialog-form" method="GET" action="{{ route('public.search') }}" role="search">
         <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
         <label class="sr-only" for="searchDialogInput">Search events, courses, life groups, stories and churches</label>
-        <input id="searchDialogInput" type="search" name="q" value="{{ request()->routeIs('public.search') ? request('q') : '' }}" placeholder="Search events, courses, groups…" maxlength="100" autocomplete="off" enterkeyhint="search">
+        <input id="searchDialogInput" type="search" name="q" value="{{ request()->routeIs('public.search') ? request('q') : '' }}" placeholder="Search events, courses, groups..." maxlength="100" autocomplete="off" enterkeyhint="search">
         <button class="search-close" type="button" data-search-close aria-label="Close search"><i class="fas fa-xmark" aria-hidden="true"></i></button>
     </form>
     <div class="search-dialog-hints">
@@ -22,8 +22,8 @@
 </dialog>
 <style>
 .search-trigger{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:border-color .15s ease,transform .15s ease}
-.search-trigger:hover,.search-trigger:focus-visible{border-color:var(--ink);color:var(--ink)}
-.search-dialog{width:min(40rem,calc(100vw - 24px));margin:12vh auto auto;padding:0;border:1.5px solid var(--ink);border-radius:24px;background:#fff;color:var(--ink);box-shadow:6px 6px 0 var(--ink);overflow:visible}
+.search-trigger:hover,.search-trigger:focus-visible{border-color:var(--edge-strong);color:var(--ink)}
+.search-dialog{width:min(40rem,calc(100vw - 24px));margin:12vh auto auto;padding:0;border:var(--bw) solid var(--edge);border-radius:24px;background:#fff;color:var(--ink);box-shadow:var(--pop);overflow:visible}
 .search-dialog::backdrop{background:rgba(29,21,48,.45);backdrop-filter:blur(3px)}
 .search-dialog[open]{animation:search-pop .18s cubic-bezier(.22,1,.36,1)}
 @keyframes search-pop{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}

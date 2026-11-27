@@ -6,7 +6,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
+use App\Services\Branding\AppearanceService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 
 class SiteSettingController extends Controller
@@ -18,7 +20,10 @@ class SiteSettingController extends Controller
             $settings = SiteSetting::pluck('value', 'key')->toArray();
         } catch (\Throwable $e) {
         }
-        return view('admin.settings.index', ['settings' => $settings]);
+        return view('admin.settings.index', [
+            'settings' => $settings,
+            'appearance' => app(AppearanceService::class)->data(),
+        ]);
     }
 
     public function update(Request $request)
@@ -36,6 +41,18 @@ class SiteSettingController extends Controller
             'mail_port' => 'nullable|integer',
             'mail_username' => 'nullable|string|max:120',
             'mail_password' => 'nullable|string|max:255',
+            'primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'secondary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'background_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'sidebar_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'sidebar_default' => ['nullable', 'boolean'],
+            'heading_font' => ['nullable', Rule::in(array_keys(AppearanceService::FONTS))],
+            'body_font' => ['nullable', Rule::in(array_keys(AppearanceService::FONTS))],
+            'theme_style' => ['nullable', Rule::in(array_keys(AppearanceService::STYLES))],
+            'reset_appearance' => ['nullable', 'boolean'],
+        ], [
+            '*.regex' => 'Choose a colour from the colour picker.',
         ]);
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('branding', 'public');
@@ -48,7 +65,23 @@ class SiteSettingController extends Controller
         foreach (['system_name', 'mission', 'vision', 'sms_username', 'sms_api_key', 'sms_sender', 'mail_host', 'mail_port', 'mail_username', 'mail_password'] as $k) {
             if (array_key_exists($k, $data)) SiteSetting::set($k, $data[$k]);
         }
-        return back()->with('success', 'Settings saved.');
+
+        if ($request->boolean('reset_appearance')) {
+            foreach (AppearanceService::KEYS as $key) {
+                SiteSetting::set($key, null);
+            }
+        } else {
+            foreach (['primary_color', 'secondary_color', 'accent_color', 'background_color', 'heading_font', 'body_font', 'theme_style'] as $key) {
+                if (! empty($data[$key])) SiteSetting::set($key, $data[$key]);
+            }
+            if ($request->has('sidebar_color') || $request->has('sidebar_default')) {
+                SiteSetting::set('sidebar_color', $request->boolean('sidebar_default') ? null : ($data['sidebar_color'] ?? null));
+            }
+        }
+
+        AppearanceService::forget();
+
+        return back()->with('success', $request->boolean('reset_appearance') ? 'Settings saved. Appearance is back to the default look.' : 'Settings saved.');
     }
 
     public function backup()

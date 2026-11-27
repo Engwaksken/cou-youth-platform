@@ -166,7 +166,7 @@ final class CourseController extends Controller
         if ($course->is_published && $lesson->is_published) {
             $this->updates->notifyYouth(
                 'New lesson in '.$course->title,
-                'A new lesson, “'.$lesson->title.'”, is now available.',
+                'A new lesson, "'.$lesson->title.'", is now available.',
                 route('public.courses.show', $course),
                 $course->organisation_unit_id,
                 $course->age_category,

@@ -15,7 +15,7 @@
                 <span class="date-tile"><b>{{ $event->starts_at?->format('j') }}</b><small>{{ $event->starts_at?->format('M') }}</small></span>
                 <div class="event-copy">
                     <h3><a href="{{ route('public.events.show', $event) }}">{{ $event->title }}</a></h3>
-                    <p>{{ $event->starts_at?->format('l · g:i A') }}@if($event->venue) · {{ $event->venue }}@endif</p>
+                    <p>{{ $event->starts_at?->format('l, g:i A') }}@if($event->venue), {{ $event->venue }}@endif</p>
                 </div>
                 @if($event->registration_required)
                     <form method="POST" action="{{ route('youth.events.register', $event) }}">@csrf<button class="btn btn-primary" type="submit"><i class="fas fa-plus"></i> Count me in</button></form>
@@ -36,7 +36,7 @@
             @php($attendance = $registration->attendance_status ?? 'pending')
             <article class="ticket {{ $event?->starts_at?->isPast() ? 'is-past' : '' }}">
                 <div class="ticket-main">
-                    <span class="ticket-when">{{ $event?->starts_at?->format('D j M · g:i A') ?? 'Date to be confirmed' }}</span>
+                    <span class="ticket-when">{{ $event?->starts_at?->format('D j M, g:i A') ?? 'Date to be confirmed' }}</span>
                     <h3>{{ $event?->title ?? 'Event no longer listed' }}</h3>
                     @if($event?->venue)<p><i class="fas fa-location-dot"></i> {{ $event->venue }}</p>@endif
                 </div>
@@ -53,7 +53,7 @@
             </article>
         @empty
             <div class="card empty-card">
-                <span class="empty-emoji" aria-hidden="true">🎟️</span>
+                <span class="empty-emoji" aria-hidden="true"><i class="fas fa-ticket"></i></span>
                 <h3>No tickets yet</h3>
                 <p class="muted">When you sign up for something it'll show up here, so you never forget where to be.</p>
                 <a class="btn btn-primary" href="{{ route('public.events') }}">Find an event</a>
@@ -73,8 +73,8 @@
 .event-copy p{margin:0;color:var(--muted)}
 .event-row form{margin:0}
 .ticket-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.ticket{display:grid;grid-template-columns:minmax(0,1fr) auto;background:#fff;border:1.5px solid var(--ink);border-radius:var(--r-card);overflow:hidden;position:relative}
-.ticket::before,.ticket::after{content:'';position:absolute;right:calc(var(--stub-w,150px) - 11px);width:22px;height:22px;border-radius:50%;background:var(--paper);border:1.5px solid var(--ink)}
+.ticket{display:grid;grid-template-columns:minmax(0,1fr) auto;background:#fff;border:var(--bw) solid var(--edge);border-radius:var(--r-card);overflow:hidden;position:relative}
+.ticket::before,.ticket::after{content:'';position:absolute;right:calc(var(--stub-w,150px) - 11px);width:22px;height:22px;border-radius:50%;background:var(--paper);border:var(--bw) solid var(--edge)}
 .ticket::before{top:-12px}.ticket::after{bottom:-12px}
 .ticket-main{padding:18px 20px}
 .ticket-when{font-size:.82rem;font-weight:800;color:var(--primary)}

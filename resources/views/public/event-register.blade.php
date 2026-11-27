@@ -3,7 +3,7 @@
 <div class="card" style="max-width:560px;margin:2rem auto;padding:1.5rem">
   <h1>{{ $event->title }}</h1>
   <p>{{ $event->description }}</p>
-  <p><strong>Venue:</strong> {{ $event->venue ?: '—' }} | <strong>Date:</strong> {{ optional($event->starts_at)->format('d M Y H:i') }}</p>
+  <p><strong>Venue:</strong> {{ $event->venue ?: 'To be confirmed' }} | <strong>Date:</strong> {{ optional($event->starts_at)->format('d M Y H:i') }}</p>
   @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
   <form method="POST" action="{{ route('public.event.register.store', $event->qr_token) }}">
     @csrf

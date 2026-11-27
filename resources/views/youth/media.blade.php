@@ -11,7 +11,7 @@
 <a class="live-banner" href="{{ $live->stream_url }}" target="_blank" rel="noopener noreferrer">
     <span class="live-pill"><span class="live-dot"></span> Live now</span>
     <strong>{{ $live->title }}</strong>
-    <span class="live-meta">@if(!empty($live->speaker)){{ $live->speaker }} · @endif{{ $live->platform ?? 'Online' }}</span>
+    <span class="live-meta">@if(!empty($live->speaker)){{ $live->speaker }}, @endif{{ $live->platform ?? 'Online' }}</span>
     <span class="btn btn-sun"><i class="fas fa-play"></i> Join in</span>
 </a>
 @endif
@@ -28,7 +28,7 @@
                     <span class="play" aria-hidden="true"><i class="fas fa-play"></i></span>
                 </span>
                 <span class="service-body">
-                    <span class="badge {{ $service->status === 'scheduled' ? 'badge-sun' : '' }}">{{ $service->status === 'scheduled' ? $starts->format('D j M · g:i A') : 'Catch up' }}</span>
+                    <span class="badge {{ $service->status === 'scheduled' ? 'badge-sun' : '' }}">{{ $service->status === 'scheduled' ? $starts->format('D j M, g:i A') : 'Catch up' }}</span>
                     <strong>{{ $service->title }}</strong>
                     @if(!empty($service->speaker))<small>{{ $service->speaker }}</small>@endif
                 </span>
@@ -56,7 +56,7 @@
                 </span>
             </a>
         @empty
-            <div class="card empty-card"><span class="empty-emoji" aria-hidden="true">🎧</span><h3>The library's still filling up</h3><p class="muted">Talks, worship sets and study notes will appear here as they're shared.</p></div>
+            <div class="card empty-card"><span class="empty-emoji" aria-hidden="true"><i class="fas fa-headphones"></i></span><h3>The library's still filling up</h3><p class="muted">Talks, worship sets and study notes will appear here as they're shared.</p></div>
         @endforelse
     </div>
     <div class="pagination">{{ $media->links() }}</div>
@@ -80,7 +80,7 @@
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb.audio{background:var(--sun-soft);color:#8a5a00}
 .thumb.document{background:var(--leaf-soft);color:var(--leaf)}
-.play{position:absolute;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#fff;color:var(--ink);font-size:1rem;border:1.5px solid var(--ink);transition:transform .18s ease}
+.play{position:absolute;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#fff;color:var(--ink);font-size:1rem;border:var(--bw) solid var(--edge);transition:transform .18s ease}
 .service-card:hover .play{transform:scale(1.1)}
 .service-body,.media-body{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 16px 18px}
 .service-body strong,.media-body strong{font-size:1.02rem;line-height:1.3}

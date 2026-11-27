@@ -20,7 +20,7 @@
 
 <section class="hero page-hero"><span class="section-kicker">YOUTH COMMUNITY</span><h1>What's <span class="scribble">on</span></h1><p>Worship nights, conferences, missions and fellowships happening across Uganda. Come along, and bring a friend.</p></section>
 
-<form class="filters" method="GET"><input name="q" value="{{ request('q') }}" placeholder="Search events or venue"><button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Search</button></form>
+@include('partials.active-search', ['route' => 'public.events'])
 
 <div class="grid">
 @forelse($items as $event)
@@ -29,7 +29,7 @@
     <div class="event-card-body">
         <div class="event-card-top"><span class="badge">{{ ucfirst($event->status ?? 'published') }}</span><span class="view-arrow"><i class="fas fa-arrow-right"></i></span></div>
         <h3>{{ $event->title }}</h3>
-        <p><i class="fas fa-calendar"></i> {{ optional($event->starts_at)->format('d M Y • H:i') ?: 'Date to be confirmed' }}</p>
+        <p><i class="fas fa-calendar"></i> {{ optional($event->starts_at)->format('d M Y, H:i') ?: 'Date to be confirmed' }}</p>
         <p class="muted"><i class="fas fa-location-dot"></i> {{ $event->venue ?: 'Venue to be confirmed' }}</p>
         @if(!empty($event->speaker))<p class="muted"><i class="fas fa-microphone"></i> {{ $event->speaker }}</p>@endif
         <span class="detail-link">View full details</span>

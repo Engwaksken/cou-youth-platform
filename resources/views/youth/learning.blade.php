@@ -46,7 +46,7 @@
             </article>
         @empty
             <div class="card empty-card">
-                <span class="empty-emoji" aria-hidden="true">📖</span>
+                <span class="empty-emoji" aria-hidden="true"><i class="fas fa-book-open"></i></span>
                 <h3>Your shelf is empty, for now</h3>
                 <p class="muted">Pick a course about faith, leadership, careers or life. Short lessons, no pressure.</p>
                 <a class="btn btn-primary" href="{{ route('public.courses') }}">Browse courses</a>
@@ -85,7 +85,7 @@
 .course-card .btn{margin-top:auto;align-self:flex-start}
 .course-card.is-finished{background:linear-gradient(180deg,var(--leaf-soft),#fff 45%)}
 .course-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.course-icon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:1.3rem;background:var(--primary-soft);color:var(--primary);border:1.5px solid var(--ink);transform:rotate(-4deg)}
+.course-icon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:1.3rem;background:var(--primary-soft);color:var(--primary);border:var(--bw) solid var(--edge);transform:rotate(calc(-4deg * var(--tilt)))}
 .course-icon.alt{background:var(--sun-soft);color:#8a5a00}
 .course-image{width:100%;height:150px;object-fit:cover;border-radius:14px}
 .progress-wrap{display:flex;align-items:center;gap:10px;margin-top:auto}

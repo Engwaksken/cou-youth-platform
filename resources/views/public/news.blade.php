@@ -55,18 +55,7 @@
 </section>
 
 
-<form class="filters" method="GET">
-    <input
-        name="q"
-        value="{{ request('q') }}"
-        placeholder="Search news and resources"
-    >
-
-    <button class="btn btn-primary" type="submit">
-        <i class="fas fa-search"></i>
-        Search
-    </button>
-</form>
+@include('partials.active-search', ['route' => 'public.news'])
 
 
 <div class="grid">

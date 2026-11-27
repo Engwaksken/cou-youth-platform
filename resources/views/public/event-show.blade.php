@@ -28,7 +28,7 @@
         <section class="card detail-section">
             <h2>Event information</h2>
             <div class="info-grid">
-                <div class="info-item"><span class="info-icon"><i class="fas fa-calendar-days"></i></span><div><small>Date & time</small><strong>{{ optional($event->starts_at)->format('D, d M Y • H:i') ?: 'To be confirmed' }}</strong>@if($event->ends_at)<span>Until {{ optional($event->ends_at)->format('d M Y • H:i') }}</span>@endif</div></div>
+                <div class="info-item"><span class="info-icon"><i class="fas fa-calendar-days"></i></span><div><small>Date & time</small><strong>{{ optional($event->starts_at)->format('D, d M Y, H:i') ?: 'To be confirmed' }}</strong>@if($event->ends_at)<span>Until {{ optional($event->ends_at)->format('d M Y, H:i') }}</span>@endif</div></div>
                 <div class="info-item"><span class="info-icon"><i class="fas fa-location-dot"></i></span><div><small>Venue</small><strong>{{ $event->venue ?: 'To be confirmed' }}</strong></div></div>
                 @if(!empty($event->speaker))<div class="info-item"><span class="info-icon"><i class="fas fa-microphone"></i></span><div><small>Speaker</small><strong>{{ $event->speaker }}</strong></div></div>@endif
                 @if(!empty($event->organizer))<div class="info-item"><span class="info-icon"><i class="fas fa-people-group"></i></span><div><small>Organiser</small><strong>{{ $event->organizer }}</strong></div></div>@endif
@@ -53,7 +53,7 @@
 </section>
 
 @if($relatedEvents->isNotEmpty())
-<section class="related-section"><div class="section-head"><div><span class="section-kicker">MORE EVENTS</span><h2>You may also like</h2></div></div><div class="grid">@foreach($relatedEvents as $related)<a class="card related-card" href="{{ route('public.events.show',$related) }}"><span class="related-icon"><i class="fas fa-calendar-days"></i></span><h3>{{ $related->title }}</h3><p class="muted">{{ optional($related->starts_at)->format('d M Y • H:i') ?: 'Date to be confirmed' }}</p><span class="detail-link">View details <i class="fas fa-arrow-right"></i></span></a>@endforeach</div></section>
+<section class="related-section"><div class="section-head"><div><span class="section-kicker">MORE EVENTS</span><h2>You may also like</h2></div></div><div class="grid">@foreach($relatedEvents as $related)<a class="card related-card" href="{{ route('public.events.show',$related) }}"><span class="related-icon"><i class="fas fa-calendar-days"></i></span><h3>{{ $related->title }}</h3><p class="muted">{{ optional($related->starts_at)->format('d M Y, H:i') ?: 'Date to be confirmed' }}</p><span class="detail-link">View details <i class="fas fa-arrow-right"></i></span></a>@endforeach</div></section>
 @endif
 
 <style>

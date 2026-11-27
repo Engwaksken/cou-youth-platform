@@ -6,7 +6,7 @@
         $primary = $brand['primary_color'] ?? '#4B2E83';
         $secondary = $brand['secondary_color'] ?? '#204F78';
     } catch (\Throwable $e) {
-        $brand = ['short_name' => 'COU Youth Platform', 'tagline' => 'Connect • Grow • Serve'];
+        $brand = ['short_name' => 'COU Youth Platform', 'tagline' => 'Connect, Grow, Serve'];
         $sysName = 'COU Youth Platform';
         $sysLogoUrl = null;
         $primary = '#4B2E83';
@@ -31,7 +31,7 @@
         'Grow' => [
             ['youth.learning', 'youth.learning', 'fa-book-open', 'My learning'],
             ['youth.certificates', 'youth.certificates', 'fa-award', 'Certificates'],
-            ['youth.annual-theme', 'youth.annual-theme', 'fa-book-bible', 'This year’s theme'],
+            ['youth.annual-theme', 'youth.annual-theme', 'fa-book-bible', "This year's theme"],
         ],
         'Together' => [
             ['youth.events', 'youth.events*', 'fa-ticket', 'My events'],
@@ -56,8 +56,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="theme-color" content="#fbf6ee">
+    <meta name="theme-color" content="{{ app(\App\Services\Branding\AppearanceService::class)->data()['background_color'] }}">
     <title>@yield('title', 'COU Youth')</title>
+    <script>try{if(localStorage.getItem('cou.sidebar')==='collapsed')document.documentElement.classList.add('side-collapsed')}catch(e){}</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
@@ -66,33 +67,48 @@
         .top{height:var(--top-h);background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1.5px solid var(--line);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
         .top-left{display:flex;align-items:center;gap:10px;min-width:0}
         .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink);min-width:0;max-width:min(26rem,45vw)}
-        .brand-logo-shell{width:42px;height:42px;min-width:42px;border:1.5px solid var(--ink);border-radius:13px;background:#fff;display:grid;place-items:center;overflow:hidden;color:var(--primary)}
+        .brand-logo-shell{width:42px;height:42px;min-width:42px;border:var(--bw) solid var(--edge);border-radius:13px;background:#fff;display:grid;place-items:center;overflow:hidden;color:var(--primary)}
         .brand-logo{width:100%;height:100%;object-fit:contain;padding:3px}.brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .top-actions{display:flex;align-items:center;gap:8px}
         .bell{position:relative;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:.15s ease}
-        .bell:hover{border-color:var(--ink)}
+        .bell:hover{border-color:var(--edge-strong)}
         .bell .dot{position:absolute;top:-4px;right:-4px;min-width:21px;height:21px;padding:0 5px;border-radius:999px;background:var(--coral);color:#fff;font-size:.7rem;font-weight:800;display:grid;place-items:center;border:2px solid var(--paper)}
         .me-chip{display:inline-flex;align-items:center;gap:9px;padding:4px 14px 4px 4px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-weight:700;color:var(--ink);transition:.15s ease}
-        .me-chip:hover{border-color:var(--ink)}
-        .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--sun);color:var(--ink);font-family:var(--font-display);font-weight:800;font-size:.85rem;border:1.5px solid var(--ink)}
+        .me-chip:hover{border-color:var(--edge-strong)}
+        .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--sun);color:var(--ink);font-family:var(--font-display);font-weight:800;font-size:.85rem;border:var(--bw) solid var(--edge)}
         .logout-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;display:grid;place-items:center}
-        .logout-btn:hover{border-color:var(--ink);color:var(--ink)}
+        .logout-btn:hover{border-color:var(--edge-strong);color:var(--ink)}
         .mobile-menu-btn{display:none}
 
         .wrap{display:grid}
-        .side{background:var(--paper-2);border-right:1.5px solid var(--line);padding:18px 14px 28px;position:sticky;overflow:auto;scrollbar-width:thin}
+        .side{background:var(--side-bg);color:var(--side-ink);border-right:1.5px solid color-mix(in srgb,var(--side-ink) 12%,transparent);padding:14px 14px 28px;position:sticky;overflow:auto;overflow-x:hidden;scrollbar-width:thin;transition:padding .2s ease}
         .side-brand{display:none}
-        .nav-label{font-size:.78rem;font-weight:700;color:var(--muted);padding:16px 12px 6px}
-        .side a{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin:2px 0;border:1.5px solid transparent;border-radius:14px;color:var(--ink-soft);font-weight:600;font-size:.95rem;transition:background .15s ease,color .15s ease,border-color .15s ease}
-        .side a i{width:20px;text-align:center;color:var(--muted);transition:color .15s ease}
-        .side a:hover{background:color-mix(in srgb,#fff 70%,transparent);color:var(--ink)}
-        .side a:hover i{color:var(--primary)}
-        .side a.active{background:#fff;border-color:var(--ink);color:var(--ink);font-weight:750;box-shadow:3px 3px 0 var(--ink)}
+        .nav-label{font-size:.78rem;font-weight:700;color:color-mix(in srgb,var(--side-ink) 60%,transparent);padding:16px 12px 6px;white-space:nowrap}
+        .side a{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin:2px 0;border:1.5px solid transparent;border-radius:14px;color:color-mix(in srgb,var(--side-ink) 82%,transparent);font-weight:600;font-size:.95rem;white-space:nowrap;transition:background .15s ease,color .15s ease,border-color .15s ease}
+        .side a i{width:20px;flex:0 0 20px;text-align:center;color:color-mix(in srgb,var(--side-ink) 60%,transparent);transition:color .15s ease}
+        .side a:hover{background:color-mix(in srgb,var(--side-ink) 9%,transparent);color:var(--side-ink)}
+        .side a:hover i{color:var(--side-ink)}
+        .side a.active{background:#fff;border-color:var(--edge-strong);color:var(--ink);font-weight:750;box-shadow:var(--pop)}
         .side a.active i{color:var(--primary)}
         .side .count{margin-left:auto;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--coral);color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center}
         .side-foot{margin:22px 4px 0;padding:14px;border-radius:16px;background:#fff;border:1.5px dashed var(--line);font-size:.86rem;color:var(--ink-soft)}
         .side-foot a{display:inline-flex;width:auto;padding:0;margin:6px 0 0;border:0;color:var(--primary);font-weight:700;background:none!important;box-shadow:none!important}
         .side-foot a i{color:var(--primary)}
+        .side-toggle{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 6px;padding:9px 12px;border:1.5px dashed color-mix(in srgb,var(--side-ink) 22%,transparent);border-radius:14px;background:transparent;color:color-mix(in srgb,var(--side-ink) 70%,transparent);font-weight:650;font-size:.85rem;cursor:pointer;white-space:nowrap}
+        .side-toggle i{width:20px;flex:0 0 20px;text-align:center;transition:transform .2s ease}
+        .side-toggle:hover{color:var(--side-ink);border-style:solid}
+        /* Collapsed: an icon rail on larger screens. Labels stay readable to screen readers. */
+        @media(min-width:801px){
+            html.side-collapsed{--side-w:4.75rem}
+            .side-collapsed .side{padding-inline:10px}
+            .side-collapsed .side .label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+            .side-collapsed .side a,.side-collapsed .side-toggle{justify-content:center;padding-inline:0;gap:0}
+            .side-collapsed .side-toggle i{transform:rotate(180deg)}
+            .side-collapsed .nav-label{height:1px;padding:0;margin:12px 8px;overflow:hidden;color:transparent;background:color-mix(in srgb,var(--side-ink) 15%,transparent)}
+            .side-collapsed .side-foot{display:none}
+            .side-collapsed .side .count{position:absolute;top:4px;right:6px;min-width:18px;height:18px;font-size:.62rem;padding:0 4px}
+        }
+        @media(max-width:800px){.side-toggle{display:none}}
 
         .main{padding-block:28px 48px;min-width:0}
         .flash{padding:13px 16px;margin-bottom:20px}
@@ -135,7 +151,7 @@
             @if($unreadCount)<span class="dot" aria-hidden="true">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>@endif
         </a>
         <a class="me-chip" href="{{ route('youth.profile') }}" title="Your profile">
-            <span class="avatar" aria-hidden="true">{{ $initials ?: '🙂' }}</span>
+            <span class="avatar" aria-hidden="true">@if($initials){{ $initials }}@else<i class="fas fa-user"></i>@endif</span>
             <span>{{ $me->name }}</span>
         </a>
         <form method="POST" action="{{ route('logout') }}">@csrf<button class="logout-btn" type="submit" aria-label="Log out" title="Log out"><i class="fas fa-right-from-bracket" aria-hidden="true"></i></button></form>
@@ -143,11 +159,12 @@
 </div>
 <div class="wrap">
     <aside class="side" id="portalSidebar" aria-label="Youth portal navigation">
+        <button class="side-toggle" type="button" data-side-toggle aria-expanded="true" aria-controls="portalSidebar"><i class="fas fa-angles-left" aria-hidden="true"></i><span class="label">Collapse menu</span></button>
         @foreach($nav as $group => $links)
             @if($group)<div class="nav-label">{{ $group }}</div>@endif
             @foreach($links as [$route, $pattern, $icon, $label])
-                <a href="{{ route($route) }}" class="{{ request()->routeIs($pattern) ? 'active' : '' }}" @if(request()->routeIs($pattern)) aria-current="page" @endif>
-                    <i class="fas {{ $icon }}" aria-hidden="true"></i> {{ $label }}
+                <a href="{{ route($route) }}" class="{{ request()->routeIs($pattern) ? 'active' : '' }}" data-tip="{{ $label }}" @if(request()->routeIs($pattern)) aria-current="page" @endif>
+                    <i class="fas {{ $icon }}" aria-hidden="true"></i> <span class="label">{{ $label }}</span>
                     @if($route === 'youth.notifications' && $unreadCount)<span class="count">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>@endif
                 </a>
             @endforeach
@@ -169,5 +186,28 @@
     @endforeach
 </nav>
 @include('partials.mobile-navigation')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.querySelector('[data-side-toggle]');
+    if (!toggle) return;
+    const root = document.documentElement;
+    const apply = collapsed => {
+        root.classList.toggle('side-collapsed', collapsed);
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.querySelector('.label').textContent = collapsed ? 'Expand menu' : 'Collapse menu';
+        toggle.title = collapsed ? 'Expand menu' : 'Collapse menu';
+        // Tooltips only matter when the labels are hidden.
+        document.querySelectorAll('#portalSidebar a[data-tip]').forEach(link => {
+            if (collapsed) link.title = link.dataset.tip; else link.removeAttribute('title');
+        });
+    };
+    apply(root.classList.contains('side-collapsed'));
+    toggle.addEventListener('click', () => {
+        const collapsed = !root.classList.contains('side-collapsed');
+        apply(collapsed);
+        try { localStorage.setItem('cou.sidebar', collapsed ? 'collapsed' : 'expanded'); } catch (e) {}
+    });
+});
+</script>
 </body>
 </html>

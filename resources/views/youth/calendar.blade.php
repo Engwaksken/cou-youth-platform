@@ -24,12 +24,12 @@
                 <span class="date-tile"><b>{{ $starts->format('j') }}</b><small>{{ $starts->format('D') }}</small></span>
                 <span class="item-copy">
                     <strong>{{ $event->title }}</strong>
-                    <small>{{ $starts->format('g:i A') }}@if(!empty($event->venue)) · {{ $event->venue }}@endif</small>
+                    <small>{{ $starts->format('g:i A') }}@if(!empty($event->venue)), {{ $event->venue }}@endif</small>
                 </span>
                 <i class="fas fa-arrow-right" aria-hidden="true"></i>
             </a>
         @empty
-            <div class="card empty-card"><span class="empty-emoji" aria-hidden="true">📅</span><h3>The calendar's clear</h3><p class="muted">New events show up here as soon as they're announced.</p></div>
+            <div class="card empty-card"><span class="empty-emoji" aria-hidden="true"><i class="fas fa-calendar-days"></i></span><h3>The calendar's clear</h3><p class="muted">New events show up here as soon as they're announced.</p></div>
         @endforelse
     </div>
 </section>
@@ -47,12 +47,12 @@
                 <span class="date-tile"><b>{{ $starts->format('j') }}</b><small>{{ $starts->format('D') }}</small></span>
                 <span class="item-copy">
                     <strong>{{ $service->title }}</strong>
-                    <small>{{ $starts->format('g:i A') }}@if(!empty($service->speaker)) · {{ $service->speaker }}@endif</small>
+                    <small>{{ $starts->format('g:i A') }}@if(!empty($service->speaker)), {{ $service->speaker }}@endif</small>
                 </span>
                 <i class="fas fa-play" aria-hidden="true"></i>
             </a>
         @empty
-            <div class="card empty-card"><span class="empty-emoji" aria-hidden="true">🎥</span><h3>No online services scheduled</h3><p class="muted">Check the Watch &amp; listen page for past services in the meantime.</p><a class="btn" href="{{ route('youth.media') }}">Watch &amp; listen</a></div>
+            <div class="card empty-card"><span class="empty-emoji" aria-hidden="true"><i class="fas fa-video"></i></span><h3>No online services scheduled</h3><p class="muted">Check the Watch &amp; listen page for past services in the meantime.</p><a class="btn" href="{{ route('youth.media') }}">Watch &amp; listen</a></div>
         @endforelse
     </div>
 </section>

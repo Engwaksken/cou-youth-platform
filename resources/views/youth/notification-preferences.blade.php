@@ -9,7 +9,13 @@
 <form class="pref-form" method="POST" action="{{ route('youth.notification-preferences.update') }}">
     @csrf @method('PUT')
 
-    <section class="card pref-group">
+    <div data-tabset>
+    <div class="tabset-list" role="tablist" aria-label="Notification settings">
+        <button type="button" role="tab" id="pref-tab-where" aria-controls="pref-where" aria-selected="true"><i class="fas fa-paper-plane" aria-hidden="true"></i> Where you hear from us</button>
+        <button type="button" role="tab" id="pref-tab-what" aria-controls="pref-what" aria-selected="false"><i class="fas fa-list-check" aria-hidden="true"></i> What you hear about</button>
+    </div>
+
+    <section class="card pref-group tabset-panel" role="tabpanel" id="pref-where" aria-labelledby="pref-tab-where">
         <h2>Where</h2>
         @foreach([
             'in_app' => ['In the app', 'Updates show up in your feed here.', 'fa-bell'],
@@ -24,7 +30,7 @@
         @endforeach
     </section>
 
-    <section class="card pref-group">
+    <section class="card pref-group tabset-panel" role="tabpanel" id="pref-what" aria-labelledby="pref-tab-what">
         <h2>What</h2>
         @foreach([
             'events' => ['Events', 'New events, reminders and changes.', 'fa-ticket'],
@@ -40,6 +46,8 @@
             </label>
         @endforeach
     </section>
+
+    </div>
 
     <div class="form-actions">
         <a class="btn btn-ghost" href="{{ route('youth.notifications') }}">Cancel</a>
@@ -57,12 +65,13 @@
 .toggle-copy{flex:1;min-width:0}
 .toggle-copy strong,.toggle-copy small{display:block}
 .toggle-copy small{color:var(--muted);margin-top:2px}
-.switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:52px!important;height:30px!important;min-height:0!important;margin:0;padding:0!important;border-radius:999px;border:1.5px solid var(--ink);background:var(--paper-2);position:relative;cursor:pointer;transition:background .2s ease}
-.switch::after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;border:1.5px solid var(--ink);transition:transform .2s cubic-bezier(.22,1,.36,1)}
+.switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:52px!important;height:30px!important;min-height:0!important;margin:0;padding:0!important;border-radius:999px;border:var(--bw) solid var(--edge);background:var(--paper-2);position:relative;cursor:pointer;transition:background .2s ease}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;border:var(--bw) solid var(--edge);transition:transform .2s cubic-bezier(.22,1,.36,1)}
 .switch:checked{background:var(--leaf)}
 .switch:checked::after{transform:translateX(22px)}
 .switch:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .form-actions{display:flex;justify-content:flex-end;gap:10px}
 @media(max-width:560px){.form-actions .btn{flex:1}}
 </style>
+@include('partials.tabs')
 @endsection

@@ -68,4 +68,19 @@ final class SiteSearchTest extends TestCase
             ->get(route('public.search', ['q' => 'camp']))->assertOk()
             ->assertSee('id="portalSidebar"', false);
     }
+
+    public function test_list_pages_rely_on_the_header_search_instead_of_their_own_box(): void
+    {
+        foreach (['public.events', 'public.courses', 'public.life-groups', 'public.news', 'public.churches'] as $route) {
+            $this->get(route($route))->assertOk()
+                ->assertDontSee('<input name="q"', false)
+                ->assertDontSee('name="q"
+        value=', false)
+                ->assertDontSee('class="active-search"', false);
+
+            $this->get(route($route, ['q' => 'camp']))->assertOk()
+                ->assertSee('class="active-search"', false)
+                ->assertSee('href="'.route($route).'"', false);
+        }
+    }
 }

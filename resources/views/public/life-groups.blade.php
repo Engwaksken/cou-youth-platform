@@ -24,10 +24,7 @@
 <p>Find a youth fellowship or small group where you can build friendships, study Scripture, pray together and serve your community.</p>
 </section>
 
-<form class="filters" method="GET" action="{{ route('public.life-groups') }}">
-<input name="q" value="{{ request('q') }}" placeholder="Search by group, church or meeting location" aria-label="Search Life Groups">
-<button class="btn btn-primary" type="submit"><i class="fas fa-search" aria-hidden="true"></i> Search</button>
-</form>
+@include('partials.active-search', ['route' => 'public.life-groups'])
 
 <div class="grid">
 @forelse($items as $group)

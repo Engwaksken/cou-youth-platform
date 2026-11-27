@@ -23,7 +23,7 @@
         default => "Here's what's good today.",
     };
 
-    $shareText = $verse ? '“'.$verse['text'].'” '.$verse['ref'] : '';
+    $shareText = $verse ? '"'.$verse['text'].'" '.$verse['ref'] : '';
 @endphp
 
 <header class="today-hero">
@@ -89,8 +89,9 @@
 </div>
 
 {{-- Pick up where you left off --}}
-<section class="block">
-    <div class="section-head"><h2>Pick up where you left off</h2><a class="btn btn-ghost" href="{{ route('youth.learning') }}">All my courses <i class="fas fa-arrow-right"></i></a></div>
+<section class="block" data-collapsible="continue">
+    <div class="section-head"><h2><button class="collapse-btn" type="button" aria-expanded="true" aria-controls="dash-continue" data-collapse="continue"><span>Pick up where you left off</span><i class="fas fa-chevron-down" aria-hidden="true"></i></button></h2><a class="btn btn-ghost" href="{{ route('youth.learning') }}">All my courses <i class="fas fa-arrow-right"></i></a></div>
+    <div class="collapse-body" id="dash-continue">
     @if($continueCourse)
         <a class="card continue-card" href="{{ route('public.courses.show', $continueCourse->course) }}">
             <span class="continue-art" aria-hidden="true"><i class="{{ $continueCourse->course->icon_class ?: 'fas fa-book-open' }}"></i></span>
@@ -115,13 +116,15 @@
             <span class="btn btn-primary">Take a look <i class="fas fa-arrow-right"></i></span>
         </a>
     @else
-        <div class="card empty-card"><span class="empty-emoji" aria-hidden="true">🌱</span><h3>No courses on the go</h3><p class="muted">When you start a course it'll show up here so you can jump straight back in.</p><a class="btn btn-primary" href="{{ route('public.courses') }}">Browse courses</a></div>
+        <div class="card empty-card"><span class="empty-emoji" aria-hidden="true"><i class="fas fa-seedling"></i></span><h3>No courses on the go</h3><p class="muted">When you start a course it'll show up here so you can jump straight back in.</p><a class="btn btn-primary" href="{{ route('public.courses') }}">Browse courses</a></div>
     @endif
+    </div>
 </section>
 
 {{-- Coming up --}}
-<section class="block">
-    <div class="section-head"><h2>Coming up</h2><a class="btn btn-ghost" href="{{ route('youth.calendar') }}">Full calendar <i class="fas fa-arrow-right"></i></a></div>
+<section class="block" data-collapsible="coming-up">
+    <div class="section-head"><h2><button class="collapse-btn" type="button" aria-expanded="true" aria-controls="dash-coming-up" data-collapse="coming-up"><span>Coming up</span><i class="fas fa-chevron-down" aria-hidden="true"></i></button></h2><a class="btn btn-ghost" href="{{ route('youth.calendar') }}">Full calendar <i class="fas fa-arrow-right"></i></a></div>
+    <div class="collapse-body" id="dash-coming-up">
     <div class="upcoming">
         @foreach($services as $service)
             @php($starts = \Illuminate\Support\Carbon::parse($service->starts_at))
@@ -130,7 +133,7 @@
                 <span class="up-copy">
                     @if($service->status === 'live')<span class="live-pill"><span class="live-dot"></span> Live now</span>@else<span class="badge">Online</span>@endif
                     <strong>{{ $service->title }}</strong>
-                    <small>{{ $starts->format('D · g:i A') }}@if($service->speaker) · {{ $service->speaker }}@endif</small>
+                    <small>{{ $starts->format('D, g:i A') }}@if($service->speaker), {{ $service->speaker }}@endif</small>
                 </span>
                 <i class="fas fa-play up-go" aria-hidden="true"></i>
             </a>
@@ -142,22 +145,24 @@
                 <span class="up-copy">
                     @if($going)<span class="badge badge-good"><i class="fas fa-check"></i> You're going</span>@endif
                     <strong>{{ $event->title }}</strong>
-                    <small>{{ $event->starts_at?->format('D · g:i A') }}@if($event->venue) · {{ $event->venue }}@endif</small>
+                    <small>{{ $event->starts_at?->format('D, g:i A') }}@if($event->venue), {{ $event->venue }}@endif</small>
                 </span>
                 <i class="fas fa-arrow-right up-go" aria-hidden="true"></i>
             </a>
         @empty
             @if($services->isEmpty())
-                <div class="card empty-card"><span class="empty-emoji" aria-hidden="true">📅</span><h3>Nothing on the calendar yet</h3><p class="muted">New events land here first. Check back soon, or find your local fellowship in the meantime.</p><a class="btn" href="{{ route('youth.life-groups') }}">Find a life group</a></div>
+                <div class="card empty-card"><span class="empty-emoji" aria-hidden="true"><i class="fas fa-calendar-days"></i></span><h3>Nothing on the calendar yet</h3><p class="muted">New events land here first. Check back soon, or find your local fellowship in the meantime.</p><a class="btn" href="{{ route('youth.life-groups') }}">Find a life group</a></div>
             @endif
         @endforelse
+    </div>
     </div>
 </section>
 
 <div class="split">
     {{-- Latest updates --}}
-    <section class="block">
-        <div class="section-head"><h2>From the team</h2><a class="btn btn-ghost" href="{{ route('youth.notifications') }}">See all <i class="fas fa-arrow-right"></i></a></div>
+    <section class="block" data-collapsible="team">
+        <div class="section-head"><h2><button class="collapse-btn" type="button" aria-expanded="true" aria-controls="dash-team" data-collapse="team"><span>From the team</span><i class="fas fa-chevron-down" aria-hidden="true"></i></button></h2><a class="btn btn-ghost" href="{{ route('youth.notifications') }}">See all <i class="fas fa-arrow-right"></i></a></div>
+        <div class="collapse-body" id="dash-team">
         <div class="card updates-card">
             @forelse($notifications as $receipt)
                 <form method="POST" action="{{ route('youth.notifications.read', $receipt) }}" class="update-row {{ $receipt->read_at ? '' : 'unread' }}">
@@ -172,14 +177,16 @@
                     </button>
                 </form>
             @empty
-                <p class="quiet"><span aria-hidden="true">📭</span> All quiet for now. News from your church and the youth team will show up here.</p>
+                <p class="quiet"><i class="fas fa-inbox" aria-hidden="true"></i> All quiet for now. News from your church and the youth team will show up here.</p>
             @endforelse
+        </div>
         </div>
     </section>
 
     {{-- Journey + profile --}}
-    <section class="block">
-        <div class="section-head"><h2>Your journey so far</h2></div>
+    <section class="block" data-collapsible="journey">
+        <div class="section-head"><h2><button class="collapse-btn" type="button" aria-expanded="true" aria-controls="dash-journey" data-collapse="journey"><span>Your journey so far</span><i class="fas fa-chevron-down" aria-hidden="true"></i></button></h2></div>
+        <div class="collapse-body" id="dash-journey">
         <div class="card journey-card">
             <div class="stamps">
                 <a class="stamp s-sun" href="{{ route('youth.life-groups') }}"><b>{{ $stats['life_groups'] }}</b><span>{{ Str::plural('life group', $stats['life_groups']) }}</span></a>
@@ -204,6 +211,7 @@
                 @endif
             </div>
         </div>
+        </div>
     </section>
 </div>
 
@@ -217,10 +225,10 @@
 @endif
 
 <nav class="quick" aria-label="Shortcuts">
-    <a href="{{ route('public.prayer') }}"><span aria-hidden="true">🙏</span> Ask for prayer</a>
-    <a href="{{ route('youth.media') }}"><span aria-hidden="true">🎧</span> Watch & listen</a>
-    <a href="{{ route('youth.life-groups') }}"><span aria-hidden="true">🤝</span> Find your people</a>
-    <a href="{{ route('youth.donations') }}"><span aria-hidden="true">💛</span> Give</a>
+    <a href="{{ route('public.prayer') }}"><i class="fas fa-hands-praying" aria-hidden="true"></i> Ask for prayer</a>
+    <a href="{{ route('youth.media') }}"><i class="fas fa-headphones" aria-hidden="true"></i> Watch & listen</a>
+    <a href="{{ route('youth.life-groups') }}"><i class="fas fa-handshake" aria-hidden="true"></i> Find your people</a>
+    <a href="{{ route('youth.donations') }}"><i class="fas fa-heart" aria-hidden="true"></i> Give</a>
 </nav>
 
 <style>
@@ -234,15 +242,15 @@
 .streak-card{padding:22px;display:flex;flex-direction:column;gap:14px}
 .streak-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .streak-count{display:flex;align-items:center;gap:12px}
-.flame{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:var(--coral-soft);color:var(--coral);font-size:1.7rem;border:1.5px solid var(--ink)}
+.flame{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:var(--coral-soft);color:var(--coral);font-size:1.7rem;border:var(--bw) solid var(--edge)}
 .streak-card.is-done .flame{background:var(--coral);color:#fff;animation:flicker 2.4s ease-in-out infinite}
-@keyframes flicker{0%,100%{transform:rotate(-3deg) scale(1)}50%{transform:rotate(3deg) scale(1.05)}}
+@keyframes flicker{0%,100%{transform:rotate(calc(-3deg * var(--tilt))) scale(1)}50%{transform:rotate(calc(3deg * var(--tilt))) scale(1.05)}}
 .streak-count strong{display:block;font-family:var(--font-display);font-size:2.6rem;line-height:.9;font-weight:800;color:var(--ink)}
 .streak-count span{font-weight:700;color:var(--ink-soft)}
 .week{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .week li{display:flex;flex-direction:column;align-items:center;gap:5px}
 .week .pip{width:100%;max-width:38px;aspect-ratio:1;border-radius:12px;border:1.5px dashed color-mix(in srgb,var(--ink) 25%,var(--line));display:grid;place-items:center;font-size:.8rem}
-.week .done .pip{background:var(--sun);border:1.5px solid var(--ink);color:var(--ink)}
+.week .done .pip{background:var(--sun);border:var(--bw) solid var(--edge);color:var(--ink)}
 .week .today .pip{outline:3px solid color-mix(in srgb,var(--primary) 30%,transparent);outline-offset:2px}
 .week .future .pip{opacity:.45}
 .week small{font-size:.72rem;font-weight:800;color:var(--muted)}
@@ -252,8 +260,7 @@
 .milestone{margin:0;font-size:.85rem;color:var(--muted)}
 .btn-block{width:100%}
 
-.verse-card{padding:24px;background:var(--primary)!important;border-color:var(--ink)!important;color:#fff;display:flex;flex-direction:column;position:relative;overflow:hidden}
-.verse-card::before{content:'“';position:absolute;right:14px;top:-34px;font-family:var(--font-display);font-size:11rem;line-height:1;color:rgba(255,255,255,.1);pointer-events:none}
+.verse-card{padding:24px;background:var(--primary)!important;border-color:var(--edge-strong)!important;color:#fff;display:flex;flex-direction:column;position:relative;overflow:hidden}
 .verse-card .section-kicker{color:var(--ink)!important;background:var(--sun);border-radius:6px;padding:2px 8px;align-self:flex-start}
 .verse-card blockquote{margin:14px 0 18px;flex:1}
 .verse-card blockquote p{margin:0;font-family:var(--font-display);font-size:clamp(1.25rem,2.4vw,1.6rem);line-height:1.3;font-weight:600;letter-spacing:-.015em;color:#fff}
@@ -266,8 +273,18 @@ body .verse-card .btn.btn-ghost{background:transparent;border-color:rgba(255,255
 body .verse-card .btn.btn-ghost:hover,body .verse-card .btn.btn-ghost:focus-visible{background:rgba(255,255,255,.12);border-color:#fff;color:#fff}
 
 .block{margin-bottom:34px}
+.collapse-btn{display:inline-flex;align-items:center;gap:10px;padding:0;border:0;background:none;font:inherit;color:inherit;letter-spacing:inherit;cursor:pointer;text-align:left}
+.collapse-btn i{font-size:.75em;color:var(--muted);transition:transform .2s ease}
+.collapse-btn:hover i{color:var(--ink)}
+.collapse-btn[aria-expanded=false] i{transform:rotate(-90deg)}
+.collapse-btn:focus-visible{outline:3px solid var(--sun);outline-offset:4px;border-radius:8px}
+[data-collapsible].is-collapsed .section-head{margin-bottom:0}
+[data-collapsible].is-collapsed .section-head>.btn{display:none}
+.collapse-body[hidden]{display:none}
+.split .block.is-collapsed .card{flex:0}
+
 .continue-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:18px;padding:18px}
-.continue-art{width:72px;height:72px;border-radius:20px;display:grid;place-items:center;font-size:1.8rem;background:var(--primary-soft);color:var(--primary);border:1.5px solid var(--ink);transform:rotate(-4deg)}
+.continue-art{width:72px;height:72px;border-radius:20px;display:grid;place-items:center;font-size:1.8rem;background:var(--primary-soft);color:var(--primary);border:var(--bw) solid var(--edge);transform:rotate(calc(-4deg * var(--tilt)))}
 .continue-art.alt{background:var(--leaf-soft);color:var(--leaf)}
 .continue-body h3{margin:2px 0 8px;font-size:1.25rem}
 .continue-body p{margin:6px 0 0}
@@ -308,7 +325,7 @@ body .verse-card .btn.btn-ghost:hover,body .verse-card .btn.btn-ghost:focus-visi
 .journey-card{padding:18px;display:flex;flex-direction:column;gap:16px}
 .stamps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .stamp{display:flex;align-items:baseline;gap:8px;padding:14px;border-radius:16px;transition:transform .15s ease}
-.stamp:hover{transform:rotate(-1.5deg) scale(1.02)}
+.stamp:hover{transform:rotate(calc(-1.5deg * var(--tilt))) scale(1.02)}
 .stamp b{font-family:var(--font-display);font-size:1.9rem;line-height:1;color:var(--ink)}
 .stamp span{font-weight:700;color:var(--ink-soft);font-size:.9rem;line-height:1.2}
 .s-sun{background:var(--sun-soft)}.s-coral{background:var(--coral-soft)}.s-leaf{background:var(--leaf-soft)}.s-sky{background:var(--sky-soft)}
@@ -327,7 +344,9 @@ body .verse-card .btn.btn-ghost:hover,body .verse-card .btn.btn-ghost:focus-visi
 
 .quick{display:flex;gap:10px;flex-wrap:wrap}
 .quick a{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-weight:700;color:var(--ink);transition:.15s ease}
-.quick a:hover{border-color:var(--ink);transform:translateY(-2px)}
+.quick a i{color:var(--primary)}
+.quiet i{color:var(--primary);margin-right:4px}
+.quick a:hover{border-color:var(--edge-strong);transform:translateY(-2px)}
 
 @media(max-width:1000px){.today-grid,.split{grid-template-columns:1fr}}
 @media(max-width:620px){
@@ -342,6 +361,26 @@ body .verse-card .btn.btn-ghost:hover,body .verse-card .btn.btn-ghost:focus-visi
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Collapsible sections; remembers what each person folded away.
+    let folded = [];
+    try { folded = JSON.parse(localStorage.getItem('cou.dashboard.collapsed') || '[]'); } catch (_) {}
+    document.querySelectorAll('[data-collapse]').forEach(btn => {
+        const key = btn.dataset.collapse;
+        const body = document.getElementById(btn.getAttribute('aria-controls'));
+        const section = btn.closest('[data-collapsible]');
+        const set = open => {
+            btn.setAttribute('aria-expanded', String(open));
+            body.hidden = !open;
+            section.classList.toggle('is-collapsed', !open);
+        };
+        set(!folded.includes(key));
+        btn.addEventListener('click', () => {
+            const open = btn.getAttribute('aria-expanded') !== 'true';
+            set(open);
+            folded = open ? folded.filter(k => k !== key) : [...new Set([...folded, key])];
+            try { localStorage.setItem('cou.dashboard.collapsed', JSON.stringify(folded)); } catch (_) {}
+        });
+    });
     const share = document.querySelector('[data-share-verse]');
     if (share && navigator.share) {
         share.addEventListener('click', event => {

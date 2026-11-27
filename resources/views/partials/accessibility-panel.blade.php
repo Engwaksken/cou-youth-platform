@@ -29,10 +29,10 @@
         </fieldset>
         <fieldset>
             <legend>Read aloud</legend>
-            <p class="access-help" id="speechHelp">Reads the page’s main text using your browser’s available voice. This is not a replacement for a screen reader.</p>
+            <p class="access-help" id="speechHelp">Reads the page's main text using your browser's available voice. This is not a replacement for a screen reader.</p>
             <div class="access-speech-actions"><button class="btn" id="accessRead" type="button" aria-describedby="speechHelp">Read page</button><button class="btn" id="accessPause" type="button" disabled>Pause</button><button class="btn" id="accessStop" type="button" disabled>Stop</button></div>
         </fieldset>
-        <details class="access-help"><summary>Keyboard &amp; assistive technology help</summary><p>Use Tab and Shift+Tab to move between controls, Enter or Space to activate them, and Escape to close this panel. Use the “Skip to main content” link at the start of the page to bypass navigation.</p><p>Your browser zoom, screen reader, voice control and device accessibility settings remain available. Captions and transcripts depend on the individual media; these settings do not generate them.</p></details>
+        <details class="access-help"><summary>Keyboard &amp; assistive technology help</summary><p>Use Tab and Shift+Tab to move between controls, Enter or Space to activate them, and Escape to close this panel. Use the "Skip to main content" link at the start of the page to bypass navigation.</p><p>Your browser zoom, screen reader, voice control and device accessibility settings remain available. Captions and transcripts depend on the individual media; these settings do not generate them.</p></details>
         <p class="access-status" id="accessStatus" role="status"></p>
         <button class="btn" type="button" id="resetAccessibility">Reset all settings</button>
     </div>

@@ -33,7 +33,7 @@ final class YouthDailyCheckinTest extends TestCase
 
         $this->actingAs($user)->post(route('youth.check-in'))
             ->assertRedirect(route('youth.dashboard'))
-            ->assertSessionHas('success', 'Checked in. Day one, let’s go!');
+            ->assertSessionHas('success', "Checked in. Day one, let's go!");
 
         $this->actingAs($user)->post(route('youth.check-in'))
             ->assertSessionHas('success', "You're already checked in for today. See you tomorrow!");
@@ -68,7 +68,7 @@ final class YouthDailyCheckinTest extends TestCase
         }
 
         $streak = $service->streak($user);
-        $this->assertSame(4, $streak['current'], 'Yesterday’s run is still alive until today ends.');
+        $this->assertSame(4, $streak['current'], "Yesterday's run is still alive until today ends.");
         $this->assertFalse($streak['checked_in_today']);
         $this->assertSame(5, $streak['best']);
         $this->assertSame(7, $streak['next_milestone']);

@@ -21,7 +21,7 @@
     </div>
 </article>
 @else
-<div class="card empty-card"><span class="empty-emoji" aria-hidden="true">📜</span><h3>This year's theme is on its way</h3><p class="muted">It'll be shared here as soon as it's announced.</p></div>
+<div class="card empty-card"><span class="empty-emoji" aria-hidden="true"><i class="fas fa-scroll"></i></span><h3>This year's theme is on its way</h3><p class="muted">It'll be shared here as soon as it's announced.</p></div>
 @endif
 
 @if($past->isNotEmpty())
@@ -40,7 +40,7 @@
 @endif
 
 <style>
-.theme-feature{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);border-radius:var(--r-card);overflow:hidden;background:var(--ink);color:#fff;margin-bottom:38px;border:1.5px solid var(--ink)}
+.theme-feature{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);border-radius:var(--r-card);overflow:hidden;background:var(--ink);color:#fff;margin-bottom:38px;border:var(--bw) solid var(--edge)}
 .theme-feature img{width:100%;height:100%;min-height:280px;object-fit:cover;display:block}
 .theme-feature:not(:has(img)){grid-template-columns:1fr}
 .theme-body{padding:clamp(24px,4vw,44px);position:relative;overflow:hidden}

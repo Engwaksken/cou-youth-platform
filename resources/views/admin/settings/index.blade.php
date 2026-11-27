@@ -8,6 +8,7 @@
 <div data-tabs class="settings-tabs-wrap">
     <div class="tabs settings-tabs" role="tablist" aria-label="Site settings sections">
         <button type="button" class="tab active" data-tab-target="settings-branding"><i class="fas fa-palette"></i> Branding</button>
+        <button type="button" class="tab" data-tab-target="settings-appearance"><i class="fas fa-swatchbook"></i> Appearance</button>
         <button type="button" class="tab" data-tab-target="settings-sms"><i class="fas fa-comment-sms"></i> SMS</button>
         <button type="button" class="tab" data-tab-target="settings-mail"><i class="fas fa-envelope"></i> Email</button>
         <button type="button" class="tab" data-tab-target="settings-backups"><i class="fas fa-database"></i> Backups</button>
@@ -15,23 +16,16 @@
 
     <section id="settings-branding" class="tab-panel active">
         <div class="card settings-card">
-            <div class="settings-section-head"><div><h2><i class="fas fa-palette"></i> Branding & Identity</h2><p>Control the name, mission, vision and visual identity shown across the platform and mobile app.</p></div></div>
+            <div class="settings-section-head"><div><h2><i class="fas fa-palette"></i> Branding & Identity</h2><p>Control the name, mission and vision shown across the platform and mobile app. Logo, favicon, colours and fonts are in the Appearance tab.</p></div></div>
             <div class="form-grid">
                 <label>System name<input name="system_name" placeholder="COU Youth Platform" value="{{ old('system_name', $settings['system_name'] ?? '') }}"></label>
-                <label>Logo<input type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml"><small>Recommended: transparent PNG/WebP or SVG.</small></label>
-                <label>Favicon<input type="file" name="favicon" accept="image/png,image/x-icon,image/svg+xml,image/webp"><small>Recommended square image, at least 32×32.</small></label>
-                <div class="brand-preview">
-                    <span>Current branding preview</span>
-                    <div class="preview-row">
-                        @if(!empty($settings['logo']))<div class="preview-box preview-logo"><img src="{{ asset('storage/'.$settings['logo']) }}" alt="Current logo"></div>@else<div class="preview-box preview-logo preview-empty"><i class="fas fa-image"></i><small>No logo</small></div>@endif
-                        @if(!empty($settings['favicon']))<div class="preview-box preview-favicon"><img src="{{ route('pwa.favicon', ['v' => substr(sha1($settings['favicon']), 0, 10)]) }}" alt="Current favicon"></div>@else<div class="preview-box preview-favicon preview-empty"><i class="fas fa-star"></i></div>@endif
-                    </div>
-                </div>
                 <label class="span-2">Mission<textarea name="mission" rows="4" placeholder="Enter the ministry mission statement">{{ old('mission', $settings['mission'] ?? '') }}</textarea><small>Displayed in the mobile Annual Theme screen.</small></label>
                 <label class="span-2">Vision<textarea name="vision" rows="4" placeholder="Enter the ministry vision statement">{{ old('vision', $settings['vision'] ?? '') }}</textarea><small>Displayed in the mobile Annual Theme screen.</small></label>
             </div>
         </div>
     </section>
+
+    @include('admin.settings._appearance')
 
     <section id="settings-sms" class="tab-panel">
         <div class="card settings-card">
@@ -67,7 +61,7 @@
     </section>
 </div>
 
-<div class="settings-savebar"><span><i class="fas fa-circle-info"></i> Save changes made in Branding, SMS or Email tabs.</span><button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i> Save settings</button></div>
+<div class="settings-savebar"><span><i class="fas fa-circle-info"></i> Save changes made in Branding, Appearance, SMS or Email tabs.</span><button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i> Save settings</button></div>
 </form>
 
 <form id="remoteBackupForm" method="POST" action="{{ route('admin.settings.backup-remote') }}" hidden>

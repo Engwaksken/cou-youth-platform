@@ -19,7 +19,7 @@
 @endif
 
 <section class="hero"><span class="section-kicker">GROW IN FAITH</span><h1>Courses to help you <span class="scribble">grow</span></h1><p>Bible studies and discipleship courses you can work through at your own pace, on your own, with friends or with your life group.</p></section>
-<form class="filters" method="GET"><input name="q" value="{{ request('q') }}" placeholder="Search courses"><button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Search</button></form>
+@include('partials.active-search', ['route' => 'public.courses'])
 
 <div class="grid">
 @forelse($items as $course)
