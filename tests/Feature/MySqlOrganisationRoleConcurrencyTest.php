@@ -383,6 +383,10 @@ class MySqlOrganisationRoleConcurrencyTest extends TestCase
         if ($barrier === false) $this->fail('Could not create race-test barrier.');
         $results = [$barrier.'.a', $barrier.'.b'];
         $children = [];
+        // Forked children inherit open sockets; when a child exits it closes the
+        // parent's MySQL connection under it ("Wrong COM_STMT_PREPARE response
+        // size"). Drop it first so every process opens its own connection.
+        DB::disconnect();
         try {
             foreach ([$firstScope, $secondScope] as $index => $scope) {
                 $pid = pcntl_fork();
