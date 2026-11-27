@@ -15,15 +15,17 @@ final class SiteSearchTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_header_search_is_on_public_and_portal_pages(): void
+    public function test_header_search_icon_and_popup_are_on_public_and_portal_pages(): void
     {
         $this->get(route('home'))->assertOk()
-            ->assertSee('class="header-search"', false)
+            ->assertSee('class="search-trigger" href="'.route('public.search').'" data-search-open', false)
+            ->assertSee('<dialog class="search-dialog" id="searchDialog"', false)
             ->assertSee('action="'.route('public.search').'"', false);
 
         $this->actingAs(User::factory()->create())
             ->get(route('youth.dashboard'))->assertOk()
-            ->assertSee('class="header-search"', false);
+            ->assertSee('data-search-open', false)
+            ->assertSee('id="searchDialog"', false);
     }
 
     public function test_search_finds_published_items_across_kinds_and_hides_unpublished_ones(): void

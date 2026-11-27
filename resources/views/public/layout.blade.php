@@ -73,8 +73,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .chat-quick button{border-radius:999px;border:1.5px solid var(--line);color:var(--ink);font-weight:650}
 .chat-quick button:hover{background:var(--ink);border-color:var(--ink)}
 .platform-footer{background:var(--ink)}
-.mobile-search{display:none;width:44px;height:44px;border-radius:14px;border:1.5px solid var(--line);place-items:center;color:var(--ink);background:#fff}
-@media(max-width:900px){.mobile-search{display:grid}.nav>.header-search{display:none}}
+@media(max-width:900px){.nav>.search-trigger{order:1}.nav>.mobile-menu-toggle{order:2}}
 .platform-footer-column h2{font-family:var(--font-display);color:var(--sun)}
 body{display:flex;flex-direction:column;min-height:100dvh}
 body>.container{flex:1}
@@ -94,7 +93,6 @@ body>.container{flex:1}
 @endif
 <span class="brand-name">{{ $platformBrand['short_name'] ?? 'COU Youth Platform' }}</span>
 </a>
-<a class="mobile-search" href="{{ route('public.search') }}" aria-label="Search"><i class="fas fa-magnifying-glass" aria-hidden="true"></i></a>
 <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open navigation menu" aria-controls="mainNav" aria-expanded="false"><i class="fas fa-bars" aria-hidden="true"></i></button>
 <div class="nav-links">
 @foreach([['public.news','public.news*','Stories'],['public.events','public.events*','Events'],['public.courses','public.courses*','Courses'],['public.life-groups','public.life-groups*','Life groups'],['public.churches','public.churches*','Find a church'],['public.donate','public.donate*','Give'],['public.about','public.about','About']] as [$navRoute, $navPattern, $navLabel])<a href="{{ route($navRoute) }}" @if(request()->routeIs($navPattern)) aria-current="page" @endif>{{ $navLabel }}</a>@endforeach
