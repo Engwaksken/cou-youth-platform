@@ -70,7 +70,8 @@
 
                         <div class="form-field">
                             <label for="password_confirmation">Confirm password</label>
-                            <input id="password_confirmation" class="field" type="password" name="password_confirmation" placeholder="Type it again" required autocomplete="new-password">
+                            <input id="password_confirmation" class="field" type="password" name="password_confirmation" placeholder="Type it again" required autocomplete="new-password" aria-describedby="passwordMatchHint">
+                            <small id="passwordMatchHint" class="password-match" aria-live="polite"></small>
                         </div>
                     </div>
 
@@ -305,6 +306,10 @@
     .field::placeholder { color: #98a2b3; }
     .field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 13%, transparent); }
     .form-field small { display: block; margin-top: 6px; color: #667085; line-height: 1.4; }
+    .form-field small.password-match:empty { display: none; }
+    .form-field small.password-match.is-match { color: #067647; font-weight: 600; }
+    .form-field small.password-match.is-mismatch { color: #b42318; font-weight: 600; }
+    .field.is-mismatch { border-color: #b42318 !important; }
 
     .guardian-intro {
         display: flex;
@@ -384,6 +389,31 @@
         const panels = Array.from(document.querySelectorAll('.register-panel'));
         const accountPanel = document.getElementById('account-panel');
         const profilePanel = document.getElementById('profile-panel');
+        const passwordInput = document.getElementById('password');
+        const confirmInput = document.getElementById('password_confirmation');
+        const matchHint = document.getElementById('passwordMatchHint');
+
+        // Keep "Confirm password" invalid while it differs from "Password", so the
+        // step checks (reportValidity) refuse to move on until they match.
+        function checkPasswordMatch() {
+            if (!passwordInput || !confirmInput || !matchHint) return true;
+
+            const confirmValue = confirmInput.value;
+            const matches = confirmValue === passwordInput.value;
+
+            confirmInput.setCustomValidity(confirmValue !== '' && !matches ? "Passwords don't match." : '');
+            confirmInput.classList.toggle('is-mismatch', confirmValue !== '' && !matches);
+            matchHint.classList.toggle('is-match', confirmValue !== '' && matches);
+            matchHint.classList.toggle('is-mismatch', confirmValue !== '' && !matches);
+            matchHint.textContent = confirmValue === ''
+                ? ''
+                : (matches ? 'Passwords match.' : "Passwords don't match.");
+
+            return confirmValue === '' || matches;
+        }
+
+        passwordInput?.addEventListener('input', checkPasswordMatch);
+        confirmInput?.addEventListener('input', checkPasswordMatch);
 
         function activatePanel(panelId) {
             tabs.forEach(function (tab) {
@@ -405,6 +435,7 @@
 
         function validatePanel(panel) {
             if (!panel) return true;
+            if (panel === accountPanel) checkPasswordMatch();
             const requiredInputs = Array.from(panel.querySelectorAll('[required]'));
             const invalid = requiredInputs.find(function (input) { return !input.reportValidity(); });
             return !invalid;
@@ -435,7 +466,19 @@
             activatePanel('profile-panel');
         });
 
-        @if($errors->has('guardian_name') || $errors->has('guardian_relationship') || $errors->has('guardian_phone') || $errors->has('guardian_email') || $errors->has('guardian_confirmed'))
+        // Last line of defence before submitting: the browser cannot point at an
+        // invalid field inside a hidden step, so reopen the account step first.
+        document.getElementById('registrationForm')?.addEventListener('submit', function (event) {
+            if (!checkPasswordMatch() || confirmInput?.value === '') {
+                event.preventDefault();
+                activatePanel('account-panel');
+                confirmInput?.reportValidity();
+            }
+        });
+
+        @if($errors->has('password'))
+            activatePanel('account-panel');
+        @elseif($errors->has('guardian_name') || $errors->has('guardian_relationship') || $errors->has('guardian_phone') || $errors->has('guardian_email') || $errors->has('guardian_confirmed'))
             activatePanel('guardian-panel');
         @elseif($errors->has('date_of_birth') || $errors->has('diocese_id') || $errors->has('school_institution'))
             activatePanel('profile-panel');

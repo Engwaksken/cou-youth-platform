@@ -92,6 +92,25 @@ class YouthDioceseTest extends TestCase
         $this->assertDatabaseHas('youth_profiles', ['diocese_id' => $this->dioceseId()]);
     }
 
+    public function test_signup_checks_that_passwords_match(): void
+    {
+        $this->get('/signup')
+            ->assertOk()
+            ->assertSee('id="passwordMatchHint"', false)
+            ->assertSee('checkPasswordMatch', false);
+
+        $this->post('/signup', [
+            'name' => 'Youth Member',
+            'email' => 'youth@example.com',
+            'date_of_birth' => now()->subYears(20)->toDateString(),
+            'diocese_id' => $this->dioceseId(),
+            'password' => 'StrongPass123',
+            'password_confirmation' => 'StrongPass124',
+        ])->assertSessionHasErrors('password');
+
+        $this->assertGuest();
+    }
+
     public function test_admin_can_filter_users_by_diocese(): void
     {
         $this->youthIn($this->dioceseId('Namirembe Diocese'), 'Namirembe Youth');
