@@ -12,78 +12,161 @@
         $primary = '#4B2E83';
         $secondary = '#204F78';
     }
+
+    $me = auth()->user();
+    $firstName = \Illuminate\Support\Str::of($me->name)->trim()->explode(' ')->first() ?: $me->name;
+    $initials = \Illuminate\Support\Str::of($me->name)->trim()->explode(' ')->filter()->take(2)
+        ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
+
+    try {
+        $unreadCount = \App\Models\PlatformNotificationReceipt::query()->where('user_id', $me->id)->whereNull('read_at')->count();
+    } catch (\Throwable $e) {
+        $unreadCount = 0;
+    }
+
+    $nav = [
+        null => [
+            ['youth.dashboard', 'youth.dashboard', 'fa-house', 'Home'],
+        ],
+        'Grow' => [
+            ['youth.learning', 'youth.learning', 'fa-book-open', 'My learning'],
+            ['youth.certificates', 'youth.certificates', 'fa-award', 'Certificates'],
+            ['youth.annual-theme', 'youth.annual-theme', 'fa-book-bible', 'This year’s theme'],
+        ],
+        'Together' => [
+            ['youth.events', 'youth.events*', 'fa-ticket', 'My events'],
+            ['youth.calendar', 'youth.calendar', 'fa-calendar-days', 'Calendar'],
+            ['youth.life-groups', 'youth.life-groups*', 'fa-people-group', 'Life groups'],
+            ['public.prayer', 'public.prayer*', 'fa-hands-praying', 'Prayer'],
+        ],
+        'Watch & give' => [
+            ['youth.media', 'youth.media', 'fa-circle-play', 'Watch & listen'],
+            ['youth.donations', 'youth.donations*', 'fa-hand-holding-heart', 'Give'],
+        ],
+        'You' => [
+            ['youth.profile', 'youth.profile*', 'fa-user', 'Profile'],
+            ['youth.notifications', 'youth.notifications', 'fa-bell', 'Updates'],
+            ['youth.notification-preferences', 'youth.notification-preferences*', 'fa-sliders', 'Settings'],
+        ],
+    ];
 @endphp
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'COU Youth Portal')</title>
+    <meta name="theme-color" content="#fbf6ee">
+    <title>@yield('title', 'COU Youth')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
-        :root{--primary:{{ $primary }};--primary-light:color-mix(in srgb, {{ $primary }} 16%, #fff 84%);--primary-soft:color-mix(in srgb, {{ $primary }} 9%, #fff 91%);--secondary:{{ $secondary }};--bg:#f6f7fb;--surface:#fff;--surface-soft:#fbfaff;--border:#e7e9f0;--text:#182230;--muted:#667085;--shadow-sm:0 8px 28px rgba(16,24,40,.05);--shadow-md:0 12px 34px rgba(16,24,40,.07)}
-        *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:'DM Sans',Arial,sans-serif;background:linear-gradient(180deg,#f8f9fd 0,#f4f6fb 100%);color:var(--text)}a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}
-        .top{height:var(--top-h);background:rgba(255,255,255,.96);backdrop-filter:blur(12px);padding:0 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}.top-left{display:flex;align-items:center;gap:10px;min-width:0}.brand{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--primary);min-width:0;max-width:min(26.875rem,45vw)}.brand-logo-shell{width:42px;height:42px;min-width:42px;border:1px solid var(--border);border-radius:12px;background:#fff;display:grid;place-items:center;overflow:hidden;box-shadow:0 5px 18px rgba(16,24,40,.08)}.brand-logo{width:100%;height:100%;object-fit:contain;padding:3px}.brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top-actions{display:flex;align-items:center;gap:10px}.user-name{font-weight:700;color:#344054}.icon-btn{border:1px solid var(--border);background:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;color:#475467}.mobile-menu-btn{display:none}
-        .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer;background:#fff;transition:.18s ease}.btn:hover{transform:translateY(-1px)}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--secondary)}.btn-light{border-color:var(--border);color:#344054}.btn-wide{width:100%}
-        .wrap{display:grid}.side{background:var(--primary);padding:16px 13px 22px;position:sticky;overflow:auto;color:#fff;box-shadow:10px 0 35px rgba(30,20,65,.08);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.3) transparent}.side-brand{display:flex;align-items:center;gap:10px;margin:0 3px 12px;padding:11px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.1);min-width:0}.side-brand .brand-logo-shell{width:40px;height:40px;min-width:40px;box-shadow:none;border-color:rgba(255,255,255,.2)}.side-brand-copy{min-width:0}.side-brand-copy strong,.side-brand-copy small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}.side-brand-copy strong{font-size:0.8125rem}.side-brand-copy small{font-size:0.6875rem;margin-top:2px;opacity:.78}.nav-label{font-size:0.625rem;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.11em;padding:15px 12px 6px}.side a,.side button{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;margin:2px 0;border:0;border-radius:10px;color:#fff;background:transparent;font:inherit;font-weight:600;font-size:0.875rem;text-align:left;cursor:pointer;transition:.18s ease}.side a i,.side button i{width:20px;text-align:center;color:#fff;font-size:0.9375rem;opacity:.9}.side a:hover,.side a.active,.side button:hover{background:var(--primary-light);color:var(--primary);transform:translateX(2px)}.side a:hover i,.side a.active i,.side button:hover i{color:var(--primary);opacity:1}.side form{margin:0}
-        .main{padding:25px;min-width:0}.flash{padding:13px 15px;border-radius:11px;margin-bottom:16px;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534}.hero{padding:6px 0 24px}.hero h1{font-size:clamp(2rem,4vw,3rem);line-height:1.1;margin:0 0 10px;color:#171225}.hero p{color:var(--muted);font-size:1.02rem;max-width:47.5rem;margin:0}.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow-sm)}.card:hover{box-shadow:var(--shadow-md)}.muted{color:var(--muted)}.badge{display:inline-flex;padding:4px 8px;border-radius:999px;background:var(--primary-light);color:var(--primary);font-size:0.75rem;font-weight:800}.pagination{margin-top:20px}.section-kicker{font-size:.74rem;font-weight:900;letter-spacing:.12em;color:var(--primary)}
-        .page-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 20px}.page-stat{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:16px;padding:15px;box-shadow:var(--shadow-sm);min-width:0}.page-stat:nth-child(4n+2){border-left-color:#15803d}.page-stat:nth-child(4n+3){border-left-color:#2563eb}.page-stat:nth-child(4n+4){border-left-color:#9333ea}.page-stat-icon,.stat-icon{width:44px;height:44px;min-width:44px;min-height:44px;border-radius:11px;display:flex!important;align-items:center!important;justify-content:center!important;background:var(--primary-light);color:var(--primary);font-size:1.0625rem;line-height:1!important;padding:0!important;text-align:center!important;overflow:hidden}.page-stat-icon i,.stat-icon i{display:block!important;width:auto!important;height:auto!important;line-height:1!important;margin:0!important;padding:0!important;position:static!important;transform:none!important;text-align:center!important}.page-stat strong{display:block;font-size:1.3rem;line-height:1.1}.page-stat span{display:block;color:var(--muted);font-size:.78rem;margin-top:3px}.side-backdrop{display:none}
-        @media(max-width:1100px){.page-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-        @media(max-width:800px){.wrap{grid-template-columns:1fr}.side{display:none}.side.open{display:block;position:fixed;top:var(--top-h);left:0;bottom:0;width:min(var(--side-w),calc(100vw - 32px));height:calc(100dvh - var(--top-h));z-index:90;box-shadow:18px 0 45px rgba(0,0,0,.25)}.mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center}.main{padding:16px}.top{padding:0 14px}.top .user-name{display:none}.brand{max-width:52vw}.brand-text{max-width:9.0625rem}.side-backdrop.open{display:block;position:fixed;inset:var(--top-h) 0 0;background:rgba(15,23,42,.5);z-index:80}}
-        @media(max-width:560px){.page-stats{grid-template-columns:1fr}}
+        :root{--primary:{{ $primary }};--secondary:{{ $secondary }};--shadow-sm:none;--shadow-md:none}
+        *{box-sizing:border-box}html,body{margin:0;min-height:100%}a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}
+        .top{height:var(--top-h);background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1.5px solid var(--line);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+        .top-left{display:flex;align-items:center;gap:10px;min-width:0}
+        .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink);min-width:0;max-width:min(26rem,45vw)}
+        .brand-logo-shell{width:42px;height:42px;min-width:42px;border:1.5px solid var(--ink);border-radius:13px;background:#fff;display:grid;place-items:center;overflow:hidden;color:var(--primary)}
+        .brand-logo{width:100%;height:100%;object-fit:contain;padding:3px}.brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .top-actions{display:flex;align-items:center;gap:8px}
+        .bell{position:relative;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:.15s ease}
+        .bell:hover{border-color:var(--ink)}
+        .bell .dot{position:absolute;top:-4px;right:-4px;min-width:21px;height:21px;padding:0 5px;border-radius:999px;background:var(--coral);color:#fff;font-size:.7rem;font-weight:800;display:grid;place-items:center;border:2px solid var(--paper)}
+        .me-chip{display:inline-flex;align-items:center;gap:9px;padding:4px 14px 4px 4px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-weight:700;color:var(--ink);transition:.15s ease}
+        .me-chip:hover{border-color:var(--ink)}
+        .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--sun);color:var(--ink);font-family:var(--font-display);font-weight:800;font-size:.85rem;border:1.5px solid var(--ink)}
+        .logout-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;display:grid;place-items:center}
+        .logout-btn:hover{border-color:var(--ink);color:var(--ink)}
+        .mobile-menu-btn{display:none}
+
+        .wrap{display:grid}
+        .side{background:var(--paper-2);border-right:1.5px solid var(--line);padding:18px 14px 28px;position:sticky;overflow:auto;scrollbar-width:thin}
+        .side-brand{display:none}
+        .nav-label{font-size:.78rem;font-weight:700;color:var(--muted);padding:16px 12px 6px}
+        .side a{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin:2px 0;border:1.5px solid transparent;border-radius:14px;color:var(--ink-soft);font-weight:600;font-size:.95rem;transition:background .15s ease,color .15s ease,border-color .15s ease}
+        .side a i{width:20px;text-align:center;color:var(--muted);transition:color .15s ease}
+        .side a:hover{background:color-mix(in srgb,#fff 70%,transparent);color:var(--ink)}
+        .side a:hover i{color:var(--primary)}
+        .side a.active{background:#fff;border-color:var(--ink);color:var(--ink);font-weight:750;box-shadow:3px 3px 0 var(--ink)}
+        .side a.active i{color:var(--primary)}
+        .side .count{margin-left:auto;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--coral);color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center}
+        .side-foot{margin:22px 4px 0;padding:14px;border-radius:16px;background:#fff;border:1.5px dashed var(--line);font-size:.86rem;color:var(--ink-soft)}
+        .side-foot a{display:inline-flex;width:auto;padding:0;margin:6px 0 0;border:0;color:var(--primary);font-weight:700;background:none!important;box-shadow:none!important}
+        .side-foot a i{color:var(--primary)}
+
+        .main{padding-block:28px 48px;min-width:0}
+        .flash{padding:13px 16px;margin-bottom:20px}
+        /* Defaults older pages (giving, prayer) still rely on. */
+        .card{padding:18px}.btn-wide{width:100%}.pagination{margin-top:20px}
+        body .btn.btn-light{border-color:var(--line);color:var(--ink)}
+
+        .tabbar{display:none}
+        @media(max-width:800px){
+            .wrap{grid-template-columns:1fr}.side{display:none}
+            .side.open{display:block;position:fixed;top:var(--top-h);left:0;bottom:0;width:min(var(--side-w),calc(100vw - 32px));height:calc(100dvh - var(--top-h));z-index:90}
+            .mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center}
+            .main{padding-block:18px calc(96px + env(safe-area-inset-bottom))}
+            .me-chip{display:none}.brand{max-width:52vw}
+            .branded-menu-toggle{border:1.5px solid var(--line)!important;border-radius:14px!important;color:var(--ink)!important}
+            .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:95;background:var(--ink);border-radius:22px;padding:6px;box-shadow:0 10px 30px rgba(29,21,48,.25)}
+            .tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;border-radius:16px;color:rgba(255,255,255,.7);font-size:.7rem;font-weight:700}
+            .tabbar a i{font-size:1.1rem}
+            .tabbar a.active{background:var(--sun);color:var(--ink)}
+            body.mobile-nav-open .tabbar{display:none}
+        }
     </style>
     @include('partials.platform-layout-styles')
     @include('partials.form-control-styles')
+    @include('partials.youth-theme')
 </head>
 <body>
 <div class="top">
     <div class="top-left">
         <x-mobile-menu-button :title="$sysName" :logo="$sysLogoUrl" controls="portalSidebar" />
         <a class="brand" href="{{ route('youth.dashboard') }}">
-            @if(!empty($sysLogoUrl))<span class="brand-logo-shell"><img class="brand-logo" src="{{ $sysLogoUrl }}" alt="{{ $sysName }} logo"></span>@else<span class="brand-logo-shell"><i class="fas fa-church" style="color:var(--primary)"></i></span>@endif
+            @if(!empty($sysLogoUrl))<span class="brand-logo-shell"><img class="brand-logo" src="{{ $sysLogoUrl }}" alt="{{ $sysName }} logo"></span>@else<span class="brand-logo-shell"><i class="fas fa-church"></i></span>@endif
             <span class="brand-text">{{ $sysName }}</span>
         </a>
     </div>
     <div class="top-actions">
-        <span class="user-name">Welcome, {{ auth()->user()->name }}</span>
-        <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-light" type="submit" aria-label="Logout"><i class="fas fa-right-from-bracket" aria-hidden="true"></i><span class="logout-label">Logout</span></button></form>
+        <a class="bell" href="{{ route('youth.notifications') }}" aria-label="Updates{{ $unreadCount ? ', '.$unreadCount.' new' : '' }}">
+            <i class="fas fa-bell" aria-hidden="true"></i>
+            @if($unreadCount)<span class="dot" aria-hidden="true">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>@endif
+        </a>
+        <a class="me-chip" href="{{ route('youth.profile') }}" title="Your profile">
+            <span class="avatar" aria-hidden="true">{{ $initials ?: '🙂' }}</span>
+            <span>{{ $me->name }}</span>
+        </a>
+        <form method="POST" action="{{ route('logout') }}">@csrf<button class="logout-btn" type="submit" aria-label="Log out" title="Log out"><i class="fas fa-right-from-bracket" aria-hidden="true"></i></button></form>
     </div>
 </div>
 <div class="wrap">
     <aside class="side" id="portalSidebar" aria-label="Youth portal navigation">
-        <div class="side-brand">@if(!empty($sysLogoUrl))<span class="brand-logo-shell"><img class="brand-logo" src="{{ $sysLogoUrl }}" alt=""></span>@else<span class="brand-logo-shell"><i class="fas fa-church" style="color:var(--primary)"></i></span>@endif<div class="side-brand-copy"><strong>{{ $brand['short_name'] ?? 'COU Youth Platform' }}</strong><small>{{ $brand['tagline'] ?? 'Connect • Grow • Serve' }}</small></div></div>
-        <div class="nav-label">Overview</div>
-        <a href="{{ route('youth.dashboard') }}" class="{{ request()->routeIs('youth.dashboard') ? 'active' : '' }}"><i class="fas fa-gauge-high"></i> Dashboard</a>
-        <a href="{{ route('home') }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-up-right-from-square"></i> Public Website</a>
-        <div class="nav-label">My Account</div>
-        <a href="{{ route('youth.profile') }}" class="{{ request()->routeIs('youth.profile*') ? 'active' : '' }}"><i class="fas fa-user-pen"></i> My Profile</a>
-        <a href="{{ route('youth.notifications') }}" class="{{ request()->routeIs('youth.notifications*') ? 'active' : '' }}"><i class="fas fa-bell"></i> Notifications</a>
-        <a href="{{ route('youth.notification-preferences') }}" class="{{ request()->routeIs('youth.notification-preferences*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Preferences</a>
-        <div class="nav-label">Growth & Community</div>
-        <a href="{{ route('youth.learning') }}" class="{{ request()->routeIs('youth.learning') ? 'active' : '' }}"><i class="fas fa-graduation-cap"></i> My Learning</a>
-        <a href="{{ route('youth.life-groups') }}" class="{{ request()->routeIs('youth.life-groups*') ? 'active' : '' }}"><i class="fas fa-people-group"></i> Life Groups</a>
-        <a href="{{ route('youth.events') }}" class="{{ request()->routeIs('youth.events*') ? 'active' : '' }}"><i class="fas fa-calendar-check"></i> My Events</a>
-        <a href="{{ route('youth.calendar') }}" class="{{ request()->routeIs('youth.calendar') ? 'active' : '' }}"><i class="fas fa-calendar-days"></i> Calendar</a>
-        <a href="{{ route('youth.certificates') }}" class="{{ request()->routeIs('youth.certificates') ? 'active' : '' }}"><i class="fas fa-certificate"></i> Certificates</a>
-        <a href="{{ route('public.prayer') }}" class="{{ request()->routeIs('public.prayer*') ? 'active' : '' }}"><i class="fas fa-hands-praying"></i> Prayer Support</a>
-        <div class="nav-label">Resources</div>
-        <a href="{{ route('youth.annual-theme') }}" class="{{ request()->routeIs('youth.annual-theme') ? 'active' : '' }}"><i class="fas fa-book-bible"></i> Annual Theme</a>
-        <a href="{{ route('youth.media') }}" class="{{ request()->routeIs('youth.media') ? 'active' : '' }}"><i class="fas fa-photo-film"></i> Media & Services</a>
-        <a href="{{ route('youth.donations') }}" class="{{ request()->routeIs('youth.donations*') ? 'active' : '' }}"><i class="fas fa-hand-holding-heart"></i> Donate & History</a>
-        @if(!empty($brand['support_email']))
-            <a href="mailto:{{ $brand['support_email'] }}"><i class="fas fa-envelope"></i> Contact Support</a>
-        @endif
+        @foreach($nav as $group => $links)
+            @if($group)<div class="nav-label">{{ $group }}</div>@endif
+            @foreach($links as [$route, $pattern, $icon, $label])
+                <a href="{{ route($route) }}" class="{{ request()->routeIs($pattern) ? 'active' : '' }}" @if(request()->routeIs($pattern)) aria-current="page" @endif>
+                    <i class="fas {{ $icon }}" aria-hidden="true"></i> {{ $label }}
+                    @if($route === 'youth.notifications' && $unreadCount)<span class="count">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>@endif
+                </a>
+            @endforeach
+        @endforeach
+        <div class="side-foot">
+            Looking for something else?
+            <a href="{{ route('home') }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-up-right-from-square"></i>&nbsp;Main website</a>
+            @if(!empty($brand['support_email']))<br><a href="mailto:{{ $brand['support_email'] }}"><i class="fas fa-envelope"></i>&nbsp;Message the team</a>@endif
+        </div>
     </aside>
     <div class="mobile-nav-backdrop" data-mobile-nav-backdrop aria-hidden="true"></div>
     <div class="portal-content">
         <main class="main" id="main-content">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('youth_content')</main>
     </div>
 </div>
+<nav class="tabbar" aria-label="Quick navigation">
+    @foreach([['youth.dashboard','youth.dashboard','fa-house','Home'],['youth.learning','youth.learning','fa-book-open','Learn'],['youth.events','youth.events*','fa-ticket','Events'],['youth.life-groups','youth.life-groups*','fa-people-group','Groups'],['youth.profile','youth.profile*','fa-user','Me']] as [$route, $pattern, $icon, $label])
+        <a href="{{ route($route) }}" class="{{ request()->routeIs($pattern) ? 'active' : '' }}" @if(request()->routeIs($pattern)) aria-current="page" @endif><i class="fas {{ $icon }}" aria-hidden="true"></i>{{ $label }}</a>
+    @endforeach
+</nav>
 @include('partials.mobile-navigation')
 </body>
 </html>

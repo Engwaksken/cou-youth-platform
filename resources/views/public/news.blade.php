@@ -48,7 +48,7 @@
 
 
 <section class="hero">
-    <h1>News & Resources</h1>
+    <h1>Stories &amp; <span class="scribble">resources</span></h1>
     <p>
         Devotionals, stories and opportunities from youth ministry across the Church of Uganda.
     </p>

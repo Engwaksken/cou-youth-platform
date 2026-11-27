@@ -1,34 +1,90 @@
 @extends('youth.layout')
 @section('title', 'Calendar | COU Youth')
 @section('youth_content')
-@php
-    $eventCount = $events->count();
-    $serviceCount = $services->count();
-    $thisMonthEvents = $events->filter(fn($event) => \Illuminate\Support\Carbon::parse($event->starts_at)->isSameMonth(now()))->count();
-    $thisMonthServices = $services->filter(fn($service) => \Illuminate\Support\Carbon::parse($service->starts_at)->isSameMonth(now()))->count();
-@endphp
-<section class="hero"><span class="section-kicker">CALENDAR</span><h1>Youth calendar</h1><p>See upcoming youth events and online services in one place.</p></section>
-<div class="page-stats">
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-calendar-days"></i></span><div><strong>{{ $eventCount }}</strong><span>Events listed</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-video"></i></span><div><strong>{{ $serviceCount }}</strong><span>Online services</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-calendar-check"></i></span><div><strong>{{ $thisMonthEvents }}</strong><span>Events this month</span></div></div>
-    <div class="page-stat"><span class="page-stat-icon"><i class="fas fa-clock"></i></span><div><strong>{{ $thisMonthServices }}</strong><span>Services this month</span></div></div>
+<section class="hero">
+    <h1>What's <span class="scribble">on</span></h1>
+    <p>Events and online services, in date order. Tap one for the details.</p>
+</section>
+
+<div class="calendar-tabs" role="tablist" aria-label="Calendar view">
+    <button class="tab active" data-tab="events" type="button" role="tab" aria-selected="true" aria-controls="tab-events"><i class="fas fa-calendar-days"></i> Events <span>{{ $events->count() }}</span></button>
+    <button class="tab" data-tab="services" type="button" role="tab" aria-selected="false" aria-controls="tab-services"><i class="fas fa-circle-play"></i> Online <span>{{ $services->count() }}</span></button>
 </div>
-<div class="calendar-tabs" role="tablist"><button class="tab active" data-tab="events" type="button"><i class="fas fa-calendar-days"></i> Events <span>{{ $events->count() }}</span></button><button class="tab" data-tab="services" type="button"><i class="fas fa-video"></i> Online Services <span>{{ $services->count() }}</span></button></div>
-<section class="tab-panel active" id="tab-events"><div class="calendar-list">
-@forelse($events as $event)
-<article class="card calendar-item"><div class="date-box"><strong>{{ \Illuminate\Support\Carbon::parse($event->starts_at)->format('d') }}</strong><span>{{ \Illuminate\Support\Carbon::parse($event->starts_at)->format('M') }}</span></div><div><h3>{{ $event->title }}</h3><p class="muted"><i class="fas fa-clock"></i> {{ \Illuminate\Support\Carbon::parse($event->starts_at)->format('D, d M Y · H:i') }}</p>@if(!empty($event->venue))<p class="muted"><i class="fas fa-location-dot"></i> {{ $event->venue }}</p>@endif</div><a class="btn" href="{{ route('public.events.show',$event->id) }}">View</a></article>
-@empty
-<div class="card empty-card">No published events are available.</div>
-@endforelse
-</div></section>
-<section class="tab-panel" id="tab-services"><div class="calendar-list">
-@forelse($services as $service)
-<article class="card calendar-item"><div class="date-box"><strong>{{ \Illuminate\Support\Carbon::parse($service->starts_at)->format('d') }}</strong><span>{{ \Illuminate\Support\Carbon::parse($service->starts_at)->format('M') }}</span></div><div><h3>{{ $service->title }}</h3><p class="muted"><i class="fas fa-clock"></i> {{ \Illuminate\Support\Carbon::parse($service->starts_at)->format('D, d M Y · H:i') }}</p>@if(!empty($service->speaker))<p class="muted"><i class="fas fa-user"></i> {{ $service->speaker }}</p>@endif</div><a class="btn btn-primary" href="{{ $service->stream_url }}" target="_blank" rel="noopener noreferrer">Open</a></article>
-@empty
-<div class="card empty-card">No scheduled online services are available.</div>
-@endforelse
-</div></section>
-<style>.calendar-tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto}.tab{border:0;background:transparent;padding:11px 14px;font-weight:800;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}.tab:hover,.tab.active{color:var(--primary);background:var(--primary-soft)}.tab.active{border-color:var(--primary)}.tab span{display:inline-flex;min-width:22px;height:22px;align-items:center;justify-content:center;border-radius:999px;background:var(--primary-light);font-size:.75rem;margin-left:5px}.tab-panel{display:none}.tab-panel.active{display:block}.calendar-list{display:grid;gap:12px}.calendar-item{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}.calendar-item h3{margin:0 0 5px}.calendar-item p{margin:3px 0}.date-box{width:60px;height:60px;border-radius:12px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;align-content:center}.date-box strong{font-size:1.3rem;line-height:1}.date-box span{font-size:.75rem;font-weight:800;text-transform:uppercase}.empty-card{text-align:center}@media(max-width:620px){.calendar-item{grid-template-columns:auto 1fr}.calendar-item>.btn{grid-column:1/-1;width:100%}}</style>
-<script>document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.calendar-tabs .tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.calendar-tabs .tab').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+btn.dataset.tab)?.classList.add('active')}))});</script>
+
+<section class="tab-panel active" id="tab-events" role="tabpanel">
+    @php($lastMonth = null)
+    <div class="calendar-list">
+        @forelse($events as $event)
+            @php($starts = \Illuminate\Support\Carbon::parse($event->starts_at))
+            @if($lastMonth !== $starts->format('Y-m'))
+                @php($lastMonth = $starts->format('Y-m'))
+                <h2 class="month">{{ $starts->format('F Y') }}</h2>
+            @endif
+            <a class="card calendar-item" href="{{ route('public.events.show', $event->id) }}">
+                <span class="date-tile"><b>{{ $starts->format('j') }}</b><small>{{ $starts->format('D') }}</small></span>
+                <span class="item-copy">
+                    <strong>{{ $event->title }}</strong>
+                    <small>{{ $starts->format('g:i A') }}@if(!empty($event->venue)) · {{ $event->venue }}@endif</small>
+                </span>
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </a>
+        @empty
+            <div class="card empty-card"><span class="empty-emoji" aria-hidden="true">📅</span><h3>The calendar's clear</h3><p class="muted">New events show up here as soon as they're announced.</p></div>
+        @endforelse
+    </div>
+</section>
+
+<section class="tab-panel" id="tab-services" role="tabpanel">
+    @php($lastMonth = null)
+    <div class="calendar-list">
+        @forelse($services as $service)
+            @php($starts = \Illuminate\Support\Carbon::parse($service->starts_at))
+            @if($lastMonth !== $starts->format('Y-m'))
+                @php($lastMonth = $starts->format('Y-m'))
+                <h2 class="month">{{ $starts->format('F Y') }}</h2>
+            @endif
+            <a class="card calendar-item {{ ($service->status ?? '') === 'live' ? 'is-live' : '' }}" href="{{ $service->stream_url }}" target="_blank" rel="noopener noreferrer">
+                <span class="date-tile"><b>{{ $starts->format('j') }}</b><small>{{ $starts->format('D') }}</small></span>
+                <span class="item-copy">
+                    <strong>{{ $service->title }}</strong>
+                    <small>{{ $starts->format('g:i A') }}@if(!empty($service->speaker)) · {{ $service->speaker }}@endif</small>
+                </span>
+                <i class="fas fa-play" aria-hidden="true"></i>
+            </a>
+        @empty
+            <div class="card empty-card"><span class="empty-emoji" aria-hidden="true">🎥</span><h3>No online services scheduled</h3><p class="muted">Check the Watch &amp; listen page for past services in the meantime.</p><a class="btn" href="{{ route('youth.media') }}">Watch &amp; listen</a></div>
+        @endforelse
+    </div>
+</section>
+
+<style>
+.calendar-tabs{display:flex;margin-bottom:18px;overflow-x:auto}
+.calendar-tabs .tab{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;cursor:pointer;white-space:nowrap;border:1.5px solid var(--line)!important}
+.calendar-tabs .tab span{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--paper-2);color:var(--ink);font-size:.75rem}
+.calendar-tabs .tab.active span{background:var(--sun)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.calendar-list{display:grid;gap:10px;max-width:52rem}
+.month{font-size:1.1rem;margin:16px 0 2px;color:var(--ink-soft)}
+.month:first-child{margin-top:0}
+.calendar-item{display:flex;align-items:center;gap:16px;padding:12px 18px 12px 12px}
+.item-copy{flex:1;min-width:0}
+.item-copy strong,.item-copy small{display:block}
+.item-copy strong{font-size:1.05rem}
+.item-copy small{color:var(--muted);margin-top:2px}
+.calendar-item>i{color:var(--muted)}
+.calendar-item.is-live{border-color:var(--coral)!important}
+.calendar-item.is-live .date-tile{background:var(--coral);color:#fff}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.calendar-tabs .tab');
+    tabs.forEach(btn => btn.addEventListener('click', () => {
+        tabs.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        document.getElementById('tab-' + btn.dataset.tab)?.classList.add('active');
+    }));
+});
+</script>
 @endsection

@@ -14,20 +14,18 @@
                 @else
                     <div class="register-logo-fallback" aria-hidden="true"><i class="fas fa-church"></i></div>
                 @endif
-                <strong>{{ $brand['short_name'] ?? 'COU Youth' }}</strong>
-                <span>Faith · Community · Opportunity</span>
             </div>
 
             <div class="register-heading">
-                <h1 id="register-title">Create Account</h1>
-                <p>Join the Church of Uganda Youth Platform.</p>
+                <h1 id="register-title">Join the family</h1>
+                <p>Free, and it takes about two minutes.</p>
             </div>
 
             @if($errors->any())
                 <div class="register-alert" role="alert">
                     <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
                     <div>
-                        <strong>Please correct the following:</strong>
+                        <strong>Almost there. A couple of things to fix:</strong>
                         <ul>
                             @foreach($errors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -56,23 +54,23 @@
                     <div class="register-grid one-column">
                         <div class="form-field">
                             <label for="name">Full name</label>
-                            <input id="name" class="field" name="name" value="{{ old('name') }}" placeholder="Enter your full name" required autocomplete="name">
+                            <input id="name" class="field" name="name" value="{{ old('name') }}" placeholder="First and last name" required autocomplete="name">
                         </div>
 
                         <div class="form-field">
                             <label for="email">Email address</label>
-                            <input id="email" class="field" type="email" name="email" value="{{ old('email') }}" placeholder="Enter your email address" required autocomplete="email">
+                            <input id="email" class="field" type="email" name="email" value="{{ old('email') }}" placeholder="you@example.com" required autocomplete="email">
                         </div>
 
                         <div class="form-field">
                             <label for="password">Password</label>
-                            <input id="password" class="field" type="password" name="password" placeholder="Create a secure password" required autocomplete="new-password">
+                            <input id="password" class="field" type="password" name="password" placeholder="8+ characters, with a capital and a number" required autocomplete="new-password">
                             <small>Use at least 8 characters with upper/lowercase letters and a number.</small>
                         </div>
 
                         <div class="form-field">
                             <label for="password_confirmation">Confirm password</label>
-                            <input id="password_confirmation" class="field" type="password" name="password_confirmation" placeholder="Re-enter your password" required autocomplete="new-password">
+                            <input id="password_confirmation" class="field" type="password" name="password_confirmation" placeholder="Type it again" required autocomplete="new-password">
                         </div>
                     </div>
 
@@ -92,7 +90,7 @@
 
                         <div class="form-field">
                             <label for="school_institution">School / institution</label>
-                            <input id="school_institution" class="field" name="school_institution" value="{{ old('school_institution') }}" placeholder="Enter your school, university or institution">
+                            <input id="school_institution" class="field" name="school_institution" value="{{ old('school_institution') }}" placeholder="School, college, university or work">
                         </div>
                     </div>
 
@@ -351,6 +349,25 @@
         .register-logo,
         .register-logo-fallback { width: 62px; height: 62px; }
     }
+
+    /* Theme: warm paper, crisp ink edges, sunflower accents. */
+    .auth-page{background:radial-gradient(circle at 10% 15%,var(--sun-soft) 0 140px,transparent 141px),radial-gradient(circle at 92% 85%,var(--coral-soft) 0 170px,transparent 171px),var(--paper)!important}
+    .auth-card,.register-card{border:1.5px solid var(--ink)!important;border-radius:26px!important;box-shadow:6px 6px 0 var(--ink)!important}
+    .auth-brand-panel strong,.auth-hello h1{font-family:var(--font-display);letter-spacing:-.03em}
+    .auth-hello{text-align:center;margin:-8px 0 22px}
+    .auth-hello h1{font-size:clamp(1.7rem,5vw,2.2rem);margin:0 0 4px;color:var(--ink)}
+    .auth-hello p{margin:0;color:var(--ink-soft)}
+    .auth-logo-fallback{border:1.5px solid var(--ink)!important;border-radius:18px!important;transform:rotate(-5deg);background:var(--sun)!important;color:var(--ink)!important}
+    .auth-input-wrap input,.field{border:1.5px solid var(--line)!important;border-radius:14px!important}
+    .auth-input-wrap input:focus,.field:focus{border-color:var(--ink)!important;box-shadow:0 0 0 4px var(--sun-soft)!important}
+    .auth-input-wrap>i{color:var(--muted)!important}
+    .auth-card a.auth-secondary-action,.auth-card a.auth-secondary-action:visited{border:1.5px solid var(--ink)!important;border-radius:999px!important;color:var(--ink)!important}
+    .auth-card a.auth-secondary-action:hover,.auth-card a.auth-secondary-action:focus-visible{background:var(--ink)!important;border-color:var(--ink)!important}
+    .auth-submit{border-radius:999px!important}
+    .auth-alert,.form-errors{border-radius:14px!important}
+    .register-tab{border-radius:999px!important}
+    .register-tab.is-active{background:var(--ink)!important}
+    .register-tab.is-active span{color:var(--ink)!important;background:var(--sun)!important;border-color:var(--sun)!important}
 </style>
 
 <script>

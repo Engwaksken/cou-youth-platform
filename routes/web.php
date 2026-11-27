@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/youth-assistant', [YouthAssistantController::class, 'reply'])->middleware('throttle:30,1')->name('youth-assistant.reply');
 
     Route::get('/dashboard', [YouthPortalController::class, 'dashboard'])->name('youth.dashboard');
+    Route::post('/check-in', [YouthPortalController::class, 'checkIn'])->middleware('throttle:20,1')->name('youth.check-in');
     Route::get('/profile', [YouthPortalController::class, 'profile'])->name('youth.profile');
     Route::put('/profile', [YouthPortalController::class, 'updateProfile'])->name('youth.profile.update');
     Route::get('/my-life-groups', [YouthPortalController::class, 'lifeGroups'])->name('youth.life-groups');

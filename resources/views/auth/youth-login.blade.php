@@ -21,8 +21,10 @@
                     </div>
                 @endif
 
-                <strong>{{ $brand['short_name'] ?? 'COU Youth' }}</strong>
-                <span>Faith · Community · Opportunity</span>
+            </div>
+            <div class="auth-hello">
+                <h1>Welcome back</h1>
+                <p>Good to see you. Your streak's waiting.</p>
             </div>
 
             @if($errors->any())
@@ -45,7 +47,7 @@
                             name="email"
                             value="{{ old('email') }}"
                             autocomplete="email"
-                            placeholder="Enter your email address"
+                            placeholder="you@example.com"
                             required
                             autofocus
                         >
@@ -65,7 +67,7 @@
                             type="password"
                             name="password"
                             autocomplete="current-password"
-                            placeholder="Enter your password"
+                            placeholder="Your password"
                             required
                         >
                         <button
@@ -92,7 +94,7 @@
             </form>
 
             <div class="auth-divider" aria-hidden="true">
-                <span>New to COU Youth?</span>
+                <span>First time here?</span>
             </div>
 
             <a href="{{ route('register') }}" class="auth-secondary-action">
@@ -348,6 +350,25 @@
         .auth-input-wrap input,
         .auth-secondary-action { transition: none; }
     }
+
+    /* Theme: warm paper, crisp ink edges, sunflower accents. */
+    .auth-page{background:radial-gradient(circle at 10% 15%,var(--sun-soft) 0 140px,transparent 141px),radial-gradient(circle at 92% 85%,var(--coral-soft) 0 170px,transparent 171px),var(--paper)!important}
+    .auth-card,.register-card{border:1.5px solid var(--ink)!important;border-radius:26px!important;box-shadow:6px 6px 0 var(--ink)!important}
+    .auth-brand-panel strong,.auth-hello h1{font-family:var(--font-display);letter-spacing:-.03em}
+    .auth-hello{text-align:center;margin:-8px 0 22px}
+    .auth-hello h1{font-size:clamp(1.7rem,5vw,2.2rem);margin:0 0 4px;color:var(--ink)}
+    .auth-hello p{margin:0;color:var(--ink-soft)}
+    .auth-logo-fallback{border:1.5px solid var(--ink)!important;border-radius:18px!important;transform:rotate(-5deg);background:var(--sun)!important;color:var(--ink)!important}
+    .auth-input-wrap input,.field{border:1.5px solid var(--line)!important;border-radius:14px!important}
+    .auth-input-wrap input:focus,.field:focus{border-color:var(--ink)!important;box-shadow:0 0 0 4px var(--sun-soft)!important}
+    .auth-input-wrap>i{color:var(--muted)!important}
+    .auth-card a.auth-secondary-action,.auth-card a.auth-secondary-action:visited{border:1.5px solid var(--ink)!important;border-radius:999px!important;color:var(--ink)!important}
+    .auth-card a.auth-secondary-action:hover,.auth-card a.auth-secondary-action:focus-visible{background:var(--ink)!important;border-color:var(--ink)!important}
+    .auth-submit{border-radius:999px!important}
+    .auth-alert,.form-errors{border-radius:14px!important}
+    .register-tab{border-radius:999px!important}
+    .register-tab.is-active{background:var(--ink)!important}
+    .register-tab.is-active span{color:var(--ink)!important;background:var(--sun)!important;border-color:var(--sun)!important}
 </style>
 
 <script>

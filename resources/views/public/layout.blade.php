@@ -17,6 +17,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#fbf6ee">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', $platformBrand['name'])</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -49,7 +50,30 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 </style>
 @include('partials.platform-layout-styles')
 @include('partials.form-control-styles')
+@include('partials.youth-theme')
 <style>
+.site-header{background:color-mix(in srgb,var(--paper) 94%,transparent);border-bottom:1.5px solid var(--line);box-shadow:none}
+.brand{font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;color:var(--ink);font-size:1.08rem}.brand:hover{color:var(--primary)}
+.brand-mark{border:1.5px solid var(--ink);border-radius:13px;box-shadow:none}
+.nav-links a{font-weight:650;color:var(--ink-soft);border-radius:999px;padding:8px 14px}
+.nav-links a:hover{background:#fff;color:var(--ink);transform:none}
+.nav-links a[aria-current="page"]{background:var(--ink);color:#fff}
+.auth-actions .btn{min-height:42px}
+.mobile-menu-toggle{border:1.5px solid var(--ink);border-radius:14px;color:var(--ink)}
+.mobile-menu-toggle:hover{background:var(--ink);border-color:var(--ink)}
+.container{padding-block:30px 48px}
+.float-btn{border-radius:50%;border:1.5px solid var(--ink);color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.float-btn:hover{background:var(--paper-2);color:var(--ink);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.float-btn.chat{background:var(--sun);border-color:var(--ink);color:var(--ink)}
+.float-btn.chat:hover{background:#ffcd5c;border-color:var(--ink);color:var(--ink)}
+.panel{border-radius:22px;border:1.5px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
+.panel-head{background:var(--sun-soft);border-bottom:1.5px solid var(--line)}
+.msg{border-radius:16px 16px 16px 4px;background:var(--paper-2)}
+.msg.user{border-radius:16px 16px 4px 16px;background:var(--primary)}
+.chat-quick button{border-radius:999px;border:1.5px solid var(--line);color:var(--ink);font-weight:650}
+.chat-quick button:hover{background:var(--ink);border-color:var(--ink)}
+.platform-footer{background:var(--ink)}
+.platform-footer-column h2{font-family:var(--font-display);color:var(--sun)}
 body{display:flex;flex-direction:column;min-height:100dvh}
 body>.container{flex:1}
 @media(min-width:901px) and (max-width:1200px){.nav{flex-wrap:wrap}.nav-links{order:3;width:100%;justify-content:center}.auth-actions{margin-left:auto}}
@@ -70,16 +94,16 @@ body>.container{flex:1}
 </a>
 <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open navigation menu" aria-controls="mainNav" aria-expanded="false"><i class="fas fa-bars" aria-hidden="true"></i></button>
 <div class="nav-links">
-<a href="{{ route('public.news') }}">News</a><a href="{{ route('public.events') }}">Events</a><a href="{{ route('public.courses') }}">Courses</a><a href="{{ route('public.life-groups') }}">Life Groups</a><a href="{{ route('public.churches') }}">Church Locator</a><a href="{{ route('public.donate') }}">Donate</a><a href="{{ route('public.about') }}">About</a>
+@foreach([['public.news','public.news*','Stories'],['public.events','public.events*','Events'],['public.courses','public.courses*','Courses'],['public.life-groups','public.life-groups*','Life groups'],['public.churches','public.churches*','Find a church'],['public.donate','public.donate*','Give'],['public.about','public.about','About']] as [$navRoute, $navPattern, $navLabel])<a href="{{ route($navRoute) }}" @if(request()->routeIs($navPattern)) aria-current="page" @endif>{{ $navLabel }}</a>@endforeach
 </div>
-<div class="auth-actions">@auth<a class="btn" href="{{ route('youth.dashboard') }}"><i class="fas fa-user"></i> {{ auth()->user()->name }}</a><form method="post" action="{{ route('logout') }}">@csrf<button class="btn" type="submit">Logout</button></form>@else<a class="btn" href="{{ route('login') }}">Youth Login</a><a class="btn btn-primary" href="{{ route('register') }}">Sign Up</a>@endauth</div>
+<div class="auth-actions">@auth<a class="btn btn-sun" href="{{ route('youth.dashboard') }}"><i class="fas fa-house"></i> My space</a><form method="post" action="{{ route('logout') }}">@csrf<button class="btn btn-ghost" type="submit">Log out</button></form>@else<a class="btn btn-ghost" href="{{ route('login') }}">Log in</a><a class="btn btn-sun" href="{{ route('register') }}">Join free</a>@endauth</div>
 </nav>
 </header>
 <main id="main-content" class="container" tabindex="-1">@if(session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif @yield('content')</main>
 <x-platform-footer :brand="$platformBrand" />
 <div class="floating-tools" aria-label="Accessibility and support tools"><button class="float-btn" type="button" id="accessToggle" aria-label="Open accessibility settings" title="Accessibility"><i class="fas fa-universal-access" aria-hidden="true"></i></button><button class="float-btn chat" type="button" id="chatToggle" aria-label="Open Youth Assistant" title="Youth Assistant"><i class="fas fa-comments" aria-hidden="true"></i></button></div>
 @include('partials.accessibility-panel')
-<section class="panel" id="chatPanel" aria-label="Youth Assistant" aria-hidden="true"><div class="panel-head"><i class="fas fa-robot" aria-hidden="true"></i><strong>Youth Assistant</strong><button class="btn btn-icon" type="button" data-close="chatPanel" aria-label="Close Youth Assistant"><i class="fas fa-xmark"></i></button></div><div class="panel-body"><div class="chat-messages" id="chatMessages" aria-live="polite"><div class="msg">Hi there! I can help you find an event, a course or a church near you, or answer questions about giving and your account.</div></div><div class="chat-quick" aria-label="Quick questions"><button type="button" data-chat="Find an event">Find an event</button><button type="button" data-chat="Find a church">Find a church</button><button type="button" data-chat="Show available courses">Courses</button><button type="button" data-chat="How do I donate?">Donate</button><button type="button" data-chat="I need prayer or pastoral support">Prayer support</button></div>@guest<div class="msg">Sign in to chat securely with the Youth Assistant.</div><a class="btn btn-primary" href="{{ route('login') }}" style="width:100%;margin-top:10px">Youth Login</a>@endguest</div>@auth<form class="chat-form" id="chatForm"><label class="sr-only" for="chatInput">Message Youth Assistant</label><input id="chatInput" maxlength="3000" autocomplete="off" placeholder="Ask the Youth Assistant…"><button class="btn btn-primary btn-icon" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button></form>@endauth</section>
+<section class="panel" id="chatPanel" aria-label="Youth Assistant" aria-hidden="true"><div class="panel-head"><i class="fas fa-comments" aria-hidden="true"></i><strong>Youth Assistant</strong><button class="btn btn-icon" type="button" data-close="chatPanel" aria-label="Close Youth Assistant"><i class="fas fa-xmark"></i></button></div><div class="panel-body"><div class="chat-messages" id="chatMessages" aria-live="polite"><div class="msg">Hi there! I can help you find an event, a course or a church near you, or answer questions about giving and your account.</div></div><div class="chat-quick" aria-label="Quick questions"><button type="button" data-chat="Find an event">Find an event</button><button type="button" data-chat="Find a church">Find a church</button><button type="button" data-chat="Show available courses">Courses</button><button type="button" data-chat="How do I donate?">Donate</button><button type="button" data-chat="I need prayer or pastoral support">Prayer support</button></div>@guest<div class="msg">Sign in to chat securely with the Youth Assistant.</div><a class="btn btn-primary" href="{{ route('login') }}" style="width:100%;margin-top:10px">Youth Login</a>@endguest</div>@auth<form class="chat-form" id="chatForm"><label class="sr-only" for="chatInput">Message Youth Assistant</label><input id="chatInput" maxlength="3000" autocomplete="off" placeholder="Ask the Youth Assistant…"><button class="btn btn-primary btn-icon" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button></form>@endauth</section>
 <script>
 (() => {
     const nav = document.getElementById('mainNav');

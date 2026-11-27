@@ -25,13 +25,15 @@ final class YouthPortalTest extends TestCase
         $this->actingAs($user)
             ->get('/dashboard')
             ->assertOk()
-            ->assertSee('Welcome, Youth Member')
-            ->assertSee('Your profile');
+            ->assertSee('Youth Member')
+            ->assertSee('<span class="scribble">Youth</span>', false)
+            ->assertSee('Your profile')
+            ->assertSee('day streak');
 
         $this->actingAs($user)
             ->get('/profile')
             ->assertOk()
-            ->assertSee('Youth profile');
+            ->assertSeeText('All about you');
     }
 
     public function test_authenticated_youth_can_create_and_update_profile(): void
