@@ -9,7 +9,19 @@
 
 <div class="page-head">
     <div><h1><i class="fas fa-users" aria-hidden="true"></i> Users</h1><p>Manage platform accounts and account details.</p></div>
-    <button class="btn btn-primary" type="button" data-user-dialog="create-user"><i class="fas fa-plus" aria-hidden="true"></i> Add user</button>
+    <div class="actions">
+        @php($exportQuery = $dioceseId > 0 ? ['diocese_id' => $dioceseId] : [])
+        <a class="btn btn-light" href="{{ route('admin.users.export.csv', $exportQuery) }}"><i class="fas fa-file-csv" aria-hidden="true"></i> Export CSV</a>
+        <a class="btn btn-light" href="{{ route('admin.users.export.pdf', $exportQuery) }}"><i class="fas fa-file-pdf" aria-hidden="true"></i> Export PDF</a>
+        <button class="btn btn-primary" type="button" data-user-dialog="create-user"><i class="fas fa-plus" aria-hidden="true"></i> Add user</button>
+    </div>
+</div>
+
+<div class="grid stats-grid">
+    <div class="card stat-card"><div class="stat-icon"><i class="fas fa-users" aria-hidden="true"></i></div><div><strong>{{ number_format($stats['total']) }}</strong><span>Total users</span></div></div>
+    <div class="card stat-card"><div class="stat-icon"><i class="fas fa-user-shield" aria-hidden="true"></i></div><div><strong>{{ number_format($stats['staff']) }}</strong><span>Admin staff</span></div></div>
+    <div class="card stat-card"><div class="stat-icon"><i class="fas fa-user-graduate" aria-hidden="true"></i></div><div><strong>{{ number_format($stats['youth']) }}</strong><span>Youth members</span></div></div>
+    <div class="card stat-card"><div class="stat-icon"><i class="fas fa-user-plus" aria-hidden="true"></i></div><div><strong>{{ number_format($stats['new']) }}</strong><span>Joined in last 30 days</span></div></div>
 </div>
 
 <div class="card"><form method="GET" class="filters" style="grid-template-columns:2fr auto auto"><select name="diocese_id" aria-label="Filter by diocese"><option value="">All dioceses</option>@foreach($dioceses as $diocese)<option value="{{ $diocese->id }}" @selected($dioceseId === $diocese->id)>{{ $diocese->name }}</option>@endforeach</select><button class="btn btn-primary"><i class="fas fa-filter" aria-hidden="true"></i> Filter</button><a class="btn btn-light" href="{{ route('admin.users.index') }}">Reset</a></form></div>
@@ -23,13 +35,14 @@
             <tbody>
             @forelse($users as $user)
                 <tr>
-                    <td><div class="user-identity"><span class="user-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span><div><strong>{{ $user->name }}</strong><small>Account #{{ $user->id }}@if($user->id === auth()->id()) · You @endif</small></div></div></td>
+                    <td><div class="user-identity">@if($user->photoUrl())<img class="user-avatar user-avatar-photo" src="{{ $user->photoUrl() }}" alt="" loading="lazy">@else<span class="user-avatar" aria-hidden="true">{{ $user->initials() }}</span>@endif<div><a class="user-profile-link" href="{{ route('admin.users.show', $user) }}"><strong>{{ $user->name }}</strong></a><small>Account #{{ $user->id }}@if($user->id === auth()->id()) · You @endif</small></div></div></td>
                     <td class="user-email">{{ $user->email }}@if($user->phone)<small>{{ $user->phone }}</small>@endif @if($user->location)<small>{{ $user->location }}</small>@endif</td>
                     <td>{{ $user->diocese?->name ?? $user->youthProfile?->diocese?->name ?? '—' }}</td>
                     <td>{{ $user->created_at?->format('d M Y') ?? '—' }}</td>
                     <td><div class="actions">
-                        <button class="btn btn-light" type="button" data-user-dialog="edit-user-{{ $user->id }}" aria-label="Edit {{ $user->name }}"><i class="fas fa-pen" aria-hidden="true"></i> Edit</button>
-                        <button class="btn btn-danger" type="button" data-user-dialog="delete-user-{{ $user->id }}" aria-label="Remove {{ $user->name }}"><i class="fas fa-trash" aria-hidden="true"></i> Remove</button>
+                        <a class="icon-btn" href="{{ route('admin.users.show', $user) }}" title="View profile" aria-label="View {{ $user->name }}’s profile"><i class="fas fa-id-badge" aria-hidden="true"></i></a>
+                        <button class="icon-btn" type="button" data-user-dialog="edit-user-{{ $user->id }}" title="Edit user" aria-label="Edit {{ $user->name }}"><i class="fas fa-pen" aria-hidden="true"></i></button>
+                        <button class="icon-btn icon-btn-danger" type="button" data-user-dialog="delete-user-{{ $user->id }}" title="Remove user" aria-label="Remove {{ $user->name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                     </div></td>
                 </tr>
             @empty

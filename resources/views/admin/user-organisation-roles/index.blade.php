@@ -26,8 +26,8 @@
                     <td>{{ $assignment->organisationUnit?->name ?? 'Global' }}</td>
                     <td><span class="assignment-status {{ $assignment->is_active ? 'is-active' : 'is-inactive' }}">{{ $assignment->is_active ? 'Active' : 'Inactive' }}</span></td>
                     <td><div class="actions">
-                        <button class="btn btn-light" type="button" data-user-dialog="edit-assignment-{{ $assignment->id }}" aria-label="Edit role assignment for {{ $assignment->user?->name }}"><i class="fas fa-pen" aria-hidden="true"></i> Edit</button>
-                        <button class="btn btn-danger" type="button" data-user-dialog="delete-assignment-{{ $assignment->id }}" aria-label="Remove role assignment for {{ $assignment->user?->name }}"><i class="fas fa-trash" aria-hidden="true"></i> Remove</button>
+                        <button class="icon-btn" type="button" data-user-dialog="edit-assignment-{{ $assignment->id }}" title="Edit assignment" aria-label="Edit role assignment for {{ $assignment->user?->name }}"><i class="fas fa-pen" aria-hidden="true"></i></button>
+                        <button class="icon-btn icon-btn-danger" type="button" data-user-dialog="delete-assignment-{{ $assignment->id }}" title="Remove assignment" aria-label="Remove role assignment for {{ $assignment->user?->name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                     </div></td>
                 </tr>
             @empty

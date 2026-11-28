@@ -25,6 +25,11 @@ final class EnsureCmsModuleAccess
         'admin.page-content.texts.*',
     ];
 
+    /** Pages every CMS user may open: they only ever act on the signed-in account. */
+    private const SELF_SERVICE_PATTERNS = [
+        'admin.profile.*',
+    ];
+
     /** @var list<string> */
     private const HIERARCHY_ADMIN_ROLES = [
         'provincial_admin',
@@ -122,7 +127,8 @@ final class EnsureCmsModuleAccess
             return $next($request);
         }
 
-        if ($roles->contains(fn ($assignment): bool => $assignment->role === 'super_admin')) {
+        if ($roles->contains(fn ($assignment): bool => $assignment->role === 'super_admin')
+            || $this->matchesAny($routeName, self::SELF_SERVICE_PATTERNS)) {
             return $next($request);
         }
 

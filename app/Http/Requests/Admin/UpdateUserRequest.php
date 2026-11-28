@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin;
 
 use App\Support\ChurchOfUgandaDioceses;
+use App\Support\UserProfilePhoto;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -30,6 +31,7 @@ final class UpdateUserRequest extends FormRequest
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'diocese_id' => ['sometimes', 'nullable', 'integer', ChurchOfUgandaDioceses::existsRule()],
             'password' => ['sometimes', 'confirmed', Password::defaults()],
+            ...UserProfilePhoto::rules(),
         ];
     }
 

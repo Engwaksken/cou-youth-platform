@@ -99,7 +99,12 @@ Route::middleware(['auth', 'cms.access'])->prefix('admin')->name('admin.')->grou
     Route::middleware('can:viewAny,'.\App\Models\User::class)->group(function (): void {
     Route::get('users', [UserController::class, 'index'])->name('users.index');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
+    Route::get('users/export/csv', [UserController::class, 'exportCsv'])->name('users.export.csv');
+    Route::get('users/export/pdf', [UserController::class, 'exportPdf'])->name('users.export.pdf');
     });
+    Route::get('users/{user}', [UserController::class, 'show'])->middleware('can:view,user')->whereNumber('user')->name('users.show');
+    Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'show'])->name('profile.show');
+    Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
     Route::put('users/{user}', [UserController::class, 'update'])->middleware('can:update,user')->name('users.update');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('can:delete,user')->name('users.destroy');
 

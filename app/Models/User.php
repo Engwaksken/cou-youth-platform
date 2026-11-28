@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -41,8 +42,20 @@ class User extends Authenticatable
         'phone',
         'location',
         'diocese_id',
+        'profile_photo',
         'password',
     ];
+
+    /** Public URL of the profile photo, or null when none is set. */
+    public function photoUrl(): ?string
+    {
+        return $this->profile_photo ? Storage::disk('public')->url($this->profile_photo) : null;
+    }
+
+    public function initials(): string
+    {
+        return mb_strtoupper(mb_substr((string) $this->name, 0, 1));
+    }
 
     /**
      * @var list<string>
