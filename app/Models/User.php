@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -37,6 +38,9 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
+        'location',
+        'diocese_id',
         'password',
     ];
 
@@ -59,6 +63,11 @@ class User extends Authenticatable
     public function organisationRoles(): HasMany
     {
         return $this->hasMany(UserOrganisationRole::class);
+    }
+
+    public function diocese(): BelongsTo
+    {
+        return $this->belongsTo(OrganisationUnit::class, 'diocese_id');
     }
 
     public function youthProfile(): HasOne

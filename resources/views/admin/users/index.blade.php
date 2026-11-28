@@ -19,13 +19,13 @@
     <div class="table-wrap">
         <table class="users-table">
             <caption class="users-sr-only">Platform accounts and available actions</caption>
-            <thead><tr><th scope="col">User</th><th scope="col">Email</th><th scope="col">Diocese</th><th scope="col">Joined</th><th scope="col">Actions</th></tr></thead>
+            <thead><tr><th scope="col">User</th><th scope="col">Contact</th><th scope="col">Diocese</th><th scope="col">Joined</th><th scope="col">Actions</th></tr></thead>
             <tbody>
             @forelse($users as $user)
                 <tr>
                     <td><div class="user-identity"><span class="user-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span><div><strong>{{ $user->name }}</strong><small>Account #{{ $user->id }}@if($user->id === auth()->id()) · You @endif</small></div></div></td>
-                    <td class="user-email">{{ $user->email }}</td>
-                    <td>{{ $user->youthProfile?->diocese?->name ?? '—' }}</td>
+                    <td class="user-email">{{ $user->email }}@if($user->phone)<small>{{ $user->phone }}</small>@endif @if($user->location)<small>{{ $user->location }}</small>@endif</td>
+                    <td>{{ $user->diocese?->name ?? $user->youthProfile?->diocese?->name ?? '—' }}</td>
                     <td>{{ $user->created_at?->format('d M Y') ?? '—' }}</td>
                     <td><div class="actions">
                         <button class="btn btn-light" type="button" data-user-dialog="edit-user-{{ $user->id }}" aria-label="Edit {{ $user->name }}"><i class="fas fa-pen" aria-hidden="true"></i> Edit</button>

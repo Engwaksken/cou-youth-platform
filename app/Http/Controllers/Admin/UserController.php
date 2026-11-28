@@ -8,7 +8,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Resources\Admin\UserResource;
+use App\Models\OrganisationRole;
 use App\Models\User;
+use App\Models\UserOrganisationRole;
+use App\Support\AssignableRoles;
 use App\Support\ChurchOfUgandaDioceses;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Request;
@@ -27,18 +30,49 @@ final class UserController extends Controller
         $this->authorize('viewAny', User::class);
         $dioceseId = $request->integer('diocese_id');
         $users = User::query()
-            ->with('youthProfile.diocese')
-            ->when($dioceseId > 0, fn ($query) => $query->whereHas('youthProfile', fn ($profile) => $profile->where('diocese_id', $dioceseId)))
+            ->with(['diocese', 'youthProfile.diocese'])
+            ->when($dioceseId > 0, fn ($query) => $query->where(fn ($match) => $match
+                ->where('diocese_id', $dioceseId)
+                ->orWhereHas('youthProfile', fn ($profile) => $profile->where('diocese_id', $dioceseId))))
             ->orderBy('id')
             ->paginate(20)
             ->withQueryString();
+        if ($request->expectsJson()) {
+            return UserResource::collection($users);
+        }
         $dioceses = ChurchOfUgandaDioceses::options();
+        $roles = AssignableRoles::options();
 
-        return $request->expectsJson() ? UserResource::collection($users) : view('admin.users.index', compact('users', 'dioceses', 'dioceseId'));
+        return view('admin.users.index', compact('users', 'dioceses', 'dioceseId', 'roles'));
     }
     public function store(StoreUserRequest $request): UserResource|JsonResponse|RedirectResponse
     {
-        $user = User::create($request->validated());
+        $data = $request->validated();
+        $role = $data['role'] ?? null;
+        unset($data['role']);
+
+        $user = $this->withinSuperAdminMutationLock(function () use ($request, $data, $role): User {
+            $user = User::create($data);
+
+            if ($role !== null) {
+                $unitId = $request->roleUnitId();
+                $catalogRoleId = AssignableRoles::catalogRoleId($role, $unitId);
+                if ($catalogRoleId !== null) {
+                    OrganisationRole::query()->whereKey($catalogRoleId)->lockForUpdate()->firstOrFail();
+                }
+
+                UserOrganisationRole::create([
+                    'user_id' => $user->id,
+                    'organisation_unit_id' => $unitId,
+                    'organisation_role_id' => $catalogRoleId,
+                    'role' => $role,
+                    'is_active' => true,
+                ]);
+            }
+
+            return $user;
+        });
+
         return $request->expectsJson() ? (new UserResource($user))->response()->setStatusCode(201) : back()->with('success', 'User created.');
     }
     public function show(User $user): UserResource { $this->authorize('view', $user); return new UserResource($user); }
